@@ -33,6 +33,17 @@ I requisiti sono descritti dal committente nel seguente documento: [TF2026 Requi
 - **Led**: dispositivo che deve lampeggiare quando il sistema è occupato (_engaged_), cioè quando una richiesta di carico è stata accettata e il sistema sta gestendo tale richiesta.
 - **Container**: è un oggetto di dimensioni predefinite che può essere trasportato dal Cargorobot e successivamente etichettato con un codice a barre da un dispositivo marker situato nello slot5.
 
+## Motivazione sull'utilizzo del metamodello Qak
+In questo progetto abbiamo scelto di utilizzare il metamodello **Quasi Actor Kotlin** (Qak) per 2 vantaggi principali offerti da questo metamodello rispetto ad altri General Purpose Language (GPL): 
+
+- Il concetto di **Interconnessione** è supportato nativamente in Qak: nel dominio descritto del problema possiamo notare che la comunicazione tra i vari attori presenti è essenziale per il corretto funzionamento del sistema, e un solo GPL non permette di esprimere questa necessità nativamente.
+
+- Progettazione orientata ad attori e microservizi: in un GPL saremmo limitati vedere gli elementi del sistema come dei semplici POJO. Qak invece permette di esprimere gli elementi del sistema come attori, supportando l'**Actor Model** (il paradigma di progettazione ad attori), questo ci permette di sviluppare il nostro progetto attorno alle interaizoni tra attori, e non sulla semplice regolazione di uno o più flussi di dati.
+
+Queste due caratteristiche permettono di ridurre significativamente l'**Abstraction Gap** tra Qak e il dominio del problema. Utilizzare solamente un GPL presenterebbe un Abstraction gap maggiore che comporterebbe a maggiore complessità nelle fasi di implementazione del progetto.
+
+Infine, l'adozione del metamodello QAK è anche motivata dalla presenza di una **Software Factory** che è in grado di generare automaticamente codice Kotlin a partire dai modelli scritti in linguaggio QAK. Questo permette non solo di ottenere dei modelli eseguibili "off-the-bat", ma supporta anche un processo di **Rapida Prototipazione** in cui si permette agli sviluppatori di valutare la fattibilità di particolari soluzioni implementative già nelle fasi di progettazione.
+
 ## Macrocomponenti
 
 ## Architettura di riferimento
