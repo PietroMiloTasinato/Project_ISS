@@ -6,9 +6,12 @@
   - [Indice](#indice)
   - [Obiettivi](#obiettivi)
   - [Requisiti](#requisiti)
-  - [Vocabolario](#vocabolario)
+    - [Requisiti funzionali individuati](#requisiti-funzionali-individuati)
   - [Motivazione sull'utilizzo del metamodello Qak](#motivazione-sullutilizzo-del-metamodello-qak)
   - [Macrocomponenti](#macrocomponenti)
+    - [Infrastruttura fornita](#infrastruttura-fornita)
+    - [Componenti software da sviluppare](#componenti-software-da-sviluppare)
+  - [Core business](#core-business)
   - [Architettura di riferimento](#architettura-di-riferimento)
     - [Messaggi](#messaggi)
     - [Diagramma dell'architettura](#diagramma-dellarchitettura)
@@ -18,23 +21,30 @@
 
 ## Obiettivi
 
-Lo sprint0 ha lo scopo di formalizzare i requisiti del committente riguardo al documento ["TemaFinale26"](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#chapter.31) e definire una architettura iniziale del sistema che verrà implementata ed espansa negli sprint successivi.
+Lo Sprint0 ha lo scopo di formalizzare i requisiti espressi dal committente nel documento [TemaFinale26](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#chapter.31) e di definire un primo modello del sistema da utilizzare come riferimento negli sprint successivi.
 
 ## Requisiti
 
-I requisiti sono descritti dal committente nel seguente documento: [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1).
+I requisiti sono descritti dal committente nel documento [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1).
 
-## Vocabolario
+### Requisiti funzionali individuati
 
-- **Maritime Cargo Shipping Company**: rappresenta la compagnia marittima committente del sistema, d'ora in poi chiamata **Company**.
-- **Differential Drive Robot (DDR)**: è un robot virtuale, d'ora in poi chiamato **Cargorobot**, abilitato al movimento all'interno dell'area di hold e che si occupa di spostare i container.
-- **Stiva**: area rettangolare che definisce lo spazio di movimento del robot in cui vengono caricati i container, chiamata d'ora in poi **Hold**. Contiene gli slot1-4, lo slot5, l'IOPort, il sonar e il robot.
-- **Slot1-4**: aree per lo stoccaggio dei container.
-- **Slot5**: area temporanea adibita per la fase di marcatura prima dello stoccaggio finale in uno degli altri slot.
-- **IOPort**: zona di ingresso dei container facente parte della Hold.
-- **Sensor**: sensore associato all'IOPort, usato per rilevare la presenza di un container se misura una distanza $D < DFREE/2$ durante un intervallo di tempo (es. 3 sec).
-- **Led**: dispositivo che deve lampeggiare quando il sistema è occupato (_engaged_), cioè quando una richiesta di carico è stata accettata e il sistema sta gestendo tale richiesta.
-- **Container**: è un oggetto di dimensioni predefinite che può essere trasportato dal Cargorobot e successivamente etichettato con un codice a barre da un dispositivo marker situato nello slot5.
+Dall'analisi del documento dei requisiti emergono i seguenti comportamenti osservabili:
+
+- **RF1 - Richiesta di carico**: il cliente invia una richiesta di carico mediante il pushbutton dell'IOPort.
+- **RF2 - IOPort occupato**: se l'IOPort è già occupato da un container, il sistema risponde `retrylater`.
+- **RF3 - Servizio non disponibile**: se il sistema si trova nello stato `out_of_service`, il sistema risponde `retrylater`.
+- **RF4 - Hold piena**: se gli slot1-4 sono tutti occupati, la richiesta viene rifiutata.
+- **RF5 - Accettazione della richiesta**: se il sistema è operativo, l'IOPort è libero ed esiste almeno uno slot disponibile, il sistema riserva uno slot e restituisce al cliente il nome dello slot riservato.
+- **RF6 - Stato engaged**: dopo l'accettazione della richiesta il sistema entra nello stato `engaged` e il LED deve lampeggiare.
+- **RF7 - Timeout di deposito**: il cliente deve collocare il container nell'area del sensore entro un intervallo di tempo prefissato, indicativamente 30 secondi. In caso contrario, il sistema torna `disengaged` e lo slot riservato viene liberato.
+- **RF8 - Rilevamento del container**: il sonar rileva la presenza del container quando misura una distanza `D < DFREE/2` per un intervallo ragionevole, indicativamente 3 secondi.
+- **RF9 - Trasporto verso slot5**: dopo il rilevamento, il cargorobot trasporta il container dall'IOPort allo slot5.
+- **RF10 - Marcatura**: nello slot5 il marker assegna al container un codice a barre e segnala il completamento della marcatura.
+- **RF11 - Trasporto finale**: dopo il completamento della marcatura, il cargorobot trasporta il container dallo slot5 allo slot precedentemente riservato.
+- **RF12 - Aggiornamento della hold**: al termine del trasporto, lo slot riservato diventa occupato e il nuovo stato della hold viene mostrato sul display.
+- **RF13 - Stato del servizio**: il display deve mostrare il messaggio `Service working` quando il sistema opera correttamente.
+- **RF14 - Guasto del sonar**: se il sonar misura una distanza `D > DFREE` per almeno 3 secondi, il sistema deve passare allo stato `out_of_service` e il display deve mostrare `Out of service`.
 
 ## Motivazione sull'utilizzo del metamodello Qak
 
@@ -50,16 +60,26 @@ Infine, l'adozione del metamodello QAK è anche motivata dalla presenza di una *
 
 ## Macrocomponenti
 
-Si riportano i macrocomponenti software del sistema che sono già forniti dal committente: **VirtualRobot** e **WEnv**. In particolare, il WEnv è un'ambiente virtuale che include un simulatore di un _Differential Drive robot_ (DDR), un particolare robot virtuale che possiede due ruote motrici sullo stesso asse e una terza ruota condotta (non motrice) in cui le possibili mosse sono:
+L'analisi distingue le entità fisiche del dominio dai componenti software utilizzati per controllarle o rappresentarle.
 
-- muoversi avanti-indietro lungo una direzione costante;
-- fermarsi;
-- ruotare di 90° a destra o sinistra.
+### Infrastruttura fornita
+
+Si riportano i macrocomponenti software del sistema che sono già forniti dal committente:
+
+- **WEnv**: ambiente virtuale che simula la hold.
+- **VirtualRobot**: componente software che permette di controllare un Differential Drive Robot all'interno di WEnv.
+
+Il DDR supporta le seguenti mosse elementari:
+
+- movimento in avanti;
+- movimento all'indietro;
+- arresto;
+- rotazione di 90° a destra;
+- rotazione di 90° a sinistra.
 
 ![Wenv & DDR](/img/CargoBot.png)
 
-Queste mosse sono realizzate inviando opportuni comandi al robot simulato.
-Il WEnv rappresenta la stiva della nave in cui il cargorobot dovrà muoversi e il VirtualRobot è un componente software che permette di controllare un DDR virtuale all'interno di WEnv.
+### Componenti software da sviluppare
 
 Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 
@@ -70,13 +90,37 @@ Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 - **hold** <!-- cosa si intende per stato corrente dell'hold -->
 - **led** <!-- chiedere se va tenuto come componente separato o inserirlo dentro IOPort -->
 
+## Core business
+
+Il core business del sistema è la gestione coordinata del processo di caricamento di un container, dalla richiesta iniziale fino al suo deposito nello slot finale. Il processo principale è costituito dalle seguenti fasi:
+
+1. il cliente preme il pushbutton della IOPort;
+2. l'IOPort inoltra la richiesta al cargoservice;
+3. il cargoservice verifica lo stato del servizio;
+4. il cargoservice verifica che l'IOPort non sia occupato o che il sistema non sia fuori servizio;
+5. il cargoservice richiede la prenotazione di uno slot;
+6. se non è disponibile alcuno slot, la richiesta viene rifiutata;
+7. in caso contrario, il sistema entra nello stato `engaged`;
+8. il LED inizia a lampeggiare e il nome dello slot riservato viene comunicato al cliente;
+9. il sistema attende il rilevamento del container entro il timeout previsto;
+10. se il timeout scade, la prenotazione viene annullata, il LED viene spento e il sistema torna `disengaged`;
+11. se il container viene rilevato nella sensor area, il cargoservice ordina al cargorobot di trasportarlo dall'IOPort allo slot5;
+12. una volta che il container è arrivato in prossimità dello slot5, inizia la fase di marcatura e il sistema ne attende il completamento;
+13. completata la fase di marcatura, il cargoservice ordina al cargorobot di trasportare il container dallo slot5 allo slot riservato;
+14. il display viene aggiornato con lo stato corrente della hold;
+15. il LED viene spento e il sistema torna `disengaged`.
+
+La lettura delle misure del sonar, il controllo delle mosse elementari del robot e il rendering del display sono funzionalità di supporto. Il coordinamento della procedura descritta costituisce invece la logica applicativa centrale.
+
 ## Architettura di riferimento
 
-Dato che adottiamo il paradigma ad attori di qak, ogni entità ha un proprio flusso di dati indipendente perciò la comunicazione deve avvenire tramite messaggi perchè non è possibile la condivisione di memoria.
+Nel modello qak, ogni attore possiede uno stato privato e un proprio comportamento. Gli attori non accedono direttamente allo stato interno degli altri attori, ma coordinano le proprie attività mediante lo scambio di messaggi.
+
+L'assenza di memoria condivisa è considerata un vincolo del modello logico: anche quando più attori vengono eseguiti nella stessa JVM, il loro coordinamento deve avvenire tramite messaggi e non mediante accesso diretto a variabili mutabili condivise.
 
 ### Messaggi
 
-Si definiscono solamente i messaggi che modellano le interazioni espresse esplicitamente dal committente nel documento dei requisiti:
+Il seguente insieme costituisce una prima definizione dei contratti di interazione. I messaggi potranno essere raffinati durante l'analisi dei singoli sprint.
 
 ```
 Request load_container : load_container(ARG)
@@ -85,10 +129,10 @@ Reply load_refused : load_refused(CAUSE) for load_container
 Reply retrylater : retrylater(CAUSE) for load_container
 
 Dispatch move_container_to_slot : move_container_to_slot(SLOT)
-Event container_marked : container_marked()
-Event container_detected : container_detected(ARG)
 
-Event sonar_failure : sonar_failure(ARG)
+Event container_marked : container_marked(BARCODE)
+Event container_detected : container_detected(DISTANCE)
+Event sonar_failure : sonar_failure(DISTANCE)
 
 Event show_hold_state : show_hold_state(STATE)
 Event show_service_status : show_service_status(STATUS)
