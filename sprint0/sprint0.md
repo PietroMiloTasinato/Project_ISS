@@ -56,6 +56,8 @@ Si riportano i macrocomponenti software del sistema che sono già forniti dal co
 - fermarsi;
 - ruotare di 90° a destra o sinistra.
 
+![Wenv & DDR](/img/CargoBot.png)
+
 Queste mosse sono realizzate inviando opportuni comandi al robot simulato.
 Il WEnv rappresenta la stiva della nave in cui il cargorobot dovrà muoversi e il VirtualRobot è un componente software che permette di controllare un DDR virtuale all'interno di WEnv.
 
@@ -108,11 +110,15 @@ Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo 
 - ctx_devices: led;
 - ctx_client: client.
 
+![Wenv & DDR](/img/IDSS_Scheme.drawio.png)
+
 ## Piano di test
+
+Questa prima fase di test seve ad effettuare un collaudo interno che in questa prima fase ha il preciso compito di confermare il corretto funzionamento della rete e delle interazioni via messaggi attraverso di essa dei vari componenti.
 
 ## Piano di lavoro
 
 ## Team di lavoro e attività specifiche
 
 Francesco Cenerini, Niccolò Leoncini, Pietro Milo Tasinato.
-Tutti e tre i componenti del team hanno partecipato attivamente a tutte le fasi del progresso dello sprint, dando il loro contributo sia in forma di conoscenze, che di ore di lavoro.
+Tutti e tre i componenti del team hanno partecipato attivamente a tutte le fasi di scrittura e stesura dello sprint, dando il loro contributo in forma di conoscenze e ore di lavoro.
