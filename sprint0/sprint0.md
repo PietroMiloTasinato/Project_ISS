@@ -152,7 +152,7 @@ Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo 
 - ctx_cargoservice: cargoservice, hold, cargorobot, marker, sonar;
 - ctx_ioport: ioport, display, pushbutton;
 - ctx_devices: led;
-- ctx_client: client.
+- ctx_client: client. <!-- realizza il cliente -->
 
 ![Wenv & DDR](/img/IDSS_Scheme.drawio.png)
 
