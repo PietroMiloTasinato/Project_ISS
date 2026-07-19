@@ -1,0 +1,204 @@
+System sprint0
+
+Request load_container : load_container(ARG)
+Reply load_accepted : load_accepted(SLOT) for load_container
+Reply load_refused : load_refused(CAUSE) for load_container // CAUSE: hold full o system disengaged
+Reply retrylater : retrylater(CAUSE) for load_container
+
+Dispatch move_container_to_slot : move_container_to_slot(SLOT)
+
+Event container_marked : container_marked(BARCODE)
+Event container_detected : container_detected(DISTANCE)
+Event sonar_failure : sonar_failure(DISTANCE)
+
+Event show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
+Event show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
+
+Context ctx_cargoservice 			ip [host="localhost" port=8000]
+Context ctx_ioport 					ip [host="localhost" port=8001]
+Context ctx_client 					ip [host="localhost" port=8002]
+Context ctx_devices 				ip [host="localhost" port=8003]
+
+
+QActor cargoservice context ctx_cargoservice {
+	[#
+		// stato e costanti
+		var ServiceWorking  = true
+	#] 
+	
+	State s0 initial{
+		println("$name STARTS") color blue
+		
+		[#
+			// inizializzo lo stato 
+		#]
+	} 
+	
+	Transition t0
+	   whenRequest load_container -> handleLoadRequest
+	   whenEvent container_detected -> setIOPortOccupied
+	   whenEvent sonar_failure -> outOfService
+	
+	/*
+     * Gestione della richiesta.
+     *
+     * Ordine delle verifiche:
+     * 1. il sistema è fuori servizio o IOPort occupato 
+     * 2. hold full (slot1-4 già occupati)
+     * 3. sistema engaged
+     * 4. richiesta di prenotazione al hold
+     */
+	State handleLoadRequest {
+		println("$name SERVING REQUEST") color blue
+		
+		 if [# !ServiceWorking #] {
+		 	
+		 	replyTo load_container with retrylater :
+		 		retrylater(out_of_service)
+		 }else{
+		 	
+		 }
+	}
+}
+
+QActor cargorobot context ctx_cargoservice {
+
+    [# var TargetSlot = "none" #]
+
+    State wait initial {
+        updateResource [# "cargorobot(idle)" #]
+    }
+
+    Transition t0
+        whenMsg move_container_to_slot -> move
+
+
+    State move {
+
+        onMsg(
+            move_container_to_slot :
+            move_container_to_slot(SLOT)
+        ) {
+            [# TargetSlot = payloadArg(0) #]
+        }
+
+        updateResource [#
+            "cargorobot(moving,$TargetSlot)"
+        #]
+
+        delay 200
+
+        updateResource [#
+            "cargorobot(idle)"
+        #]
+    }
+
+    Goto wait
+}
+ 
+QActor marker context ctx_cargoservice {
+
+    State wait initial {
+        updateResource [# "marker(idle)" #]
+    }
+
+    State marking {
+
+        updateResource [# "marker(marking)" #]
+
+        delay 200
+
+        emit container_marked :
+            container_marked(code001)
+
+        updateResource [#
+            "marker(completed,code001)"
+        #]
+    }
+
+    Goto wait
+}
+	
+QActor hold context ctx_cargoservice{
+  State s0 initial {
+  } 
+}
+
+QActor sonar context ctx_cargoservice{
+ 	State s0 initial {
+  	} 
+}
+
+QActor led context ctx_devices{
+ 	State s0 initial {
+  	} 
+}
+ 
+QActor display context ctx_ioport {
+
+    [# var DisplayValue = "none" #]
+
+    State wait initial {
+        updateResource [# "display(service_working)" #]
+    }
+
+    Transition t0
+        whenEvent show_hold_state -> showHold
+        whenEvent show_service_status -> showService
+
+
+    State showHold {
+
+        onMsg(
+            show_hold_state :
+            show_hold_state(STATE)
+        ) {
+            [#
+                DisplayValue =
+                    "display(hold,${payloadArg(0)})"
+            #]
+        }
+
+        println("$DisplayValue") color magenta
+
+        updateResource [# DisplayValue #]
+    }
+
+    Goto wait
+
+
+    State showService {
+
+        onMsg(
+            show_service_status :
+            show_service_status(STATUS)
+        ) {
+            [#
+                DisplayValue =
+                    "display(service,${payloadArg(0)})"
+            #]
+        }
+
+        println("$DisplayValue") color magenta
+
+        updateResource [# DisplayValue #]
+    }
+
+    Goto wait
+}
+
+QActor pushbutton context ctx_ioport{
+	State s0 initial {
+  	} 
+}
+
+QActor ioport context ctx_ioport{
+	State s0 initial {
+  	} 
+}
+
+
+QActor external_client context ctx_client{
+	State s0 initial {
+  	} 
+}
