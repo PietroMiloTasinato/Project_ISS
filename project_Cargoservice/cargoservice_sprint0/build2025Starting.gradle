@@ -154,9 +154,9 @@ task dovesiamo {
 
 distributions {
     main {
-        distributionBaseName = 'arch0'
+        distributionBaseName = 'sprint0'
         contents { 
-             from './arch0.pl'
+             from './sprint0.pl'
              from './sysRules.pl'
              from './facadeConfig.json'
         }

@@ -11,36 +11,43 @@ Event container_marked : container_marked(BARCODE)
 Event container_detected : container_detected(DISTANCE)
 Event sonar_failure : sonar_failure(DISTANCE)
 
-Event show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
-Event show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
+Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
+Dispatch show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
 
 Context ctx_cargoservice 			ip [host="localhost" port=8000]
 Context ctx_ioport 					ip [host="localhost" port=8001]
 Context ctx_client 					ip [host="localhost" port=8002]
 Context ctx_devices 				ip [host="localhost" port=8003]
 
-
 QActor cargoservice context ctx_cargoservice {
 	[#
 		// stato e costanti
-		var ServiceWorking  = true
+		var ServiceWorking = true
+		var IOPortOccupied = false
+        var Engaged = false
 	#] 
 	
-	State s0 initial{
-		println("$name STARTS") color blue
-		
-		[#
-			// inizializzo lo stato 
-		#]
-	} 
+	State idle initial{
+		println("$name | READY") color green
+
+        updateResource [#
+            "cargoservice(idle," +
+            "serviceWorking=$ServiceWorking," +
+            "ioportOccupied=$IOPortOccupied)"
+        #]
+
+        forward display -m show_service_status :
+            show_service_status(service_working)
+    }
+
 	
 	Transition t0
 	   whenRequest load_container -> handleLoadRequest
-	   whenEvent container_detected -> setIOPortOccupied
-	   whenEvent sonar_failure -> outOfService
+	   // whenEvent container_detected -> setIOPortOccupied
+	   // whenEvent sonar_failure -> outOfService
 	
 	/*
-     * Gestione della richiesta.
+     * Template gestione della richiesta.
      *
      * Ordine delle verifiche:
      * 1. il sistema è fuori servizio o IOPort occupato 
@@ -56,9 +63,46 @@ QActor cargoservice context ctx_cargoservice {
 		 	replyTo load_container with retrylater :
 		 		retrylater(out_of_service)
 		 }else{
-		 	
+		 	if [# IOPortOccupied || Engaged #] {
+		 		 replyTo load_container with retrylater :
+                    retrylater(ioport_occupied)
+		 	}else {
+		 		[# Engaged = true #]
+				// quindi riserva lo slot (1-4) dove posizionare il container alla fine
+		 	}
 		 }
 	}
+	
+	// accetta la richiesta di carico
+	State acceptRequest {
+		
+	}
+	
+	// rifiuta la richiesta di carico
+	State refuseRequest {
+		
+	}
+	
+	// comanda il robot per portare il container fino allo slot 5 per la fase di marcatura
+	State moveToSlot5 {
+		
+	}
+	
+	// comanda il robot per depositare il container nello slot precedentemente riservato
+	State moveToReservedSlot {
+		
+	}
+	
+	// gestione ioport occupata
+	State setIOPortOccupied {
+		
+	}
+	
+	// gestione failure sonar
+	State outOfService {
+		
+	}
+	
 }
 
 QActor cargorobot context ctx_cargoservice {
@@ -118,22 +162,7 @@ QActor marker context ctx_cargoservice {
 
     Goto wait
 }
-	
-QActor hold context ctx_cargoservice{
-  State s0 initial {
-  } 
-}
 
-QActor sonar context ctx_cargoservice{
- 	State s0 initial {
-  	} 
-}
-
-QActor led context ctx_devices{
- 	State s0 initial {
-  	} 
-}
- 
 QActor display context ctx_ioport {
 
     [# var DisplayValue = "none" #]
@@ -143,8 +172,8 @@ QActor display context ctx_ioport {
     }
 
     Transition t0
-        whenEvent show_hold_state -> showHold
-        whenEvent show_service_status -> showService
+        whenMsg  show_hold_state -> showHold
+        whenMsg  show_service_status -> showService
 
 
     State showHold {
@@ -185,6 +214,21 @@ QActor display context ctx_ioport {
     }
 
     Goto wait
+}
+	
+QActor hold context ctx_cargoservice{
+  State s0 initial {
+  } 
+}
+
+QActor sonar context ctx_cargoservice{
+ 	State s0 initial {
+  	} 
+}
+
+QActor led context ctx_devices{
+ 	State s0 initial {
+  	} 
 }
 
 QActor pushbutton context ctx_ioport{
