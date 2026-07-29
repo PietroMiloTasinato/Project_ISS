@@ -35,7 +35,9 @@ QActor cargoservice context ctx_cargoservice {
             "serviceWorking=$ServiceWorking," +
             "ioportOccupied=$IOPortOccupied)"
         #]
-
+        
+		println("$name | UPDATE") color green
+		
         forward display -m show_service_status :
             show_service_status(service_working)
     }
@@ -66,12 +68,14 @@ QActor cargoservice context ctx_cargoservice {
 		 	if [# IOPortOccupied || Engaged #] {
 		 		 replyTo load_container with retrylater :
                     retrylater(ioport_occupied)
-		 	}else {
+		 	}else{
 		 		[# Engaged = true #]
 				// quindi riserva lo slot (1-4) dove posizionare il container alla fine
 		 	}
 		 }
+		 
 	}
+	Goto idle
 	
 	// accetta la richiesta di carico
 	State acceptRequest {
