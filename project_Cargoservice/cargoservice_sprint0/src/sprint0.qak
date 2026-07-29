@@ -35,8 +35,6 @@ QActor cargoservice context ctx_cargoservice {
             "serviceWorking=$ServiceWorking," +
             "ioportOccupied=$IOPortOccupied)"
         #]
-        
-		println("$name | UPDATE") color green
 		
         forward display -m show_service_status :
             show_service_status(service_working)
@@ -61,14 +59,17 @@ QActor cargoservice context ctx_cargoservice {
 		println("$name SERVING REQUEST") color blue
 		
 		 if [# !ServiceWorking #] {
+		 	println("Out of service") color red
 		 	
 		 	replyTo load_container with retrylater :
 		 		retrylater(out_of_service)
-		 }else{
+		 }else{ 
 		 	if [# IOPortOccupied || Engaged #] {
+		 		println("Already Engaged") color yellow
 		 		 replyTo load_container with retrylater :
                     retrylater(ioport_occupied)
 		 	}else{
+		 		println("Engaged") color yellow
 		 		[# Engaged = true #]
 				// quindi riserva lo slot (1-4) dove posizionare il container alla fine
 		 	}

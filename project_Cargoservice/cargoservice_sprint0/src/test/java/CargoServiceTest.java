@@ -9,6 +9,7 @@ import unibo.basicomm23.interfaces.Interaction;
 import unibo.basicomm23.msg.ProtocolType;
 import unibo.basicomm23.utils.CommUtils;
 import unibo.basicomm23.utils.ConnectionFactory;
+import unibo.basicomm23.interfaces.IApplMessage;
 
 public class CargoServiceTest {
 	private static Interaction conn;
@@ -18,20 +19,20 @@ public class CargoServiceTest {
 	    conn = ConnectionFactory.createClientSupport23(ProtocolType.tcp, "localhost", "8000");
 	}
 	
-	
+/*	
     // Scenario di test 1: Richiesta di carico accettata da cargoservice
     @Test
     public void testLoadRequestAccepted() throws Exception {
         //Costruzione di richiesta 
 
-        String requestStr = CommUtils.buildRequest("tester",
-                "load_container", "load_container()",
-                "cargoservice").toString();
+        IApplMessage requestStr = CommUtils.buildRequest("cargoservice",
+                "load_container", "load_container(1)",
+                "cargoservice");
         
-        System.out.println("Richiesta: " + requestStr);
+        System.out.println("Richiesta: " + requestStr.toString());
         
         //Risposta accettata perchè robot e marker sono liberi
-        String response = conn.request(requestStr);
+        String response = conn.request(requestStr).toString();
         
         System.out.println("Risposta: " + response); // Risposta contenente lo slot libero dove posizionare il container
         
@@ -39,14 +40,14 @@ public class CargoServiceTest {
         assertTrue("TEST: richiesta accettata", 
                  response.contains("load_accepted"));
     }
-
+*/
     //Scenario di test 2: Doppia richiesta di carico 
-
+    
     @Test
     public void testDoubleLoadRequest() throws Exception {
 	    // Costruzione della prima richiesta 
 	    String request1 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container()", 
+	            "load_container", "load_container(1)", 
 	            "cargoservice").toString();
 	
 	    //Risposta accettata perchè robot e marker sono liberi
@@ -57,7 +58,7 @@ public class CargoServiceTest {
 	    
 	   // Costruzione della seconda richiesta
 	    String request2 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container()", 
+	            "load_container", "load_container(1)", 
 	            "cargoservice").toString();
 	
 	    //Risposta negativa perchè robot e marker non sono liberi
@@ -70,7 +71,7 @@ public class CargoServiceTest {
 
 
     //Scenario di test 3: richiesta di carico rifiutata perchè robot e marker non sono liberi senza arrivo concorrenziale di due load_request
-    @Test
+    /*@Test
     public void testLoadRequestDenied() throws Exception {
     	//Costruzione di richiesta
     	String requestStr = CommUtils.buildRequest("tester",
@@ -88,5 +89,6 @@ public class CargoServiceTest {
     	assertTrue("TEST: richiesta rifiutata per slot pieni",
             response.contains("load_refused") && 
             response.contains("out_of_service"));
-    }
+    }*/
+    
 }

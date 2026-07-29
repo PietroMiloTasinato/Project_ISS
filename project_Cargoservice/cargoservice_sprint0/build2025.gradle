@@ -14,8 +14,8 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "1.9.22"
     
     //Per poter usare qakfacadegui23-1.0 che usa Spring
-    id 'org.springframework.boot' version '2.7.16'
-    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+    //id 'org.springframework.boot' version '2.7.16'
+    //id 'io.spring.dependency-management' version '1.0.15.RELEASE'
     
     //Per poter usare javafx
     //id 'org.openjfx.javafxplugin' version '0.1.0'
@@ -37,13 +37,7 @@ repositories {
     mavenCentral()
     flatDir {   dirs '../unibolibs'	 }
 }
-
-/*
-javafx {
-    version = "11"
-    modules =  ["javafx.controls", "javafx.fxml", "javafx.web", "javafx.graphics"]
-}
-*/
+ 
 
 dependencies {
     // Align versions of all Kotlin components
@@ -67,10 +61,6 @@ dependencies {
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm
     implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core-jvm', version: "$kotlinVersion"
 
-	//SOCKET.IO  
-    implementation group: 'javax.websocket', name: 'javax.websocket-api', version: '1.1'
-    //javax.websocket api is only the specification
-    implementation group: 'org.glassfish.tyrus.bundles', name: 'tyrus-standalone-client', version: '1.9'
 
 	//HTTP
     implementation 'org.apache.httpcomponents:httpclient:4.5'
@@ -81,7 +71,6 @@ dependencies {
 
     /* JSON ********************************************************************************* */
     // https://mvnrepository.com/artifact/org.json/json
-    //implementation group: 'org.json', name: 'json', version: '20220320'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation group: 'org.json', name: 'json', version: '20180130'
 
@@ -112,9 +101,8 @@ dependencies {
 
     /* AIMA ****************************************** */
  	//PLANNER  
-    implementation name: 'unibo.planner23-1.0'
-    // https://mvnrepository.com/artifact/com.googlecode.aima-java/aima-core
-    implementation group: 'com.googlecode.aima-java', name: 'aima-core', version: '3.0.0'
+    //implementation name: 'unibo.planner23-1.0'
+    //implementation group: 'com.googlecode.aima-java', name: 'aima-core', version: '3.0.0'
 
     /* UNIBO *********************************************************************************/
     implementation name: 'uniboInterfaces'
@@ -124,27 +112,30 @@ dependencies {
 
 
     
-    //USER libs for facades
     
 }
-	
-sourceSets {
-    main.java.srcDirs += 'src'
-    main.java.srcDirs += 'src/main/java'
-    main.java.srcDirs += 'src/main/kotlin'
-    main.java.srcDirs += 'src/main/resources'
-    test.java.srcDirs += 'src/main/java/test'		//test is specific
-    test.java.srcDirs += 'src/main/kotlin/test'
-}
-  
 
+sourceSets {
+    main {
+        java {
+            srcDir 'utils'
+            srcDir 'src'   // Importante per i file generati Qak
+            exclude 'main/**'
+        }
+    }
+}  
+
+/*
 eclipse {
     classpath {
         sourceSets -= [sourceSets.main, sourceSets.test]	
     }	
  }
+*/
 
-
+tasks.withType(Copy).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 
 application {
     //Define the main class for the application.
@@ -175,7 +166,6 @@ distributions {
         contents { 
              from './sprint0.pl'
              from './sysRules.pl'
-             from './facadeConfig.json'
         }
     }
 } 

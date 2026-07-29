@@ -28,7 +28,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		
 				// stato e costanti
 				var ServiceWorking = true
@@ -55,14 +55,17 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					action { //it:State
 						CommUtils.outblue("$name SERVING REQUEST")
 						if(  !ServiceWorking  
-						 ){answer("load_container", "retrylater", "retrylater(out_of_service)"   )  
+						 ){CommUtils.outred("Out of service")
+						answer("load_container", "retrylater", "retrylater(out_of_service)"   )  
 						}
 						else
 						 {if(  IOPortOccupied || Engaged  
-						  ){answer("load_container", "retrylater", "retrylater(ioport_occupied)"   )  
+						  ){CommUtils.outyellow("Already Engaged")
+						 answer("load_container", "retrylater", "retrylater(ioport_occupied)"   )  
 						 }
 						 else
-						  { Engaged = true  
+						  {CommUtils.outyellow("Engaged")
+						   Engaged = true  
 						  }
 						 }
 						//genTimer( actor, state )
@@ -70,6 +73,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 				state("acceptRequest") { //this:State
 					action { //it:State
