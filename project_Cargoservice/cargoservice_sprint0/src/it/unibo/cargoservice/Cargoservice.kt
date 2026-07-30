@@ -42,6 +42,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 						            "cargoservice(idle," +
 						            "serviceWorking=$ServiceWorking," +
 						            "ioportOccupied=$IOPortOccupied)"
+										
 						)
 						forward("show_service_status", "show_service_status(service_working)" ,"display" ) 
 						//genTimer( actor, state )
@@ -61,11 +62,14 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 						else
 						 {if(  IOPortOccupied || Engaged  
 						  ){CommUtils.outyellow("Already Engaged")
-						 answer("load_container", "retrylater", "retrylater(ioport_occupied)"   )  
+						 answer("load_container", "load_refused", "load_refused(ioport_occupied)"   )  
 						 }
 						 else
 						  {CommUtils.outyellow("Engaged")
 						   Engaged = true  
+						  answer("load_container", "load_accepted", "load_accepted(1)"   )  
+						  delay(100) 
+						   Engaged = false  
 						  }
 						 }
 						//genTimer( actor, state )

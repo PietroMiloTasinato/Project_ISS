@@ -29,18 +29,19 @@ QActor cargoservice context ctx_cargoservice {
 	
 	State idle initial{
 		println("$name | READY") color green
-
+ 
         updateResource [#
             "cargoservice(idle," +
             "serviceWorking=$ServiceWorking," +
             "ioportOccupied=$IOPortOccupied)"
-        #]
+				
+        #] // TODO: update engaded state here instead of at the end of the task
 		
         forward display -m show_service_status :
             show_service_status(service_working)
     }
-
-	
+ 
+ 	
 	Transition t0
 	   whenRequest load_container -> handleLoadRequest
 	   // whenEvent container_detected -> setIOPortOccupied
@@ -66,12 +67,19 @@ QActor cargoservice context ctx_cargoservice {
 		 }else{ 
 		 	if [# IOPortOccupied || Engaged #] {
 		 		println("Already Engaged") color yellow
-		 		 replyTo load_container with retrylater :
-                    retrylater(ioport_occupied)
+		 		 replyTo load_container with load_refused :
+                    load_refused(ioport_occupied)
 		 	}else{
 		 		println("Engaged") color yellow
 		 		[# Engaged = true #]
-				// quindi riserva lo slot (1-4) dove posizionare il container alla fine
+		 		
+		 		replyTo load_container with load_accepted :
+		 		load_accepted(1)
+		 		
+		 		//simulate execution
+		 		delay 100
+		 		[# Engaged = false #]
+		 		// quindi riserva lo slot (1-4) dove posizionare il container alla fine
 		 	}
 		 }
 		 

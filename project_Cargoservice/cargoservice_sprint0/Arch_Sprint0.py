@@ -49,5 +49,5 @@ with Diagram('Sprint0_Arch', show=False, outformat='png', graph_attr=graphattr) 
         hold >> Edge(color='magenta', style='solid', decorate='false', label='<show_hold_status(STATUS) &nbsp; >',  fontcolor='magenta') >> display
         sonar >> Edge(**eventedgeattr, style='solid', decorate='false', label='<container_detected(DISTANCE) &nbsp; >',  fontcolor='red') >> sys
         marker >> Edge(**eventedgeattr, style='solid', decorate='false', label='<container_marked(BARCODE) &nbsp; >', fontcolor='red') >> sys
-        sonar >> Edge( label='<container_detected(DISTANCE)&nbsp; >', **eventedgeattr, style='solid', decorate='false', fontcolor='red') >> sys
+        sonar >> Edge( label='<sonar_failure(DISTANCE)&nbsp; >', **eventedgeattr, style='solid', decorate='false', fontcolor='red') >> sys
 diag
