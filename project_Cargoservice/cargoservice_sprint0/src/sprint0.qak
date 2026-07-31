@@ -6,6 +6,8 @@ Reply load_refused : load_refused(CAUSE) for load_container // CAUSE: hold full 
 Reply retrylater : retrylater(CAUSE) for load_container
 
 Dispatch move_container_to_slot : move_container_to_slot(SLOT)
+Dispatch startWorking : startWorking(ARG)
+Dispatch taskCompleted : taskCompleted(ARG)
 
 Event container_marked : container_marked(BARCODE)
 Event container_detected : container_detected(DISTANCE)
@@ -19,7 +21,7 @@ Context ctx_ioport 					ip [host="localhost" port=8001]
 Context ctx_client 					ip [host="localhost" port=8002]
 Context ctx_devices 				ip [host="localhost" port=8003]
 
-QActor cargoservice context ctx_cargoservice {
+QActor cargoservice_handler context ctx_cargoservice {
 	[#
 		// stato e costanti
 		var ServiceWorking = true
@@ -44,6 +46,8 @@ QActor cargoservice context ctx_cargoservice {
  	
 	Transition t0
 	   whenRequest load_container -> handleLoadRequest
+	   whenMsg taskCompleted -> resetEngaged
+	   
 	   // whenEvent container_detected -> setIOPortOccupied
 	   // whenEvent sonar_failure -> outOfService
 	
@@ -76,9 +80,10 @@ QActor cargoservice context ctx_cargoservice {
 		 		replyTo load_container with load_accepted :
 		 		load_accepted(1)
 		 		
+		 		forward cargoservice_worker -m startWorking :
+            	startWorking(1)
+		 		
 		 		//simulate execution
-		 		delay 100
-		 		[# Engaged = false #]
 		 		// quindi riserva lo slot (1-4) dove posizionare il container alla fine
 		 	}
 		 }
@@ -86,10 +91,33 @@ QActor cargoservice context ctx_cargoservice {
 	}
 	Goto idle
 	
-	// accetta la richiesta di carico
-	State acceptRequest {
+	State resetEngaged {
+		println("no more Engaged") color yellow
+		[# Engaged = false #]
+	}
+	Goto idle
+
+}
+
+QActor cargoservice_worker context ctx_cargoservice {
+
+	State idle initial{
+		println("$name | READY") color green
 		
 	}
+	
+	Transition t0
+	   whenMsg startWorking -> acceptRequest
+	
+	// accetta la richiesta di carico
+	State acceptRequest {
+		delay 100 
+		
+		forward cargoservice_handler -m taskCompleted :
+       	taskCompleted(1)
+		
+	}
+	Goto idle
 	
 	// rifiuta la richiesta di carico
 	State refuseRequest {

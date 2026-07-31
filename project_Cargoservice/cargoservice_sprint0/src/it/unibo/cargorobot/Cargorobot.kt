@@ -40,7 +40,7 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t01",targetState="move",cond=whenDispatch("move_container_to_slot"))
+					 transition(edgeName="t03",targetState="move",cond=whenDispatch("move_container_to_slot"))
 				}	 
 				state("move") { //this:State
 					action { //it:State

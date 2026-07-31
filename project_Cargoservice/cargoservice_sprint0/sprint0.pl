@@ -6,6 +6,8 @@ reply( load_accepted, load_accepted(SLOT) ).  %%for load_container
 reply( load_refused, load_refused(CAUSE) ).  %%for load_container
 reply( retrylater, retrylater(CAUSE) ).  %%for load_container
 dispatch( move_container_to_slot, move_container_to_slot(SLOT) ).
+dispatch( startWorking, startWorking(ARG) ).
+dispatch( taskCompleted, taskCompleted(ARG) ).
 event( container_marked, container_marked(BARCODE) ).
 event( container_detected, container_detected(DISTANCE) ).
 event( sonar_failure, sonar_failure(DISTANCE) ).
@@ -16,8 +18,10 @@ context(ctx_cargoservice, "localhost",  "TCP", "8000").
 context(ctx_ioport, "localhost",  "TCP", "8001").
 context(ctx_client, "localhost",  "TCP", "8002").
 context(ctx_devices, "localhost",  "TCP", "8003").
- qactor( cargoservice, ctx_cargoservice, "it.unibo.cargoservice.Cargoservice").
- static(cargoservice).
+ qactor( cargoservice_handler, ctx_cargoservice, "it.unibo.cargoservice_handler.Cargoservice_handler").
+ static(cargoservice_handler).
+  qactor( cargoservice_worker, ctx_cargoservice, "it.unibo.cargoservice_worker.Cargoservice_worker").
+ static(cargoservice_worker).
   qactor( cargorobot, ctx_cargoservice, "it.unibo.cargorobot.Cargorobot").
  static(cargorobot).
   qactor( marker, ctx_cargoservice, "it.unibo.marker.Marker").

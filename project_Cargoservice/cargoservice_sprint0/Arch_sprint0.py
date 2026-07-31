@@ -26,7 +26,8 @@ with Diagram('sprint0Arch', show=False, outformat='png', graph_attr=graphattr) a
      sys = Custom('','./qakicons/system.png')
 ### see https://renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
      with Cluster('ctx_cargoservice', graph_attr=nodeattr):
-          cargoservice=Custom('cargoservice','./qakicons/symActorWithobjSmall.png')
+          cargoservice_handler=Custom('cargoservice_handler','./qakicons/symActorWithobjSmall.png')
+          cargoservice_worker=Custom('cargoservice_worker','./qakicons/symActorWithobjSmall.png')
           cargorobot=Custom('cargorobot','./qakicons/symActorWithobjSmall.png')
           marker=Custom('marker','./qakicons/symActorWithobjSmall.png')
           hold=Custom('hold','./qakicons/symActorWithobjSmall.png')
@@ -40,5 +41,7 @@ with Diagram('sprint0Arch', show=False, outformat='png', graph_attr=graphattr) a
      with Cluster('ctx_devices', graph_attr=nodeattr):
           led=Custom('led','./qakicons/symActorWithobjSmall.png')
      marker >> Edge( label='container_marked', **eventedgeattr, decorate='true', fontcolor='red') >> sys
-     cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<show_service_status &nbsp; >',  fontcolor='blue') >> display
+     cargoservice_handler >> Edge(color='blue', style='solid',  decorate='true', label='<startWorking &nbsp; >',  fontcolor='blue') >> cargoservice_worker
+     cargoservice_handler >> Edge(color='blue', style='solid',  decorate='true', label='<show_service_status &nbsp; >',  fontcolor='blue') >> display
+     cargoservice_worker >> Edge(color='blue', style='solid',  decorate='true', label='<taskCompleted &nbsp; >',  fontcolor='blue') >> cargoservice_handler
 diag

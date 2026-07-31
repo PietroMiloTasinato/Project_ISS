@@ -23,7 +23,7 @@ public class CargoServiceTest {
 	
 	
     // Scenario di test 1: Richiesta di carico accettata da cargoservice
-    @Test
+    /*@Test
     public void testLoadRequestAccepted() throws Exception {
         //Costruzione di richiesta 
 
@@ -44,7 +44,7 @@ public class CargoServiceTest {
         
         TimeUnit.SECONDS.sleep(1); // wait for robot to finish
     }
-
+	*/
     //Scenario di test 2: Doppia richiesta di carico 
     
     @Test

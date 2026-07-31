@@ -154,7 +154,7 @@ Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo 
 - ctx_devices: led;
 - ctx_client: client. <!-- realizza il cliente -->
 
-![Wenv & DDR](/img/IDSS_Scheme.drawio.png)
+![Wenv & DDR](/img/sprint0_arch.png)
 
 ## Piano di test
 
