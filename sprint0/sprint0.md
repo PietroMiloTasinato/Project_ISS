@@ -160,7 +160,87 @@ Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo 
 
 Questa prima fase di test seve ad effettuare un collaudo interno che in questa prima fase ha il preciso compito di confermare il corretto funzionamento della rete e delle interazioni via messaggi attraverso di essa dei vari componenti.
 
+Il primo test ha l'obiettivo di confermare la ricezione dei messaggi da parte degli attori qak e la corretta formazione dei messaggi.
+```text
+@Test
+    public void testLoadRequestAccepted() throws Exception {
+        //Costruzione di richiesta 
+
+        IApplMessage requestStr = CommUtils.buildRequest("tester",
+                "load_container", "load_container(\"args\")",
+                "cargoservice_handler");
+        
+        System.out.println("Richiesta: " + requestStr.toString());
+        
+        //Risposta accettata perchè robot e marker sono liberi
+        String response = conn.request(requestStr).toString();
+        
+        System.out.println("Risposta: " + response); // Risposta contenente lo slot libero dove posizionare il container
+        
+        //Verifica che sia stata accettata
+        assertTrue("TEST: richiesta accettata", 
+                 response.contains("load_accepted"));
+        
+        TimeUnit.SECONDS.sleep(1); // wait for robot to finish
+    }
+```
+
+Il secondo test ha l'obiettivo di confermare il corretto funzionamento del sistema in caso di arrivo concorrente di due richieste di carico
+```text
+@Test
+public void testDoubleLoadRequest() throws Exception {
+	    // Costruzione della prima richiesta 
+	    String request1 = CommUtils.buildRequest("tester",
+	            "load_container", "load_container(\"args\")", 
+	            "cargoservice_handler").toString();
+	
+	    //Risposta accettata perchè robot e marker sono liberi
+	    String response1 = conn.request(request1);
+	    
+	    System.out.println("Risposta: " + response1); // Risposta contenente lo slot libero dove posizionare il container
+	    assertTrue("TEST: Prima richiesta accettata", 
+	             response1.contains("load_accepted")); 
+	    
+	   // Costruzione della seconda richiesta
+	    String request2 = CommUtils.buildRequest("tester",
+	            "load_container", "load_container(\"args\")", 
+	            "cargoservice_handler").toString();
+	
+	    //Risposta negativa perchè robot e marker non sono liberi
+	    String response2 = conn.request(request2);
+	    System.out.println("Risposta: " + response2); // Risposta contenente la causa del rifiuto
+	    assertTrue("TEST: Seconda richiesta rifiutata",
+	    		response2.contains("load_refused") && 
+	    		response2.contains("ioport_occupied"));
+    }
+```
+
 ## Piano di lavoro
+
+Oltre a questo sprint 0 iniziale, dedicato all'impostazione del progetto, nel nostro processo Scrum abbiamo previsto tre sprint operativi:
+
+1. Sprint 1
+    - cargoservice (core business del sistema)
+    - cargorobot
+1. Sprint 2
+    - sonar
+    - hold
+    - IO port e pushbutton
+1. Sprint 3
+    - led
+    - web-gui
+    - display
+
+| Numero sprint             | Data inizio (indicativa)  | Data fine (indicativa)    | Lavoro Stimato Totale (h) |
+|---------------------------|---------------------------|---------------------------|---------------------------|
+| Sprint 1                  | 03/08/2026                | 8/08/2026                | 30                        |
+| Sprint 2                  | 10/08/2026                | 14/08/2026                | 20                        |
+| Sprint 3                  | 17/08/2026                | 21/08/2026                | 20                        |
+
+La pianificazione temporale costituisce un riferimento per il team.  
+Sono comunque contemplate variazioni, nel limite del ragionevole, purché non compromettano il ritmo generale del lavoro.  
+Eventuali modifiche significative potranno essere apportate solo in presenza di esigenze straordinarie, cambiamenti rilevanti durante il percorso progettuale, o situazioni tali da non poter essere ignorate.  
+
 
 ## Team di lavoro e attività specifiche
 

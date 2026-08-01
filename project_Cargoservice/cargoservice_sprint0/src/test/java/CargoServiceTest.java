@@ -23,13 +23,13 @@ public class CargoServiceTest {
 	
 	
     // Scenario di test 1: Richiesta di carico accettata da cargoservice
-    /*@Test
+    @Test
     public void testLoadRequestAccepted() throws Exception {
         //Costruzione di richiesta 
 
         IApplMessage requestStr = CommUtils.buildRequest("tester",
                 "load_container", "load_container(\"args\")",
-                "cargoservice");
+                "cargoservice_handler");
         
         System.out.println("Richiesta: " + requestStr.toString());
         
@@ -44,7 +44,7 @@ public class CargoServiceTest {
         
         TimeUnit.SECONDS.sleep(1); // wait for robot to finish
     }
-	*/
+	
     //Scenario di test 2: Doppia richiesta di carico 
     
     @Test
@@ -52,7 +52,7 @@ public class CargoServiceTest {
 	    // Costruzione della prima richiesta 
 	    String request1 = CommUtils.buildRequest("tester",
 	            "load_container", "load_container(\"args\")", 
-	            "cargoservice").toString();
+	            "cargoservice_handler").toString();
 	
 	    //Risposta accettata perchè robot e marker sono liberi
 	    String response1 = conn.request(request1);
@@ -64,7 +64,7 @@ public class CargoServiceTest {
 	   // Costruzione della seconda richiesta
 	    String request2 = CommUtils.buildRequest("tester",
 	            "load_container", "load_container(\"args\")", 
-	            "cargoservice").toString();
+	            "cargoservice_handler").toString();
 	
 	    //Risposta negativa perchè robot e marker non sono liberi
 	    String response2 = conn.request(request2);
