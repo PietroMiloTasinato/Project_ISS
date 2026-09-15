@@ -10,7 +10,7 @@ Dispatch startWorking : startWorking(ARG)
 Dispatch taskCompleted : taskCompleted(ARG)
 
 Event container_marked : container_marked(BARCODE)
-Event container_detected : container_detected(DISTANCE)
+Event robot_detected : robot_detected(DISTANCE)
 Event sonar_failure : sonar_failure(DISTANCE)
 
 Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
@@ -48,7 +48,7 @@ QActor cargoservice_handler context ctx_cargoservice {
 	   whenRequest load_container -> handleLoadRequest
 	   whenMsg taskCompleted -> resetEngaged
 	   
-	   // whenEvent container_detected -> setIOPortOccupied
+	   // whenEvent robot_detected -> setIOPortOccupied
 	   // whenEvent sonar_failure -> outOfService
 	
 	/*

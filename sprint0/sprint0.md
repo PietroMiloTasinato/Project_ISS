@@ -83,7 +83,7 @@ Il DDR supporta le seguenti mosse elementari:
 
 Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 
-- **cargoservice**
+- **cargoservice**: composto da _cargoservice_handler_ e _cargoservice_worker_
 - **cargorobot**
 - **sonar**
 - **IOPort**: composto da un _display_ (web-gui) + _pushbutton_
@@ -95,20 +95,20 @@ Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 Il core business del sistema è la gestione coordinata del processo di caricamento di un container, dalla richiesta iniziale fino al suo deposito nello slot finale. Il processo principale è costituito dalle seguenti fasi:
 
 1. il cliente preme il pushbutton della IOPort;
-2. l'IOPort inoltra la richiesta al cargoservice;
-3. il cargoservice verifica lo stato del servizio;
-4. il cargoservice verifica che l'IOPort non sia occupato o che il sistema non sia fuori servizio;
-5. il cargoservice richiede la prenotazione di uno slot;
+2. l'IOPort inoltra la richiesta al cargoservice_handler;
+3. il cargoservice_handler verifica lo stato del sistema;
+4. il cargoservice_handler verifica che l'IOPort non sia occupato o che il sistema non sia fuori servizio;
+5. il cargoservice_worker richiede la prenotazione di uno slot;
 6. se non è disponibile alcuno slot, la richiesta viene rifiutata;
 7. in caso contrario, il sistema entra nello stato `engaged`;
 8. il LED inizia a lampeggiare e il nome dello slot riservato viene comunicato al cliente;
 9. il sistema attende il rilevamento del container entro il timeout previsto;
 10. se il timeout scade, la prenotazione viene annullata, il LED viene spento e il sistema torna `disengaged`;
-11. se il container viene rilevato nella sensor area, il cargoservice ordina al cargorobot di trasportarlo dall'IOPort allo slot5;
+11. se il container viene rilevato nella sensor area, il cargoservice_worker ordina al cargorobot di trasportarlo dall'IOPort allo slot5;
 12. una volta che il container è arrivato in prossimità dello slot5, inizia la fase di marcatura e il sistema ne attende il completamento;
-13. completata la fase di marcatura, il cargoservice ordina al cargorobot di trasportare il container dallo slot5 allo slot riservato;
+13. completata la fase di marcatura, il cargoservice_worker ordina al cargorobot di trasportare il container dallo slot5 allo slot riservato;
 14. il display viene aggiornato con lo stato corrente della hold;
-15. il LED viene spento e il sistema torna `disengaged`.
+15. il LED viene spento e il sistema torna allo stato `disengaged`.
 
 La lettura delle misure del sonar, il controllo delle mosse elementari del robot e il rendering del display sono funzionalità di supporto. Il coordinamento della procedura descritta costituisce invece la logica applicativa centrale.
 
@@ -129,9 +129,11 @@ Reply load_refused : load_refused(CAUSE) for load_container
 Reply retrylater : retrylater(CAUSE) for load_container
 
 Dispatch move_container_to_slot : move_container_to_slot(SLOT)
+Dispatch startWorking : startWorking(ARG)
+Dispatch taskCompleted : taskCompleted(ARG)
 
 Event container_marked : container_marked(BARCODE)
-Event container_detected : container_detected(DISTANCE)
+Event robot_detected : robot_detected(DISTANCE)
 Event sonar_failure : sonar_failure(DISTANCE)
 
 Event show_hold_state : show_hold_state(STATE)
@@ -149,7 +151,7 @@ Le interazioni rimanenti tramite messaggi verranno discusse e modellate durante 
 
 Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1.
 
-- ctx_cargoservice: cargoservice, hold, cargorobot, marker, sonar;
+- ctx_cargoservice: cargoservice_handler, cargoservice_worker, hold, cargorobot, marker, sonar;
 - ctx_ioport: ioport, display, pushbutton;
 - ctx_devices: led;
 - ctx_client: client. <!-- realizza il cliente -->
@@ -222,6 +224,7 @@ Oltre a questo sprint 0 iniziale, dedicato all'impostazione del progetto, nel no
 1. Sprint 1
     - cargoservice (core business del sistema)
     - cargorobot
+    - marker
 1. Sprint 2
     - sonar
     - hold

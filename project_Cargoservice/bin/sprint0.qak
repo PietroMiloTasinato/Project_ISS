@@ -10,7 +10,7 @@ Dispatch startWorking : startWorking(ARG)
 Dispatch taskCompleted : taskCompleted(ARG)
 
 Event container_marked : container_marked(BARCODE)
-Event robot_detected : robot_detected(DISTANCE)
+Event container_detected : container_detected(DISTANCE)
 Event sonar_failure : sonar_failure(DISTANCE)
 
 Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
@@ -48,14 +48,14 @@ QActor cargoservice_handler context ctx_cargoservice {
 	   whenRequest load_container -> handleLoadRequest
 	   whenMsg taskCompleted -> resetEngaged
 	   
-	   // whenEvent robot_detected -> setIOPortOccupied
+	   // whenEvent container_detected -> setIOPortOccupied
 	   // whenEvent sonar_failure -> outOfService
 	
 	/*
      * Template gestione della richiesta.
      *
      * Ordine delle verifiche:
-     * 1. il sistema è fuori servizio o IOPort occupato
+     * 1. il sistema è fuori servizio o IOPort occupato 
      * 2. hold full (slot1-4 già occupati)
      * 3. sistema engaged
      * 4. richiesta di prenotazione al hold
