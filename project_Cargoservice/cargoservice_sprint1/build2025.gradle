@@ -162,9 +162,9 @@ task dovesiamo {
 
 distributions {
     main {
-        distributionBaseName = 'sprint0'
+        distributionBaseName = 'sprint1'
         contents { 
-             from './sprint0.pl'
+             from './sprint1.pl'
              from './sysRules.pl'
         }
     }

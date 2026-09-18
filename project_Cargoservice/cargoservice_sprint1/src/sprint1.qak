@@ -1,4 +1,4 @@
-System sprint0
+System sprint1
 
 Request load_container : load_container(ARG)
 Reply load_accepted : load_accepted(SLOT) for load_container
@@ -16,10 +16,19 @@ Event sonar_failure : sonar_failure(DISTANCE)
 Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
 Dispatch show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
 
+Request move_robot: move_robot(TARGETX, TARGETY,STEPTIME)
+Reply move_robot_done  :  move_robot_done(ARG)                    for move_robot
+Reply move_robot_failed:  move_robot_failed(PLANDONE, PLANTODO) for move_robot
+Request get_robot_state : get_robot_state(ARG)        "request robot state ARG unused"
+Reply robot_state      : robot_state(POS,DIR)  for get_robot_state  "POS->pos(X,Y) DIR->up|down|left|right"
+
 Context ctx_cargoservice 			ip [host="localhost" port=8000]
+Context ctx_smartrobot 				ip [host="localhost" port=8020]
 Context ctx_ioport 					ip [host="localhost" port=8001]
 Context ctx_client 					ip [host="localhost" port=8002]
 Context ctx_devices 				ip [host="localhost" port=8003]
+
+ExternalQActor robotsmart context ctx_smartrobot
 
 QActor cargoservice_handler context ctx_cargoservice {
 	[#
@@ -148,7 +157,18 @@ QActor cargoservice_worker context ctx_cargoservice {
 
 QActor cargorobot context ctx_cargoservice {
 
-    [# var TargetSlot = "none" #]
+    [#
+    	
+    	val slots = mapOf<String, Array<Int>>(
+    		"home" to arrayOf(0, 0),
+    		"io_port" to arrayOf(0, 4),
+    		"slot1" to arrayOf(1, 1),
+    		"slot2" to arrayOf(1, 3),
+    		"slot3" to arrayOf(4, 1),
+    		"slot4" to arrayOf(4, 3),
+    		"marker" to arrayOf(5, 2)
+    	)
+    #]
 
     State wait initial {
         updateResource [# "cargorobot(idle)" #]
@@ -156,18 +176,36 @@ QActor cargorobot context ctx_cargoservice {
 
     Transition t0
         whenMsg move_container_to_slot -> move
+        whenReply move_robot_done -> move_robot_done
+		whenReply move_robot_failed -> move_robot_failed
 
+	State move_robot_done{
+		println ("Move | OK") color green
+	}
+	
+	State move_robot_failed{
+		println ("Move | BAD") color yellow
+	}
 
     State move {
+    	printCurrentMessage color green
+    	onMsg(move_container_to_slot : move_container_to_slot(SLOT)) {
+    	
+	    	println("CARGOROBOT | Move Requested") color blue
+	        [# 
+	        	val coord = slots[payloadArg(0)]
+	        #]
+	        if [# coord != null #]{
+	        	println("CARGOROBOT | ${coord.get(0)} - ${coord.get(1)}") color green
+	        	[# val (X, Y) = coord #]
+	        	request robotsmart -m move_robot:move_robot($X, $Y, 100) 
+	        } else {
+	        	println("Target not valid") color red
+	        }
 
-        onMsg(
-            move_container_to_slot :
-            move_container_to_slot(SLOT)
-        ) {
-            [# TargetSlot = payloadArg(0) #]
-        }
+		}
 
-        updateResource [#
+        /*updateResource [#
             "cargorobot(moving,$TargetSlot)"
         #]
 
@@ -175,7 +213,7 @@ QActor cargorobot context ctx_cargoservice {
 
         updateResource [#
             "cargorobot(idle)"
-        #]
+        #]*/
     }
 
     Goto wait

@@ -29,7 +29,17 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
-		 var TargetSlot = "none"  
+		
+		    	
+		    	val slots = mapOf<String, Array<Int>>(
+		    		"home" to arrayOf(0, 0),
+		    		"io_port" to arrayOf(0, 4),
+		    		"slot1" to arrayOf(1, 1),
+		    		"slot2" to arrayOf(1, 3),
+		    		"slot3" to arrayOf(4, 1),
+		    		"slot4" to arrayOf(4, 3),
+		    		"marker" to arrayOf(5, 2)
+		    	)
 		return { //this:ActionBasciFsm
 				state("wait") { //this:State
 					action { //it:State
@@ -41,20 +51,45 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 					sysaction { //it:State
 					}	 	 
 					 transition(edgeName="t03",targetState="move",cond=whenDispatch("move_container_to_slot"))
+					transition(edgeName="t04",targetState="move_robot_done",cond=whenReply("move_robot_done"))
+					transition(edgeName="t05",targetState="move_robot_failed",cond=whenReply("move_robot_failed"))
+				}	 
+				state("move_robot_done") { //this:State
+					action { //it:State
+						CommUtils.outgreen("Move | OK")
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+				}	 
+				state("move_robot_failed") { //this:State
+					action { //it:State
+						CommUtils.outyellow("Move | BAD")
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
 				}	 
 				state("move") { //this:State
 					action { //it:State
+						CommUtils.outgreen("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
+						 	   
 						if( checkMsgContent( Term.createTerm("move_container_to_slot(SLOT)"), Term.createTerm("move_container_to_slot(SLOT)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 TargetSlot = payloadArg(0)  
+								CommUtils.outblue("CARGOROBOT | Move Requested")
+								 
+									        	val coord = slots[payloadArg(0)]
+								if(  coord != null  
+								 ){CommUtils.outgreen("CARGOROBOT | ${coord.get(0)} - ${coord.get(1)}")
+								 val (X, Y) = coord  
+								request("move_robot", "move_robot($X,$Y,100)" ,"robotsmart" )  
+								}
+								else
+								 {CommUtils.outred("Target not valid")
+								 }
 						}
-						updateResourceRep(
-						            "cargorobot(moving,$TargetSlot)"
-						)
-						delay(200) 
-						updateResourceRep(
-						            "cargorobot(idle)"
-						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

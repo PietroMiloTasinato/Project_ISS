@@ -9,16 +9,20 @@ dispatch( move_container_to_slot, move_container_to_slot(SLOT) ).
 dispatch( startWorking, startWorking(ARG) ).
 dispatch( taskCompleted, taskCompleted(ARG) ).
 event( container_marked, container_marked(BARCODE) ).
-event( container_detected, container_detected(DISTANCE) ).
+event( robot_detected, robot_detected(DISTANCE) ).
 event( sonar_failure, sonar_failure(DISTANCE) ).
 dispatch( show_hold_state, show_hold_state(STATE) ).
 dispatch( show_service_status, show_service_status(STATUS) ).
+request( moverobot, moverobot(TARGETX,TARGETY,STEPTIME) ).
+reply( moverobotdone, moverobotok(ARG) ).  %%for moverobot
+reply( moverobotfailed, moverobotfailed(PLANDONE,PLANTODO) ).  %%for moverobot
 %====================================================================================
-context(ctx_cargoservice, "localhost",  "TCP", "8000").
+context(ctx_cargoservice, "localhost",  "TCP", "8020").
 context(ctx_ioport, "localhost",  "TCP", "8001").
 context(ctx_client, "localhost",  "TCP", "8002").
 context(ctx_devices, "localhost",  "TCP", "8003").
- qactor( cargoservice_handler, ctx_cargoservice, "it.unibo.cargoservice_handler.Cargoservice_handler").
+ qactor( robotsmart, ctx_cargoservice, "external").
+  qactor( cargoservice_handler, ctx_cargoservice, "it.unibo.cargoservice_handler.Cargoservice_handler").
  static(cargoservice_handler).
   qactor( cargoservice_worker, ctx_cargoservice, "it.unibo.cargoservice_worker.Cargoservice_worker").
  static(cargoservice_worker).
