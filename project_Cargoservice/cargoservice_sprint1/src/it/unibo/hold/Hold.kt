@@ -24,19 +24,30 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
           ActorBasicFsm( name, scope, confined=isconfined, dynamically=isdynamic ){
 
 	override fun getInitialState() : String{
-		return "s0"
+		return "idle"
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		return { //this:ActionBasciFsm
-				state("s0") { //this:State
+				state("idle") { //this:State
 					action { //it:State
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition(edgeName="t018",targetState="choose_slot",cond=whenRequest("ask_for_slot"))
+				}	 
+				state("choose_slot") { //this:State
+					action { //it:State
+						answer("ask_for_slot", "slot_obtained", "slot_obtained(slot1)"   )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 			}
 		}

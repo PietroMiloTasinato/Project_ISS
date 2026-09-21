@@ -29,6 +29,8 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		
+				var Slot = ""	
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
@@ -40,35 +42,79 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					}	 	 
 					 transition(edgeName="t02",targetState="acceptRequest",cond=whenDispatch("startWorking"))
 				}	 
-				state("acceptRequest") { //this:State
+				state("ask_holding") { //this:State
 					action { //it:State
-						delay(100) 
-						forward("taskCompleted", "taskCompleted(1)" ,"cargoservice_handler" ) 
+						request("ask_for_slot", "ask_for_slot("")" ,"hold" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
+					 transition(edgeName="t13",targetState="acceptRequest",cond=whenReply("slot_obtained"))
+					transition(edgeName="t14",targetState="refuseRequest",cond=whenReply("slots_unavailable"))
 				}	 
 				state("refuseRequest") { //this:State
 					action { //it:State
+						 Slot = ""  
+						forward("taskCompleted", "taskCompleted("")" ,"cargoservice_handler" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
 				}	 
-				state("moveToSlot5") { //this:State
+				state("acceptRequest") { //this:State
 					action { //it:State
+						if( checkMsgContent( Term.createTerm("slot_obtained(SLOT)"), Term.createTerm("slot_obtained(SLOT)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 Slot = payloadArg(0)  
+								request("moverobot", "moverobot(io_port)" ,"cargorobot" )  
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition(edgeName="t25",targetState="at_io_port",cond=whenReply("moverobotdone"))
+					transition(edgeName="t26",targetState="outOfService",cond=whenReply("moverobotfailed"))
 				}	 
-				state("moveToReservedSlot") { //this:State
+				state("at_io_port") { //this:State
 					action { //it:State
+						request("moverobot", "moverobot(marker)" ,"cargorobot" )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t37",targetState="at_marker",cond=whenReply("moverobotdone"))
+					transition(edgeName="t38",targetState="outOfService",cond=whenReply("moverobotfailed"))
+				}	 
+				state("at_marker") { //this:State
+					action { //it:State
+						request("moverobot", "moverobot($Slot)" ,"cargorobot" )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t49",targetState="move_to_home",cond=whenReply("moverobotdone"))
+					transition(edgeName="t410",targetState="outOfService",cond=whenReply("moverobotfailed"))
+				}	 
+				state("move_to_home") { //this:State
+					action { //it:State
+						request("moverobot", "moverobot(home)" ,"cargorobot" )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t511",targetState="task_finished",cond=whenReply("moverobotdone"))
+					transition(edgeName="t512",targetState="outOfService",cond=whenReply("moverobotfailed"))
+				}	 
+				state("task_finished") { //this:State
+					action { //it:State
+						 Slot = ""  
+						forward("taskCompleted", "taskCompleted("")" ,"cargoservice_handler" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -85,6 +131,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 				}	 
 				state("outOfService") { //this:State
 					action { //it:State
+						 Slot = ""  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

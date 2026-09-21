@@ -5,6 +5,10 @@ Reply load_accepted : load_accepted(SLOT) for load_container
 Reply load_refused : load_refused(CAUSE) for load_container // CAUSE: hold full o system disengaged
 Reply retrylater : retrylater(CAUSE) for load_container
 
+Request ask_for_slot: ask_for_slot(ARG)
+Reply slot_obtained: slot_obtained(SLOT) for ask_for_slot
+Reply slots_unavailable: slots_unavailable(ARG) for ask_for_slot
+
 Dispatch move_container_to_slot : move_container_to_slot(SLOT)
 Dispatch startWorking : startWorking(ARG)
 Dispatch taskCompleted : taskCompleted(ARG)
@@ -16,14 +20,13 @@ Event sonar_failure : sonar_failure(DISTANCE)
 Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
 Dispatch show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
 
-Request move_robot: move_robot(TARGETX, TARGETY,STEPTIME)
-Reply move_robot_done  :  move_robot_done(ARG)                    for move_robot
-Reply move_robot_failed:  move_robot_failed(PLANDONE, PLANTODO) for move_robot
-Request get_robot_state : get_robot_state(ARG)        "request robot state ARG unused"
-Reply robot_state      : robot_state(POS,DIR)  for get_robot_state  "POS->pos(X,Y) DIR->up|down|left|right"
+Dispatch setrobotstate: setpos(X,Y,D)
+Request moverobot: moverobot(TARGETX, TARGETY,STEPTIME)
+Reply moverobotdone  :  moverobotdone(ARG)                    for moverobot
+Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
 
 Context ctx_cargoservice 			ip [host="localhost" port=8000]
-Context ctx_smartrobot 				ip [host="localhost" port=8020]
+Context ctx_smartrobot 				ip [host="127.0.0.1" port=8020]
 Context ctx_ioport 					ip [host="localhost" port=8001]
 Context ctx_client 					ip [host="localhost" port=8002]
 Context ctx_devices 				ip [host="localhost" port=8003]
@@ -109,6 +112,10 @@ QActor cargoservice_handler context ctx_cargoservice {
 }
 
 QActor cargoservice_worker context ctx_cargoservice {
+	
+	[#
+		var Slot = ""	
+	#]
 
 	State idle initial{
 		println("$name | READY") color green
@@ -117,31 +124,60 @@ QActor cargoservice_worker context ctx_cargoservice {
 	
 	Transition t0
 	   whenMsg startWorking -> acceptRequest
+	   
+	State ask_holding{
+		request hold -m ask_for_slot: ask_for_slot('')
+	}
+	Transition t1
+	 	whenReply slot_obtained -> acceptRequest
+  		whenReply slots_unavailable -> refuseRequest
+	   
+	// rifiuta la richiesta di carico
+	State refuseRequest {
+		[# Slot = "" #]
+		forward cargoservice_handler -m taskCompleted:taskCompleted("")
+	}
 	
 	// accetta la richiesta di carico
 	State acceptRequest {
-		delay 100 
-		
-		forward cargoservice_handler -m taskCompleted :
-       	taskCompleted(1)
+		onMsg(slot_obtained: slot_obtained(SLOT)){
+			[# Slot = payloadArg(0) #]
+			request cargorobot -m moverobot: moverobot(io_port) 
+		}
 		
 	}
-	Goto idle
+	Transition t2
+		whenReply moverobotdone -> at_io_port
+		whenReply moverobotfailed -> outOfService
+		
 	
-	// rifiuta la richiesta di carico
-	State refuseRequest {
-		
+	State at_io_port {
+		request cargorobot -m moverobot: moverobot(marker)
 	}
+	Transition t3 
+		whenReply moverobotdone -> at_marker
+		whenReply moverobotfailed -> outOfService
+		
 	
 	// comanda il robot per portare il container fino allo slot 5 per la fase di marcatura
-	State moveToSlot5 {
-		
-	}
+	State at_marker {
+		request cargorobot -m moverobot: moverobot($Slot)
+	}Transition t4 
+		whenReply moverobotdone -> move_to_home
+		whenReply moverobotfailed -> outOfService
 	
 	// comanda il robot per depositare il container nello slot precedentemente riservato
-	State moveToReservedSlot {
+	State move_to_home {
+		request cargorobot -m moverobot: moverobot(home)
+	}Transition t5 
+		whenReply moverobotdone -> task_finished
+		whenReply moverobotfailed -> outOfService
 		
+	State task_finished{
+		[# Slot = "" #]
+		forward cargoservice_handler -m taskCompleted:taskCompleted("")
 	}
+	
 	
 	// gestione ioport occupata
 	State setIOPortOccupied {
@@ -150,7 +186,8 @@ QActor cargoservice_worker context ctx_cargoservice {
 	
 	// gestione failure sonar
 	State outOfService {
-		
+		[# Slot = "" #]
+		// TODO: set ServiceWorking to false in handler
 	}
 	
 }
@@ -158,47 +195,61 @@ QActor cargoservice_worker context ctx_cargoservice {
 QActor cargorobot context ctx_cargoservice {
 
     [#
-    	
+    	var currentPos = arrayOf<Int>()
+    	var (Xtemp, Ytemp) = -1 to -1
     	val slots = mapOf<String, Array<Int>>(
     		"home" to arrayOf(0, 0),
-    		"io_port" to arrayOf(0, 4),
+    		"io_port" to arrayOf(4, 0),
     		"slot1" to arrayOf(1, 1),
-    		"slot2" to arrayOf(1, 3),
-    		"slot3" to arrayOf(4, 1),
-    		"slot4" to arrayOf(4, 3),
-    		"marker" to arrayOf(5, 2)
+    		"slot2" to arrayOf(3, 1),
+    		"slot3" to arrayOf(1, 4),
+    		"slot4" to arrayOf(3, 4),
+    		"marker" to arrayOf(2, 5)
     	)
     #]
+    
+    State setup initial{
+    	[# currentPos = slots["home"] ?: arrayOf(0, 0) #]
+    	forward robotsmart -m setrobotstate : setpos(0,0,down)
+    }
+    Goto wait
 
-    State wait initial {
+    State wait {
         updateResource [# "cargorobot(idle)" #]
     }
 
     Transition t0
         whenMsg move_container_to_slot -> move
-        whenReply move_robot_done -> move_robot_done
-		whenReply move_robot_failed -> move_robot_failed
+        whenReply moverobotdone -> move_robot_done
+		whenReply moverobotfailed -> move_robot_failed
 
 	State move_robot_done{
-		println ("Move | OK") color green
+		[# currentPos = arrayOf(Xtemp, Ytemp) #]
+		println ("CARGOROBOT | Move: OK") color green
+		if [# slots["home"] != null && !(currentPos.contentEquals(slots["home"])) #] {
+			[# Xtemp = slots["home"]?.get(0) ?: 0; Ytemp = slots["home"]?.get(1) ?: 0 #]
+			request robotsmart -m moverobot:moverobot($Xtemp, $Ytemp, 345)
+		}
+			
 	}
+	Goto wait
 	
 	State move_robot_failed{
-		println ("Move | BAD") color yellow
+		println ("CARGOROBOT | Move: BAD") color yellow
 	}
 
     State move {
     	printCurrentMessage color green
     	onMsg(move_container_to_slot : move_container_to_slot(SLOT)) {
     	
-	    	println("CARGOROBOT | Move Requested") color blue
+	    	println("CARGOROBOT | Move Requested") color blue 
 	        [# 
 	        	val coord = slots[payloadArg(0)]
 	        #]
 	        if [# coord != null #]{
 	        	println("CARGOROBOT | ${coord.get(0)} - ${coord.get(1)}") color green
-	        	[# val (X, Y) = coord #]
-	        	request robotsmart -m move_robot:move_robot($X, $Y, 100) 
+	        	[# Xtemp = coord[0]; Ytemp = coord[1] #]
+	        	request robotsmart -m moverobot:moverobot($Xtemp, $Ytemp, 345) 
 	        } else {
 	        	println("Target not valid") color red
 	        }
@@ -296,8 +347,16 @@ QActor display context ctx_ioport {
 }
 	
 QActor hold context ctx_cargoservice{
-  State s0 initial {
-  } 
+  State idle initial {
+  
+  }
+  Transition t0
+  	whenRequest ask_for_slot -> choose_slot
+  
+  State choose_slot{
+  	replyTo ask_for_slot with slot_obtained:slot_obtained(slot1)
+  }
+  Goto idle
 }
 
 QActor sonar context ctx_cargoservice{

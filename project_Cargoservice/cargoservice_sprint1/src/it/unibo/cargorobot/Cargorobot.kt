@@ -24,23 +24,35 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
           ActorBasicFsm( name, scope, confined=isconfined, dynamically=isdynamic ){
 
 	override fun getInitialState() : String{
-		return "wait"
+		return "setup"
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		
-		    	
+		    	var currentPos = arrayOf<Int>()
+		    	var (Xtemp, Ytemp) = -1 to -1
 		    	val slots = mapOf<String, Array<Int>>(
 		    		"home" to arrayOf(0, 0),
-		    		"io_port" to arrayOf(0, 4),
+		    		"io_port" to arrayOf(4, 0),
 		    		"slot1" to arrayOf(1, 1),
-		    		"slot2" to arrayOf(1, 3),
-		    		"slot3" to arrayOf(4, 1),
-		    		"slot4" to arrayOf(4, 3),
-		    		"marker" to arrayOf(5, 2)
+		    		"slot2" to arrayOf(3, 1),
+		    		"slot3" to arrayOf(1, 4),
+		    		"slot4" to arrayOf(3, 4),
+		    		"marker" to arrayOf(2, 5)
 		    	)
 		return { //this:ActionBasciFsm
+				state("setup") { //this:State
+					action { //it:State
+						 currentPos = slots["home"] ?: arrayOf(0, 0)  
+						forward("setrobotstate", "setpos(0,0,down)" ,"robotsmart" ) 
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="wait", cond=doswitch() )
+				}	 
 				state("wait") { //this:State
 					action { //it:State
 						updateResourceRep( "cargorobot(idle)"  
@@ -50,22 +62,28 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t03",targetState="move",cond=whenDispatch("move_container_to_slot"))
-					transition(edgeName="t04",targetState="move_robot_done",cond=whenReply("move_robot_done"))
-					transition(edgeName="t05",targetState="move_robot_failed",cond=whenReply("move_robot_failed"))
+					 transition(edgeName="t013",targetState="move",cond=whenDispatch("move_container_to_slot"))
+					transition(edgeName="t014",targetState="move_robot_done",cond=whenReply("moverobotdone"))
+					transition(edgeName="t015",targetState="move_robot_failed",cond=whenReply("moverobotfailed"))
 				}	 
 				state("move_robot_done") { //this:State
 					action { //it:State
-						CommUtils.outgreen("Move | OK")
+						 currentPos = arrayOf(Xtemp, Ytemp)  
+						CommUtils.outgreen("CARGOROBOT | Move: OK")
+						if(  slots["home"] != null && !(currentPos.contentEquals(slots["home"]))  
+						 ){ Xtemp = slots["home"]?.get(0) ?: 0; Ytemp = slots["home"]?.get(1) ?: 0  
+						request("moverobot", "moverobot($Xtemp,$Ytemp,345)" ,"robotsmart" )  
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="wait", cond=doswitch() )
 				}	 
 				state("move_robot_failed") { //this:State
 					action { //it:State
-						CommUtils.outyellow("Move | BAD")
+						CommUtils.outyellow("CARGOROBOT | Move: BAD")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -83,8 +101,8 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 									        	val coord = slots[payloadArg(0)]
 								if(  coord != null  
 								 ){CommUtils.outgreen("CARGOROBOT | ${coord.get(0)} - ${coord.get(1)}")
-								 val (X, Y) = coord  
-								request("move_robot", "move_robot($X,$Y,100)" ,"robotsmart" )  
+								 Xtemp = coord[0]; Ytemp = coord[1]  
+								request("moverobot", "moverobot($Xtemp,$Ytemp,345)" ,"robotsmart" )  
 								}
 								else
 								 {CommUtils.outred("Target not valid")

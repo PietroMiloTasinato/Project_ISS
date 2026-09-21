@@ -43,8 +43,11 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
      with Cluster('ctx_devices', graph_attr=nodeattr):
           led=Custom('led','./qakicons/symActorWithobjSmall.png')
      marker >> Edge( label='container_marked', **eventedgeattr, decorate='true', fontcolor='red') >> sys
-     cargorobot >> Edge(color='magenta', style='solid', decorate='true', label='<move_robot<font color="darkgreen"> move_robot_done move_robot_failed</font> &nbsp; >',  fontcolor='magenta') >> robotsmart
+     cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> cargorobot
+     cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_obtained slots_unavailable</font> &nbsp; >',  fontcolor='magenta') >> hold
+     cargorobot >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> robotsmart
      cargoservice_handler >> Edge(color='blue', style='solid',  decorate='true', label='<startWorking &nbsp; >',  fontcolor='blue') >> cargoservice_worker
      cargoservice_handler >> Edge(color='blue', style='solid',  decorate='true', label='<show_service_status &nbsp; >',  fontcolor='blue') >> display
      cargoservice_worker >> Edge(color='blue', style='solid',  decorate='true', label='<taskCompleted &nbsp; >',  fontcolor='blue') >> cargoservice_handler
+     cargorobot >> Edge(color='blue', style='solid',  decorate='true', label='<setrobotstate &nbsp; >',  fontcolor='blue') >> robotsmart
 diag

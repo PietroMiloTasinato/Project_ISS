@@ -5,6 +5,9 @@ request( load_container, load_container(ARG) ).
 reply( load_accepted, load_accepted(SLOT) ).  %%for load_container
 reply( load_refused, load_refused(CAUSE) ).  %%for load_container
 reply( retrylater, retrylater(CAUSE) ).  %%for load_container
+request( ask_for_slot, ask_for_slot(ARG) ).
+reply( slot_obtained, slot_obtained(SLOT) ).  %%for ask_for_slot
+reply( slots_unavailable, slots_unavailable(ARG) ).  %%for ask_for_slot
 dispatch( move_container_to_slot, move_container_to_slot(SLOT) ).
 dispatch( startWorking, startWorking(ARG) ).
 dispatch( taskCompleted, taskCompleted(ARG) ).
@@ -13,14 +16,13 @@ event( robot_detected, robot_detected(DISTANCE) ).
 event( sonar_failure, sonar_failure(DISTANCE) ).
 dispatch( show_hold_state, show_hold_state(STATE) ).
 dispatch( show_service_status, show_service_status(STATUS) ).
-request( move_robot, move_robot(TARGETX,TARGETY,STEPTIME) ).
-reply( move_robot_done, move_robot_done(ARG) ).  %%for move_robot
-reply( move_robot_failed, move_robot_failed(PLANDONE,PLANTODO) ).  %%for move_robot
-request( get_robot_state, get_robot_state(ARG) ). %request robot state ARG unused
-reply( robot_state, robot_state(POS,DIR) ). %%for get_robot_state | POS->pos(X,Y) DIR->up|down|left|right
+dispatch( setrobotstate, setpos(X,Y,D) ).
+request( moverobot, moverobot(TARGETX,TARGETY,STEPTIME) ).
+reply( moverobotdone, moverobotdone(ARG) ).  %%for moverobot
+reply( moverobotfailed, moverobotfailed(PLANDONE,PLANTODO) ).  %%for moverobot
 %====================================================================================
 context(ctx_cargoservice, "localhost",  "TCP", "8000").
-context(ctx_smartrobot, "localhost",  "TCP", "8020").
+context(ctx_smartrobot, "127.0.0.1",  "TCP", "8020").
 context(ctx_ioport, "localhost",  "TCP", "8001").
 context(ctx_client, "localhost",  "TCP", "8002").
 context(ctx_devices, "localhost",  "TCP", "8003").
