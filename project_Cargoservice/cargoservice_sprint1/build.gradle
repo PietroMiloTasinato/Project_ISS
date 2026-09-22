@@ -150,6 +150,7 @@ eclipse {
 application {
     //Define the main class for the application.
     mainClassName    = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
+    //mainClassName    = 'main.kotlin.ContextStarterKt'
 }
  
  jar {

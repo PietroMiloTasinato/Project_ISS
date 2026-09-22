@@ -37,7 +37,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t018",targetState="choose_slot",cond=whenRequest("ask_for_slot"))
+					 transition(edgeName="t022",targetState="choose_slot",cond=whenRequest("ask_for_slot"))
 				}	 
 				state("choose_slot") { //this:State
 					action { //it:State

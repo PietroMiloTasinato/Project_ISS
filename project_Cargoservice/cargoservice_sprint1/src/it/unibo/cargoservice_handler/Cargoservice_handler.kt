@@ -37,7 +37,8 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
-						CommUtils.outgreen("$name | READY")
+						CommUtils.outgreen("CARGOSERVICE_HANDLER | Ready")
+						delay(2000) 
 						updateResourceRep(
 						            "cargoservice(idle," +
 						            "serviceWorking=$ServiceWorking," +
@@ -50,25 +51,25 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t00",targetState="handleLoadRequest",cond=whenRequest("load_container"))
+					 transition(edgeName="t00",targetState="handleLoadRequest",cond=whenRequest("start_engage"))
 					transition(edgeName="t01",targetState="resetEngaged",cond=whenDispatch("taskCompleted"))
 				}	 
 				state("handleLoadRequest") { //this:State
 					action { //it:State
-						CommUtils.outblue("$name SERVING REQUEST")
+						CommUtils.outgreen("CARGOSERVICE_HANDLER | Serving")
 						if(  !ServiceWorking  
-						 ){CommUtils.outred("Out of service")
-						answer("load_container", "retrylater", "retrylater(out_of_service)"   )  
+						 ){CommUtils.outgreen("CARGOSERVICE_HANDLER | System set to out of service")
+						answer("start_engage", "retrylater", "retrylater(out_of_service)"   )  
 						}
 						else
 						 {if(  IOPortOccupied || Engaged  
-						  ){CommUtils.outyellow("Already Engaged")
-						 answer("load_container", "load_refused", "load_refused(ioport_occupied)"   )  
+						  ){CommUtils.outgreen("CARGOSERVICE_HANDLER | Already Engaged")
+						 answer("start_engage", "engage_refused", "engage_refused(ioport_occupied)"   )  
 						 }
 						 else
-						  {CommUtils.outyellow("Engaged")
+						  {CommUtils.outgreen("CARGOSERVICE_HANDLER | System is now engaged")
 						   Engaged = true  
-						  answer("load_container", "load_accepted", "load_accepted(1)"   )  
+						  answer("start_engage", "engage_successful", "engage_successful(ARG)"   )  
 						  forward("startWorking", "startWorking(1)" ,"cargoservice_worker" ) 
 						  }
 						 }
@@ -81,7 +82,7 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 				}	 
 				state("resetEngaged") { //this:State
 					action { //it:State
-						CommUtils.outyellow("no more Engaged")
+						CommUtils.outgreen("CARGOSERVICE_HANDLER | No more Engaged")
 						 Engaged = false  
 						//genTimer( actor, state )
 					}

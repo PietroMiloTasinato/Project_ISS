@@ -28,7 +28,7 @@ public class CargoServiceTest {
         //Costruzione di richiesta 
 
         IApplMessage requestStr = CommUtils.buildRequest("tester",
-                "load_container", "load_container(\"args\")",
+                "load_container", "load_container(\"args\")", //FIXME CAMBIARE IL NOME load_container IN start_engage
                 "cargoservice_handler");
         
         System.out.println("Richiesta: " + requestStr.toString());

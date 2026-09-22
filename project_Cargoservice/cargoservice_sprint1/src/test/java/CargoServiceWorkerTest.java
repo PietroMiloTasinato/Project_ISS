@@ -10,20 +10,21 @@ import unibo.basicomm23.msg.ProtocolType;
 import unibo.basicomm23.utils.CommUtils;
 import unibo.basicomm23.utils.ConnectionFactory;
 
-public class CargoRobotTest {
+public class CargoServiceWorkerTest {
 	private static Interaction conn;
 	
 	@BeforeClass
 	public static void setup() {
+		System.out.println("TESTER | Starting setup");
 	    conn = ConnectionFactory.createClientSupport23(ProtocolType.tcp, "localhost", "8000");
+	    System.out.println("TESTER | Setup done");
 	}
 	
 	
 	@Test
 	public void testMoveRobot() throws Exception{
-		IApplMessage request = CommUtils.buildDispatch("tester",
-                "move_container_to_slot", "move_container_to_slot(marker)",
-                "cargorobot");
+		System.out.println("TESTER | Starting...");
+		IApplMessage request = CommUtils.buildDispatch("tester", "startWorking", "startWorking(ARG)", "cargoservice_worker");
 		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
 		String response = conn.request(request).toString();
 		System.out.println("CARGOROBOT | Risposta: " + response.toString());

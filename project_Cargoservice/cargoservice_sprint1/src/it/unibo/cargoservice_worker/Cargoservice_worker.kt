@@ -34,17 +34,18 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
-						CommUtils.outgreen("$name | READY")
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Ready")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t02",targetState="acceptRequest",cond=whenDispatch("startWorking"))
+					 transition(edgeName="t02",targetState="ask_holding",cond=whenDispatch("startWorking"))
 				}	 
 				state("ask_holding") { //this:State
 					action { //it:State
-						request("ask_for_slot", "ask_for_slot("")" ,"hold" )  
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Asking for holding...")
+						request("ask_for_slot", "ask_for_slot(ARG)" ,"hold" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -56,7 +57,8 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 				state("refuseRequest") { //this:State
 					action { //it:State
 						 Slot = ""  
-						forward("taskCompleted", "taskCompleted("")" ,"cargoservice_handler" ) 
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Request refused!")
+						forward("taskCompleted", "taskCompleted(ARG)" ,"cargoservice_handler" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -68,6 +70,8 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 						if( checkMsgContent( Term.createTerm("slot_obtained(SLOT)"), Term.createTerm("slot_obtained(SLOT)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 Slot = payloadArg(0)  
+								CommUtils.outyellow("CARGOSERVICE_WORKER | Request accepted with arg: $Slot")
+								CommUtils.outyellow("CARGOSERVICE_WORKER | Moving cargorobot to io port")
 								request("moverobot", "moverobot(io_port)" ,"cargorobot" )  
 						}
 						//genTimer( actor, state )
@@ -76,50 +80,78 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					sysaction { //it:State
 					}	 	 
 					 transition(edgeName="t25",targetState="at_io_port",cond=whenReply("moverobotdone"))
-					transition(edgeName="t26",targetState="outOfService",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t26",targetState="out_of_service",cond=whenReply("moverobotfailed"))
 				}	 
 				state("at_io_port") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Cargorbot at io port!")
+						request("load_container", "load_container(ARG)" ,"io_port" )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t47",targetState="move_to_marker",cond=whenReply("load_done"))
+				}	 
+				state("move_to_marker") { //this:State
+					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Moving cargorobot to marker")
 						request("moverobot", "moverobot(marker)" ,"cargorobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t37",targetState="at_marker",cond=whenReply("moverobotdone"))
-					transition(edgeName="t38",targetState="outOfService",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t38",targetState="at_marker",cond=whenReply("moverobotdone"))
+					transition(edgeName="t39",targetState="out_of_service",cond=whenReply("moverobotfailed"))
 				}	 
 				state("at_marker") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Cargorbot at marker")
+						request("start_marking", "start_marking(ARG)" ,"marker" )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t510",targetState="move_container_to_slot",cond=whenEvent("container_marked"))
+					transition(edgeName="t511",targetState="out_of_service",cond=whenReply("moverobotfailed"))
+				}	 
+				state("move_container_to_slot") { //this:State
+					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Moving container to its designeted slot")
 						request("moverobot", "moverobot($Slot)" ,"cargorobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t49",targetState="move_to_home",cond=whenReply("moverobotdone"))
-					transition(edgeName="t410",targetState="outOfService",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t612",targetState="move_to_home",cond=whenReply("moverobotdone"))
+					transition(edgeName="t613",targetState="out_of_service",cond=whenReply("moverobotfailed"))
 				}	 
 				state("move_to_home") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Moving cargorobot home")
 						request("moverobot", "moverobot(home)" ,"cargorobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t511",targetState="task_finished",cond=whenReply("moverobotdone"))
-					transition(edgeName="t512",targetState="outOfService",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t714",targetState="task_finished",cond=whenReply("moverobotdone"))
+					transition(edgeName="t715",targetState="out_of_service",cond=whenReply("moverobotfailed"))
 				}	 
 				state("task_finished") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Task completed succesfully!")
 						 Slot = ""  
-						forward("taskCompleted", "taskCompleted("")" ,"cargoservice_handler" ) 
+						forward("taskCompleted", "taskCompleted(ARG)" ,"cargoservice_handler" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 				state("setIOPortOccupied") { //this:State
 					action { //it:State
@@ -128,15 +160,18 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
-				state("outOfService") { //this:State
+				state("out_of_service") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE_WORKER | System going out of service!")
 						 Slot = ""  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 			}
 		}

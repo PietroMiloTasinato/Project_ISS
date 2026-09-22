@@ -40,8 +40,8 @@ class Display ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t016",targetState="showHold",cond=whenDispatch("show_hold_state"))
-					transition(edgeName="t017",targetState="showService",cond=whenDispatch("show_service_status"))
+					 transition(edgeName="t020",targetState="showHold",cond=whenDispatch("show_hold_state"))
+					transition(edgeName="t021",targetState="showService",cond=whenDispatch("show_service_status"))
 				}	 
 				state("showHold") { //this:State
 					action { //it:State

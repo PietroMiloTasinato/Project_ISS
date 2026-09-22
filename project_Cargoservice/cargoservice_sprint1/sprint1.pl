@@ -1,22 +1,25 @@
 %====================================================================================
 % sprint1 description   
 %====================================================================================
+request( start_engage, start_engage(ARG) ).
+reply( engage_successful, engage_successful(ARG) ).  %%for start_engage
+reply( engage_refused, engage_refused(ARG) ).  %%for start_engage
+reply( retrylater, retrylater(CAUSE) ).  %%for start_engage
 request( load_container, load_container(ARG) ).
-reply( load_accepted, load_accepted(SLOT) ).  %%for load_container
-reply( load_refused, load_refused(CAUSE) ).  %%for load_container
-reply( retrylater, retrylater(CAUSE) ).  %%for load_container
+reply( load_done, load_done(SLOT) ).  %%for load_container
 request( ask_for_slot, ask_for_slot(ARG) ).
 reply( slot_obtained, slot_obtained(SLOT) ).  %%for ask_for_slot
 reply( slots_unavailable, slots_unavailable(ARG) ).  %%for ask_for_slot
-dispatch( move_container_to_slot, move_container_to_slot(SLOT) ).
 dispatch( startWorking, startWorking(ARG) ).
 dispatch( taskCompleted, taskCompleted(ARG) ).
+request( start_marking, start_marking(ARG) ).
 event( container_marked, container_marked(BARCODE) ).
 event( robot_detected, robot_detected(DISTANCE) ).
 event( sonar_failure, sonar_failure(DISTANCE) ).
 dispatch( show_hold_state, show_hold_state(STATE) ).
 dispatch( show_service_status, show_service_status(STATUS) ).
 dispatch( setrobotstate, setpos(X,Y,D) ).
+request( moverobot, moverobot(SLOT) ).
 request( moverobot, moverobot(TARGETX,TARGETY,STEPTIME) ).
 reply( moverobotdone, moverobotdone(ARG) ).  %%for moverobot
 reply( moverobotfailed, moverobotfailed(PLANDONE,PLANTODO) ).  %%for moverobot
@@ -45,7 +48,7 @@ context(ctx_devices, "localhost",  "TCP", "8003").
  static(led).
   qactor( pushbutton, ctx_ioport, "it.unibo.pushbutton.Pushbutton").
  static(pushbutton).
-  qactor( ioport, ctx_ioport, "it.unibo.ioport.Ioport").
- static(ioport).
+  qactor( io_port, ctx_ioport, "it.unibo.io_port.Io_port").
+ static(io_port).
   qactor( external_client, ctx_client, "it.unibo.external_client.External_client").
  static(external_client).

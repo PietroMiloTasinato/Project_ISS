@@ -62,18 +62,15 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t013",targetState="move",cond=whenDispatch("move_container_to_slot"))
-					transition(edgeName="t014",targetState="move_robot_done",cond=whenReply("moverobotdone"))
-					transition(edgeName="t015",targetState="move_robot_failed",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t016",targetState="move",cond=whenRequest("moverobot"))
+					transition(edgeName="t017",targetState="move_robot_done",cond=whenReply("moverobotdone"))
+					transition(edgeName="t018",targetState="move_robot_failed",cond=whenReply("moverobotfailed"))
 				}	 
 				state("move_robot_done") { //this:State
 					action { //it:State
 						 currentPos = arrayOf(Xtemp, Ytemp)  
-						CommUtils.outgreen("CARGOROBOT | Move: OK")
-						if(  slots["home"] != null && !(currentPos.contentEquals(slots["home"]))  
-						 ){ Xtemp = slots["home"]?.get(0) ?: 0; Ytemp = slots["home"]?.get(1) ?: 0  
-						request("moverobot", "moverobot($Xtemp,$Ytemp,345)" ,"robotsmart" )  
-						}
+						CommUtils.outred("CARGOROBOT | Move: OK")
+						answer("moverobot", "moverobotdone", "moverobotdone(ARG)"   )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -83,7 +80,7 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 				}	 
 				state("move_robot_failed") { //this:State
 					action { //it:State
-						CommUtils.outyellow("CARGOROBOT | Move: BAD")
+						CommUtils.outred("CARGOROBOT | Move: BAD")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -92,20 +89,17 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 				}	 
 				state("move") { //this:State
 					action { //it:State
-						CommUtils.outgreen("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
-						 	   
-						if( checkMsgContent( Term.createTerm("move_container_to_slot(SLOT)"), Term.createTerm("move_container_to_slot(SLOT)"), 
+						if( checkMsgContent( Term.createTerm("moverobot(SLOT)"), Term.createTerm("moverobot(SLOT)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outblue("CARGOROBOT | Move Requested")
-								 
-									        	val coord = slots[payloadArg(0)]
+								 val coord = slots[payloadArg(0)]  
+								CommUtils.outred("CARGOROBOT | Move Requested to ${payloadArg(0)}")
 								if(  coord != null  
-								 ){CommUtils.outgreen("CARGOROBOT | ${coord.get(0)} - ${coord.get(1)}")
+								 ){CommUtils.outred("CARGOROBOT | Moving to ${coord.get(0)} - ${coord.get(1)}")
 								 Xtemp = coord[0]; Ytemp = coord[1]  
 								request("moverobot", "moverobot($Xtemp,$Ytemp,345)" ,"robotsmart" )  
 								}
 								else
-								 {CommUtils.outred("Target not valid")
+								 {CommUtils.outred("CARGOROBOT | Target not valid")
 								 }
 						}
 						//genTimer( actor, state )

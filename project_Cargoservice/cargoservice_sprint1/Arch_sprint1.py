@@ -37,13 +37,16 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
      with Cluster('ctx_ioport', graph_attr=nodeattr):
           display=Custom('display','./qakicons/symActorWithobjSmall.png')
           pushbutton=Custom('pushbutton','./qakicons/symActorWithobjSmall.png')
-          ioport=Custom('ioport','./qakicons/symActorWithobjSmall.png')
+          io_port=Custom('io_port','./qakicons/symActorWithobjSmall.png')
      with Cluster('ctx_client', graph_attr=nodeattr):
           external_client=Custom('external_client','./qakicons/symActorWithobjSmall.png')
      with Cluster('ctx_devices', graph_attr=nodeattr):
           led=Custom('led','./qakicons/symActorWithobjSmall.png')
+     sys >> Edge( label='container_marked', **evattr, decorate='true', fontcolor='darkgreen') >> cargoservice_worker
      marker >> Edge( label='container_marked', **eventedgeattr, decorate='true', fontcolor='red') >> sys
+     cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<start_marking &nbsp; >',  fontcolor='magenta') >> marker
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> cargorobot
+     cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<load_container<font color="darkgreen"> load_done</font> &nbsp; >',  fontcolor='magenta') >> io_port
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_obtained slots_unavailable</font> &nbsp; >',  fontcolor='magenta') >> hold
      cargorobot >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> robotsmart
      cargoservice_handler >> Edge(color='blue', style='solid',  decorate='true', label='<startWorking &nbsp; >',  fontcolor='blue') >> cargoservice_worker
