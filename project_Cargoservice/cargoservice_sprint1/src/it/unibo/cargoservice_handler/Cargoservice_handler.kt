@@ -53,6 +53,7 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 					}	 	 
 					 transition(edgeName="t00",targetState="handleLoadRequest",cond=whenRequest("start_engage"))
 					transition(edgeName="t01",targetState="resetEngaged",cond=whenDispatch("taskCompleted"))
+					transition(edgeName="t02",targetState="system_out_of_service",cond=whenEvent("system_failure"))
 				}	 
 				state("handleLoadRequest") { //this:State
 					action { //it:State
@@ -84,6 +85,20 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 					action { //it:State
 						CommUtils.outgreen("CARGOSERVICE_HANDLER | No more Engaged")
 						 Engaged = false  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
+				}	 
+				state("system_out_of_service") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("system_failure(ARG)"), Term.createTerm("system_failure(ARG)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 ServiceWorking = payloadArg(0).toBoolean()  
+								CommUtils.outgreen("CARGOSERVICE_HANDLER | System out of service set to $ServiceWorking")
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

@@ -149,8 +149,9 @@ eclipse {
 
 application {
     //Define the main class for the application.
-    mainClassName    = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
-    //mainClassName    = 'main.kotlin.ContextStarterKt'
+    //mainClassName    = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
+    //mainClassName    = 'it.unibo.ctx_ioport.MainCtx_ioportKt'
+    mainClassName    = 'main.kotlin.ContextStarterKt'
 }
  
  jar {
@@ -183,6 +184,15 @@ distributions {
 } 
 
 task run0(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    //main = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
+    main = 'it.unibo.ctx_ioport.MainCtx_ioportKt'
+    //main = 'main.kotlin.ContextStarterKt'
+}
+
+task run1(type: JavaExec) {
     group = "Execution"
     description = "Run the main class with JavaExecTask"
     classpath = sourceSets.main.runtimeClasspath

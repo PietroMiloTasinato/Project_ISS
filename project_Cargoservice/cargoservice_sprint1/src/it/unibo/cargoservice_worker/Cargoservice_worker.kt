@@ -40,7 +40,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t02",targetState="ask_holding",cond=whenDispatch("startWorking"))
+					 transition(edgeName="t03",targetState="ask_holding",cond=whenDispatch("startWorking"))
 				}	 
 				state("ask_holding") { //this:State
 					action { //it:State
@@ -51,8 +51,8 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t13",targetState="acceptRequest",cond=whenReply("slot_obtained"))
-					transition(edgeName="t14",targetState="refuseRequest",cond=whenReply("slots_unavailable"))
+					 transition(edgeName="t14",targetState="acceptRequest",cond=whenReply("slot_obtained"))
+					transition(edgeName="t15",targetState="refuseRequest",cond=whenReply("slots_unavailable"))
 				}	 
 				state("refuseRequest") { //this:State
 					action { //it:State
@@ -79,8 +79,8 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t25",targetState="at_io_port",cond=whenReply("moverobotdone"))
-					transition(edgeName="t26",targetState="out_of_service",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t26",targetState="at_io_port",cond=whenReply("moverobotdone"))
+					transition(edgeName="t27",targetState="out_of_service",cond=whenReply("moverobotfailed"))
 				}	 
 				state("at_io_port") { //this:State
 					action { //it:State
@@ -91,7 +91,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t47",targetState="move_to_marker",cond=whenReply("load_done"))
+					 transition(edgeName="t48",targetState="move_to_marker",cond=whenReply("load_done"))
 				}	 
 				state("move_to_marker") { //this:State
 					action { //it:State
@@ -102,8 +102,8 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t38",targetState="at_marker",cond=whenReply("moverobotdone"))
-					transition(edgeName="t39",targetState="out_of_service",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t39",targetState="at_marker",cond=whenReply("moverobotdone"))
+					transition(edgeName="t310",targetState="out_of_service",cond=whenReply("moverobotfailed"))
 				}	 
 				state("at_marker") { //this:State
 					action { //it:State
@@ -114,8 +114,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t510",targetState="move_container_to_slot",cond=whenEvent("container_marked"))
-					transition(edgeName="t511",targetState="out_of_service",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t511",targetState="move_container_to_slot",cond=whenEvent("container_marked"))
 				}	 
 				state("move_container_to_slot") { //this:State
 					action { //it:State

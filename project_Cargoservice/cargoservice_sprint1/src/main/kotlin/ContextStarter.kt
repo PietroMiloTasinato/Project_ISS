@@ -7,10 +7,13 @@ import kotlinx.coroutines.delay
 fun main() = runBlocking{
 
     QakContext.createContexts(
-        "localhost", this, "sprint1.pl", "sysRules.pl", "ctx_cargoservice"
-    )
-    delay(2000)
-    QakContext.createContexts(
         "localhost", this, "sprint1.pl", "sysRules.pl", "ctx_ioport"
     )
+
+    delay(2000)
+
+    QakContext.createContexts(
+        "localhost", this, "sprint1.pl", "sysRules.pl", "ctx_cargoservice"
+    )
+    
 }

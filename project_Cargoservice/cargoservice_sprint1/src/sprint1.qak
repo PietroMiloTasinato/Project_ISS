@@ -19,6 +19,7 @@ Request start_marking: start_marking(ARG)
 Event container_marked : container_marked(BARCODE)
 Event robot_detected : robot_detected(DISTANCE)
 Event sonar_failure : sonar_failure(DISTANCE)
+Event system_failure: system_failure(ARG)
 
 Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
 Dispatch show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
@@ -47,8 +48,7 @@ QActor cargoservice_handler context ctx_cargoservice {
 	
 	State idle initial{
 		println("CARGOSERVICE_HANDLER | Ready") color green
- 		delay 2000
- 
+		delay 2000
         updateResource [#
             "cargoservice(idle," +
             "serviceWorking=$ServiceWorking," +
@@ -64,6 +64,7 @@ QActor cargoservice_handler context ctx_cargoservice {
 	Transition t0
 	   whenRequest start_engage -> handleLoadRequest
 	   whenMsg taskCompleted -> resetEngaged
+	   whenEvent system_failure -> system_out_of_service
 	   
 	   // whenEvent robot_detected -> setIOPortOccupied
 	   // whenEvent sonar_failure -> outOfService
@@ -109,7 +110,13 @@ QActor cargoservice_handler context ctx_cargoservice {
 		[# Engaged = false #]
 	}
 	Goto idle
-
+	
+	State system_out_of_service{
+		onMsg(system_failure: system_failure(ARG)){
+			[# ServiceWorking = payloadArg(0).toBoolean() #]
+			println("CARGOSERVICE_HANDLER | System out of service set to $ServiceWorking") color green
+		}
+	} Goto idle
 }
 
 QActor cargoservice_worker context ctx_cargoservice {
@@ -172,7 +179,6 @@ QActor cargoservice_worker context ctx_cargoservice {
 		request marker -m start_marking:start_marking(ARG)
 	}Transition t5 
 		whenEvent container_marked -> move_container_to_slot
-		whenReply moverobotfailed -> out_of_service
 		
 	State move_container_to_slot{
 		println("CARGOSERVICE_WORKER | Moving container to its designeted slot") color yellow
@@ -307,7 +313,7 @@ QActor marker context ctx_cargoservice {
     Goto wait
 }
 
-QActor display context ctx_ioport {
+QActor display context ctx_cargoservice {
 
     [# var DisplayValue = "none" #]
 
@@ -332,7 +338,7 @@ QActor display context ctx_ioport {
             #]
         }
 
-        println("$DisplayValue") color magenta
+        println("DISPLAY | $DisplayValue") color magenta
 
         updateResource [# DisplayValue #]
     }
@@ -352,7 +358,7 @@ QActor display context ctx_ioport {
             #]
         }
 
-        println("$DisplayValue") color magenta
+        println("DISPLAY | $DisplayValue") color magenta
 
         updateResource [# DisplayValue #]
     }
@@ -388,7 +394,7 @@ QActor pushbutton context ctx_ioport{
   	} 
 }
 
-QActor io_port context ctx_ioport{
+QActor io_port context ctx_cargoservice{
 	
 	State idle initial {
 		println ("IO_PORT | Ready") color blue

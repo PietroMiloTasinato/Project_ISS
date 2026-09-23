@@ -16,6 +16,7 @@ request( start_marking, start_marking(ARG) ).
 event( container_marked, container_marked(BARCODE) ).
 event( robot_detected, robot_detected(DISTANCE) ).
 event( sonar_failure, sonar_failure(DISTANCE) ).
+event( system_failure, system_failure(ARG) ).
 dispatch( show_hold_state, show_hold_state(STATE) ).
 dispatch( show_service_status, show_service_status(STATUS) ).
 dispatch( setrobotstate, setpos(X,Y,D) ).
@@ -38,7 +39,7 @@ context(ctx_devices, "localhost",  "TCP", "8003").
  static(cargorobot).
   qactor( marker, ctx_cargoservice, "it.unibo.marker.Marker").
  static(marker).
-  qactor( display, ctx_ioport, "it.unibo.display.Display").
+  qactor( display, ctx_cargoservice, "it.unibo.display.Display").
  static(display).
   qactor( hold, ctx_cargoservice, "it.unibo.hold.Hold").
  static(hold).
@@ -48,7 +49,7 @@ context(ctx_devices, "localhost",  "TCP", "8003").
  static(led).
   qactor( pushbutton, ctx_ioport, "it.unibo.pushbutton.Pushbutton").
  static(pushbutton).
-  qactor( io_port, ctx_ioport, "it.unibo.io_port.Io_port").
+  qactor( io_port, ctx_cargoservice, "it.unibo.io_port.Io_port").
  static(io_port).
   qactor( external_client, ctx_client, "it.unibo.external_client.External_client").
  static(external_client).

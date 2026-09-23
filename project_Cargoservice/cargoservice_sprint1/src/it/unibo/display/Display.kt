@@ -51,7 +51,7 @@ class Display ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 								                DisplayValue =
 								                    "display(hold,${payloadArg(0)})"
 						}
-						CommUtils.outmagenta("$DisplayValue")
+						CommUtils.outmagenta("DISPLAY | $DisplayValue")
 						updateResourceRep( DisplayValue  
 						)
 						//genTimer( actor, state )
@@ -69,7 +69,7 @@ class Display ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 								                DisplayValue =
 								                    "display(service,${payloadArg(0)})"
 						}
-						CommUtils.outmagenta("$DisplayValue")
+						CommUtils.outmagenta("DISPLAY | $DisplayValue")
 						updateResourceRep( DisplayValue  
 						)
 						//genTimer( actor, state )
