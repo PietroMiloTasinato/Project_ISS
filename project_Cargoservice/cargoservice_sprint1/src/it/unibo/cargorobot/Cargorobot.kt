@@ -81,11 +81,13 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 				state("move_robot_failed") { //this:State
 					action { //it:State
 						CommUtils.outred("CARGOROBOT | Move: BAD")
+						answer("moverobot", "moverobotfailed", "moverobotfailed(ARG)"   )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="wait", cond=doswitch() )
 				}	 
 				state("move") { //this:State
 					action { //it:State

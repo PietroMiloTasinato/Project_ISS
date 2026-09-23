@@ -165,6 +165,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					action { //it:State
 						CommUtils.outyellow("CARGOSERVICE_WORKER | System going out of service!")
 						 Slot = ""  
+						emit("system_failure", "system_failure(ARG)" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

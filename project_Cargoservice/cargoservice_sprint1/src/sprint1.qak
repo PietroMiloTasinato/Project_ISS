@@ -112,10 +112,10 @@ QActor cargoservice_handler context ctx_cargoservice {
 	Goto idle
 	
 	State system_out_of_service{
-		onMsg(system_failure: system_failure(ARG)){
-			[# ServiceWorking = payloadArg(0).toBoolean() #]
-			println("CARGOSERVICE_HANDLER | System out of service set to $ServiceWorking") color green
-		}
+		
+		[# ServiceWorking = false #]
+		println("CARGOSERVICE_HANDLER | System out of service!") color green
+		
 	} Goto idle
 }
 
@@ -211,6 +211,7 @@ QActor cargoservice_worker context ctx_cargoservice {
 	State out_of_service {
 		println("CARGOSERVICE_WORKER | System going out of service!") color yellow
 		[# Slot = "" #]
+		emit system_failure: system_failure(ARG)
 		// TODO: set ServiceWorking to false in handler
 	} Goto idle
 	
@@ -256,7 +257,9 @@ QActor cargorobot context ctx_cargoservice {
 	
 	State move_robot_failed{
 		println ("CARGOROBOT | Move: BAD") color red
+		replyTo moverobot with moverobotfailed:moverobotfailed(ARG)
 	}
+	Goto wait
 
     State move {
     	onMsg(moverobot : moverobot(SLOT)) {
