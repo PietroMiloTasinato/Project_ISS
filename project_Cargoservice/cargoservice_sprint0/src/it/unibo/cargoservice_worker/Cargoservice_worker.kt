@@ -32,13 +32,13 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
-						CommUtils.outgreen("$name | READY")
+						CommUtils.outyellow("CARGOSERVICE_WORKER | Ready")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t02",targetState="acceptRequest",cond=whenDispatch("startWorking"))
+					 transition(edgeName="t03",targetState="acceptRequest",cond=whenDispatch("startWorking"))
 				}	 
 				state("acceptRequest") { //this:State
 					action { //it:State

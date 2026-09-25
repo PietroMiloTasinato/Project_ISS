@@ -7,6 +7,7 @@ reply( engage_refused, engage_refused(ARG) ).  %%for start_engage
 reply( retrylater, retrylater(CAUSE) ).  %%for start_engage
 request( load_container, load_container(ARG) ).
 reply( load_done, load_done(SLOT) ).  %%for load_container
+dispatch( container_deployed, container_deployed(Slot,Code) ).
 request( ask_for_slot, ask_for_slot(ARG) ).
 reply( slot_obtained, slot_obtained(SLOT) ).  %%for ask_for_slot
 reply( slots_unavailable, slots_unavailable(ARG) ).  %%for ask_for_slot

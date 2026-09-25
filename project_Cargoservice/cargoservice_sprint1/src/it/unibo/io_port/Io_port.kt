@@ -38,7 +38,7 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t023",targetState="load_container",cond=whenRequest("load_container"))
+					 transition(edgeName="t024",targetState="load_container",cond=whenRequest("load_container"))
 				}	 
 				state("load_container") { //this:State
 					action { //it:State

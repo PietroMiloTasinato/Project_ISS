@@ -7,6 +7,7 @@ Reply retrylater : retrylater(CAUSE) for start_engage
 
 Request load_container : load_container(ARG)
 Reply load_done : load_done(SLOT) for load_container
+Dispatch container_deployed: container_deployed(Slot, Code)
 
 Request ask_for_slot: ask_for_slot(ARG)
 Reply slot_obtained: slot_obtained(SLOT) for ask_for_slot
@@ -93,9 +94,9 @@ QActor cargoservice_handler context ctx_cargoservice {
 		 		println("CARGOSERVICE_HANDLER | System is now engaged") color green
 		 		[# Engaged = true #]
 		 		
-		 		replyTo start_engage with engage_successful :engage_successful(ARG)
+		 		replyTo start_engage with engage_successful :engage_successful(0)
 		 		
-		 		forward cargoservice_worker -m startWorking :startWorking(1)
+		 		forward cargoservice_worker -m startWorking :startWorking(0)
 		 		
 		 		//simulate execution
 		 		// quindi riserva lo slot (1-4) dove posizionare il container alla fine
@@ -122,7 +123,8 @@ QActor cargoservice_handler context ctx_cargoservice {
 QActor cargoservice_worker context ctx_cargoservice {
 	
 	[#
-		var Slot = ""	
+		var Slot = ""
+		var Code = ""
 	#]
 
 	State idle initial{
@@ -181,8 +183,13 @@ QActor cargoservice_worker context ctx_cargoservice {
 		whenEvent container_marked -> move_container_to_slot
 		
 	State move_container_to_slot{
-		println("CARGOSERVICE_WORKER | Moving container to its designeted slot") color yellow
-		request cargorobot -m moverobot: moverobot($Slot)
+		onMsg(container_marked: container_marked(ARG)){
+			
+			println("CARGOSERVICE_WORKER | Moving container to its designeted slot") color yellow
+			//forward hold -m 
+			request cargorobot -m moverobot: moverobot($Slot)
+		
+		}
 	}Transition t6
 		whenReply moverobotdone -> move_to_home
 		whenReply moverobotfailed -> out_of_service
@@ -190,6 +197,7 @@ QActor cargoservice_worker context ctx_cargoservice {
 	// comanda il robot per depositare il container nello slot precedentemente riservato
 	State move_to_home {
 		println("CARGOSERVICE_WORKER | Moving cargorobot home") color yellow
+		forward hold -m container_deployed: container_deployed(Slot, Code)
 		request cargorobot -m moverobot: moverobot(home)
 	}Transition t7 
 		whenReply moverobotdone -> task_finished
@@ -291,6 +299,8 @@ QActor cargorobot context ctx_cargoservice {
 }
  
 QActor marker context ctx_cargoservice {
+	
+	[# var CodeNumber = 1 #]
 
     State wait initial {
         updateResource [# "marker(idle)" #]
@@ -305,8 +315,11 @@ QActor marker context ctx_cargoservice {
         delay 2000
 
 		println("MARKER | Container marked") color magenta
-        emit container_marked :
-            container_marked(code001)
+		[# 
+			val Code = "code + $CodeNumber" 
+			CodeNumber++
+		#]
+        emit container_marked :container_marked($Code)
 
         updateResource [#
             "marker(completed,code001)"
@@ -370,16 +383,46 @@ QActor display context ctx_cargoservice {
 }
 	
 QActor hold context ctx_cargoservice{
+	
+	[# 
+		
+		val map = mapOf(
+			"slot1" to "",
+			"slot2" to "",
+			"slot3" to "",
+			"slot4" to ""
+		)
+	#]
+	
+	
   State idle initial {
   
   }
   Transition t0
   	whenRequest ask_for_slot -> choose_slot
+  	whenMsg container_deployed -> update_map
   
   State choose_slot{
-  	replyTo ask_for_slot with slot_obtained:slot_obtained(slot1)
+  	[# val Slot = map.firstOrNull{ it.value.isBlank() }?.key #]
+  	if [# if Slot != null #]{
+  		replyTo ask_for_slot with slot_obtained:slot_obtained(slot1)
+  	} else {
+		replyTo ask_for_slot with slots_unavailable:slots_unavailable(0)
+	}
   }
   Goto idle
+  
+  State update_map{
+  	onMsg(container_deployed: container_deployed(Slot, Code)){
+  		[# val Slot = payloadArg(0); val Code = payloadArg(1) #]
+  		if [# map.containsKey(Slot) #]{
+  			[# map[Slot] = Code #]
+  		} else{
+  			emit system_failure: system_failure(0)
+  		}
+  	}
+  } Goto idle
+  
 }
 
 QActor sonar context ctx_cargoservice{

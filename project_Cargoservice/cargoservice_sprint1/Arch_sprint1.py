@@ -46,6 +46,7 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
      sys >> Edge( label='container_marked', **evattr, decorate='true', fontcolor='darkgreen') >> cargoservice_worker
      cargoservice_worker >> Edge( label='system_failure', **eventedgeattr, decorate='true', fontcolor='red') >> sys
      marker >> Edge( label='container_marked', **eventedgeattr, decorate='true', fontcolor='red') >> sys
+     hold >> Edge( label='system_failure', **eventedgeattr, decorate='true', fontcolor='red') >> sys
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<start_marking &nbsp; >',  fontcolor='magenta') >> marker
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> cargorobot
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<load_container<font color="darkgreen"> load_done</font> &nbsp; >',  fontcolor='magenta') >> io_port
@@ -53,6 +54,7 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
      cargorobot >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> robotsmart
      cargoservice_handler >> Edge(color='blue', style='solid',  decorate='true', label='<startWorking &nbsp; >',  fontcolor='blue') >> cargoservice_worker
      cargoservice_handler >> Edge(color='blue', style='solid',  decorate='true', label='<show_service_status &nbsp; >',  fontcolor='blue') >> display
+     cargoservice_worker >> Edge(color='blue', style='solid',  decorate='true', label='<container_deployed &nbsp; >',  fontcolor='blue') >> hold
      cargoservice_worker >> Edge(color='blue', style='solid',  decorate='true', label='<taskCompleted &nbsp; >',  fontcolor='blue') >> cargoservice_handler
      cargorobot >> Edge(color='blue', style='solid',  decorate='true', label='<setrobotstate &nbsp; >',  fontcolor='blue') >> robotsmart
 diag

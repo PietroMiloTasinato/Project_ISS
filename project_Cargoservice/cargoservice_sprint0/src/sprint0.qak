@@ -1,9 +1,9 @@
 System sprint0
 
-Request load_container : load_container(ARG)
-Reply load_accepted : load_accepted(SLOT) for load_container
-Reply load_refused : load_refused(CAUSE) for load_container // CAUSE: hold full o system disengaged
-Reply retrylater : retrylater(CAUSE) for load_container
+Request start_engage:start_engage(ARG)
+Reply engage_successful: engage_successful(ARG) for start_engage
+Reply engage_refused: engage_refused(ARG) for start_engage
+Reply retrylater : retrylater(CAUSE) for start_engage
 
 Dispatch move_container_to_slot : move_container_to_slot(SLOT)
 Dispatch startWorking : startWorking(ARG)
@@ -12,6 +12,7 @@ Dispatch taskCompleted : taskCompleted(ARG)
 Event container_marked : container_marked(BARCODE)
 Event robot_detected : robot_detected(DISTANCE)
 Event sonar_failure : sonar_failure(DISTANCE)
+Event system_failure: system_failure(ARG)
 
 Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
 Dispatch show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
@@ -30,23 +31,24 @@ QActor cargoservice_handler context ctx_cargoservice {
 	#] 
 	
 	State idle initial{
-		println("$name | READY") color green
- 
+		println("CARGOSERVICE_HANDLER | Ready") color green
+		delay 2000
         updateResource [#
             "cargoservice(idle," +
             "serviceWorking=$ServiceWorking," +
             "ioportOccupied=$IOPortOccupied)"
 				
         #]
-		
+        
         forward display -m show_service_status :
             show_service_status(service_working)
     }
  
  	
 	Transition t0
-	   whenRequest load_container -> handleLoadRequest
+	   whenRequest start_engage -> handleLoadRequest
 	   whenMsg taskCompleted -> resetEngaged
+	   whenEvent system_failure -> system_out_of_service
 	   
 	   // whenEvent robot_detected -> setIOPortOccupied
 	   // whenEvent sonar_failure -> outOfService
@@ -55,33 +57,29 @@ QActor cargoservice_handler context ctx_cargoservice {
      * Template gestione della richiesta.
      *
      * Ordine delle verifiche:
-     * 1. il sistema è fuori servizio o IOPort occupato
+     * 1. il sistema è fuori servizio o IOPort occupato 
      * 2. hold full (slot1-4 già occupati)
      * 3. sistema engaged
      * 4. richiesta di prenotazione al hold
      */
 	State handleLoadRequest {
-		println("$name SERVING REQUEST") color blue
+		println("CARGOSERVICE_HANDLER | Serving") color green
 		
 		 if [# !ServiceWorking #] {
-		 	println("Out of service") color red
+		 	println("CARGOSERVICE_HANDLER | System set to out of service") color green
 		 	
-		 	replyTo load_container with retrylater :
-		 		retrylater(out_of_service)
+		 	replyTo start_engage with retrylater :retrylater(out_of_service)
 		 }else{ 
 		 	if [# IOPortOccupied || Engaged #] {
-		 		println("Already Engaged") color yellow
-		 		 replyTo load_container with load_refused :
-                    load_refused(ioport_occupied)
+		 		println("CARGOSERVICE_HANDLER | Already Engaged") color green
+		 		 replyTo start_engage with engage_refused :engage_refused(ioport_occupied)
 		 	}else{
-		 		println("Engaged") color yellow
+		 		println("CARGOSERVICE_HANDLER | System is now engaged") color green
 		 		[# Engaged = true #]
 		 		
-		 		replyTo load_container with load_accepted :
-		 		load_accepted(1)
+		 		replyTo start_engage with engage_successful :engage_successful(0)
 		 		
-		 		forward cargoservice_worker -m startWorking :
-            	startWorking(1)
+		 		forward cargoservice_worker -m startWorking :startWorking(0)
 		 		
 		 		//simulate execution
 		 		// quindi riserva lo slot (1-4) dove posizionare il container alla fine
@@ -92,18 +90,23 @@ QActor cargoservice_handler context ctx_cargoservice {
 	Goto idle
 	
 	State resetEngaged {
-		println("no more Engaged") color yellow
+		println("CARGOSERVICE_HANDLER | No more Engaged") color green
 		[# Engaged = false #]
 	}
 	Goto idle
-
+	
+	State system_out_of_service{
+		
+		[# ServiceWorking = false #]
+		println("CARGOSERVICE_HANDLER | System out of service!") color green
+		
+	} Goto idle
 }
 
 QActor cargoservice_worker context ctx_cargoservice {
 
 	State idle initial{
-		println("$name | READY") color green
-		
+		println("CARGOSERVICE_WORKER | Ready") color yellow
 	}
 	
 	Transition t0
@@ -148,37 +151,9 @@ QActor cargoservice_worker context ctx_cargoservice {
 
 QActor cargorobot context ctx_cargoservice {
 
-    [# var TargetSlot = "none" #]
-
     State wait initial {
         updateResource [# "cargorobot(idle)" #]
     }
-
-    Transition t0
-        whenMsg move_container_to_slot -> move
-
-
-    State move {
-
-        onMsg(
-            move_container_to_slot :
-            move_container_to_slot(SLOT)
-        ) {
-            [# TargetSlot = payloadArg(0) #]
-        }
-
-        updateResource [#
-            "cargorobot(moving,$TargetSlot)"
-        #]
-
-        delay 200
-
-        updateResource [#
-            "cargorobot(idle)"
-        #]
-    }
-
-    Goto wait
 }
  
 QActor marker context ctx_cargoservice {
@@ -186,25 +161,9 @@ QActor marker context ctx_cargoservice {
     State wait initial {
         updateResource [# "marker(idle)" #]
     }
-
-    State marking {
-
-        updateResource [# "marker(marking)" #]
-
-        delay 200
-
-        emit container_marked :
-            container_marked(code001)
-
-        updateResource [#
-            "marker(completed,code001)"
-        #]
-    }
-
-    Goto wait
 }
 
-QActor display context ctx_ioport {
+QActor display context ctx_cargoservice {
 
     [# var DisplayValue = "none" #]
 
@@ -229,7 +188,7 @@ QActor display context ctx_ioport {
             #]
         }
 
-        println("$DisplayValue") color magenta
+        println("DISPLAY | $DisplayValue") color magenta
 
         updateResource [# DisplayValue #]
     }
@@ -249,7 +208,7 @@ QActor display context ctx_ioport {
             #]
         }
 
-        println("$DisplayValue") color magenta
+        println("DISPLAY | $DisplayValue") color magenta
 
         updateResource [# DisplayValue #]
     }

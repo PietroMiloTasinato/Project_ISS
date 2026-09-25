@@ -30,7 +30,8 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		
-				var Slot = ""	
+				var Slot = ""
+				var Code = ""
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
@@ -118,8 +119,11 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 				}	 
 				state("move_container_to_slot") { //this:State
 					action { //it:State
-						CommUtils.outyellow("CARGOSERVICE_WORKER | Moving container to its designeted slot")
-						request("moverobot", "moverobot($Slot)" ,"cargorobot" )  
+						if( checkMsgContent( Term.createTerm("container_marked(BARCODE)"), Term.createTerm("container_marked(ARG)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outyellow("CARGOSERVICE_WORKER | Moving container to its designeted slot")
+								request("moverobot", "moverobot($Slot)" ,"cargorobot" )  
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -131,6 +135,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 				state("move_to_home") { //this:State
 					action { //it:State
 						CommUtils.outyellow("CARGOSERVICE_WORKER | Moving cargorobot home")
+						forward("container_deployed", "container_deployed(Slot,Code)" ,"hold" ) 
 						request("moverobot", "moverobot(home)" ,"cargorobot" )  
 						//genTimer( actor, state )
 					}

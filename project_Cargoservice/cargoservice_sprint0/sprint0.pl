@@ -1,16 +1,17 @@
 %====================================================================================
 % sprint0 description   
 %====================================================================================
-request( load_container, load_container(ARG) ).
-reply( load_accepted, load_accepted(SLOT) ).  %%for load_container
-reply( load_refused, load_refused(CAUSE) ).  %%for load_container
-reply( retrylater, retrylater(CAUSE) ).  %%for load_container
+request( start_engage, start_engage(ARG) ).
+reply( engage_successful, engage_successful(ARG) ).  %%for start_engage
+reply( engage_refused, engage_refused(ARG) ).  %%for start_engage
+reply( retrylater, retrylater(CAUSE) ).  %%for start_engage
 dispatch( move_container_to_slot, move_container_to_slot(SLOT) ).
 dispatch( startWorking, startWorking(ARG) ).
 dispatch( taskCompleted, taskCompleted(ARG) ).
 event( container_marked, container_marked(BARCODE) ).
 event( robot_detected, robot_detected(DISTANCE) ).
 event( sonar_failure, sonar_failure(DISTANCE) ).
+event( system_failure, system_failure(ARG) ).
 dispatch( show_hold_state, show_hold_state(STATE) ).
 dispatch( show_service_status, show_service_status(STATUS) ).
 %====================================================================================
@@ -26,7 +27,7 @@ context(ctx_devices, "localhost",  "TCP", "8003").
  static(cargorobot).
   qactor( marker, ctx_cargoservice, "it.unibo.marker.Marker").
  static(marker).
-  qactor( display, ctx_ioport, "it.unibo.display.Display").
+  qactor( display, ctx_cargoservice, "it.unibo.display.Display").
  static(display).
   qactor( hold, ctx_cargoservice, "it.unibo.hold.Hold").
  static(hold).

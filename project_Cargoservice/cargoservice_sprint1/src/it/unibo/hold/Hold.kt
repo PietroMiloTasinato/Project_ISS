@@ -29,6 +29,14 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		 
+				
+				val map = mapOf(
+					"slot1" to "",
+					"slot2" to "",
+					"slot3" to "",
+					"slot4" to ""
+				)
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
@@ -38,10 +46,36 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					sysaction { //it:State
 					}	 	 
 					 transition(edgeName="t022",targetState="choose_slot",cond=whenRequest("ask_for_slot"))
+					transition(edgeName="t023",targetState="update_map",cond=whenDispatch("container_deployed"))
 				}	 
 				state("choose_slot") { //this:State
 					action { //it:State
-						answer("ask_for_slot", "slot_obtained", "slot_obtained(slot1)"   )  
+						 val Slot = map.firstOrNull{ it.value.isBlank() }?.key  
+						if(  if Slot != null  
+						 ){answer("ask_for_slot", "slot_obtained", "slot_obtained(slot1)"   )  
+						}
+						else
+						 {answer("ask_for_slot", "slots_unavailable", "slots_unavailable(0)"   )  
+						 }
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
+				}	 
+				state("update_map") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("container_deployed(Slot,Code)"), Term.createTerm("container_deployed(Slot,Code)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 val Slot = payloadArg(0); val Code = payloadArg(1)  
+								if(  map.containsKey(Slot)  
+								 ){ map[Slot] = Code  
+								}
+								else
+								 {emit("system_failure", "system_failure(0)" ) 
+								 }
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

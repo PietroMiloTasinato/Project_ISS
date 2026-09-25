@@ -40,22 +40,6 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 					sysaction { //it:State
 					}	 	 
 				}	 
-				state("marking") { //this:State
-					action { //it:State
-						updateResourceRep( "marker(marking)"  
-						)
-						delay(200) 
-						emit("container_marked", "container_marked(code001)" ) 
-						updateResourceRep(
-						            "marker(completed,code001)"
-						)
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="wait", cond=doswitch() )
-				}	 
 			}
 		}
 } 

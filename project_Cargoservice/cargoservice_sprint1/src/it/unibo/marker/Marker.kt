@@ -29,6 +29,7 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		 var CodeNumber = 1  
 		return { //this:ActionBasciFsm
 				state("wait") { //this:State
 					action { //it:State
@@ -48,7 +49,10 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 						CommUtils.outmagenta("MARKER | Marking container...")
 						delay(2000) 
 						CommUtils.outmagenta("MARKER | Container marked")
-						emit("container_marked", "container_marked(code001)" ) 
+						 
+									val Code = "code + $CodeNumber" 
+									CodeNumber++
+						emit("container_marked", "container_marked($Code)" ) 
 						updateResourceRep(
 						            "marker(completed,code001)"
 						)

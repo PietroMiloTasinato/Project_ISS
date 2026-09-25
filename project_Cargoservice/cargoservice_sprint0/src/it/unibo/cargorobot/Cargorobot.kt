@@ -29,7 +29,6 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
-		 var TargetSlot = "none"  
 		return { //this:ActionBasciFsm
 				state("wait") { //this:State
 					action { //it:State
@@ -40,27 +39,6 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t03",targetState="move",cond=whenDispatch("move_container_to_slot"))
-				}	 
-				state("move") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("move_container_to_slot(SLOT)"), Term.createTerm("move_container_to_slot(SLOT)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								 TargetSlot = payloadArg(0)  
-						}
-						updateResourceRep(
-						            "cargorobot(moving,$TargetSlot)"
-						)
-						delay(200) 
-						updateResourceRep(
-						            "cargorobot(idle)"
-						)
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="wait", cond=doswitch() )
 				}	 
 			}
 		}
