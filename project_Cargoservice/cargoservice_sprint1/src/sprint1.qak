@@ -190,9 +190,9 @@ QActor cargoservice_worker context ctx_cargoservice {
 		whenEvent container_marked -> move_container_to_slot
 		
 	State move_container_to_slot{
-		onMsg(container_marked: container_marked(ARG)){
-			
-			println("CARGOSERVICE_WORKER | Moving container to its designeted slot") color yellow
+		onMsg(container_marked: container_marked(CODE)){
+			[# Code = payloadArg(0) #]
+			println("CARGOSERVICE_WORKER | Moving container to its designated slot") color yellow
 			//forward hold -m 
 			request cargorobot -m moverobot: moverobot($Slot)
 		
@@ -204,7 +204,7 @@ QActor cargoservice_worker context ctx_cargoservice {
 	// comanda il robot per depositare il container nello slot precedentemente riservato
 	State move_to_home {
 		println("CARGOSERVICE_WORKER | Moving cargorobot home") color yellow
-		forward hold -m container_deployed: container_deployed(Slot, Code)
+		forward hold -m container_deployed: container_deployed($Slot, $Code)
 		request cargorobot -m moverobot: moverobot(home)
 	}Transition t7 
 		whenReply moverobotdone -> task_finished
@@ -212,7 +212,7 @@ QActor cargoservice_worker context ctx_cargoservice {
 		
 	State task_finished{
 		println("CARGOSERVICE_WORKER | Task completed succesfully!") color yellow
-		[# Slot = "" #]
+		[# Slot = ""; Code = "" #]
 		forward cargoservice_handler -m taskCompleted:taskCompleted(ARG)
 	} Goto idle
 	
@@ -326,8 +326,8 @@ QActor marker context ctx_cargoservice {
 
 		println("MARKER | Container marked") color magenta
 		[# 
-			val Code = "code + $CodeNumber" 
-			CodeNumber++
+			val Code = "code$CodeNumber" 
+			CodeNumber = CodeNumber + 1
 		#]
         emit container_marked :container_marked($Code)
 
@@ -413,9 +413,11 @@ QActor hold context ctx_cargoservice{
   	whenMsg container_deployed -> update_map
   
   State choose_slot{
+  	println ("HOLD | Choosing a slot...") color cyan
   	[# val Slot = map.entries.firstOrNull{ it.value.isBlank() }?.key #]
+  	println ("HOLD | $Slot") color cyan
   	if [# Slot != null #]{
-  		replyTo ask_for_slot with slot_obtained:slot_obtained(slot1)
+  		replyTo ask_for_slot with slot_obtained:slot_obtained($Slot)
   	} else {
 		replyTo ask_for_slot with slots_unavailable:slots_unavailable(0)
 	}
@@ -424,8 +426,9 @@ QActor hold context ctx_cargoservice{
   
   State update_map{
   	onMsg(container_deployed: container_deployed(Slot, Code)){
+  		printCurrentMessage color cyan
   		[# val Slot = payloadArg(0); val Code = payloadArg(1) #]
-  		println("HOLD | assigned code: $Code") color cyan 
+  		println("HOLD | assigned slot: code: $Slot: $Code") color cyan 
   		if [# map.containsKey(Slot) #]{
   			[# map[Slot] = Code #]
   		} else{

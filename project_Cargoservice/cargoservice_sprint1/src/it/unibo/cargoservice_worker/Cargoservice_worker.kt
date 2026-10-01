@@ -119,9 +119,10 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 				}	 
 				state("move_container_to_slot") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("container_marked(BARCODE)"), Term.createTerm("container_marked(ARG)"), 
+						if( checkMsgContent( Term.createTerm("container_marked(BARCODE)"), Term.createTerm("container_marked(CODE)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outyellow("CARGOSERVICE_WORKER | Moving container to its designeted slot")
+								 Code = payloadArg(0)  
+								CommUtils.outyellow("CARGOSERVICE_WORKER | Moving container to its designated slot")
 								request("moverobot", "moverobot($Slot)" ,"cargorobot" )  
 						}
 						//genTimer( actor, state )
@@ -135,7 +136,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 				state("move_to_home") { //this:State
 					action { //it:State
 						CommUtils.outyellow("CARGOSERVICE_WORKER | Moving cargorobot home")
-						forward("container_deployed", "container_deployed(Slot,Code)" ,"hold" ) 
+						forward("container_deployed", "container_deployed($Slot,$Code)" ,"hold" ) 
 						request("moverobot", "moverobot(home)" ,"cargorobot" )  
 						//genTimer( actor, state )
 					}
@@ -148,7 +149,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 				state("task_finished") { //this:State
 					action { //it:State
 						CommUtils.outyellow("CARGOSERVICE_WORKER | Task completed succesfully!")
-						 Slot = ""  
+						 Slot = ""; Code = ""  
 						forward("taskCompleted", "taskCompleted(ARG)" ,"cargoservice_handler" ) 
 						//genTimer( actor, state )
 					}

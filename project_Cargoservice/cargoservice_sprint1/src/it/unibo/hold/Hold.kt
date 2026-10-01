@@ -51,9 +51,11 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 				}	 
 				state("choose_slot") { //this:State
 					action { //it:State
+						CommUtils.outcyan("HOLD | Choosing a slot...")
 						 val Slot = map.entries.firstOrNull{ it.value.isBlank() }?.key  
+						CommUtils.outcyan("HOLD | $Slot")
 						if(  Slot != null  
-						 ){answer("ask_for_slot", "slot_obtained", "slot_obtained(slot1)"   )  
+						 ){answer("ask_for_slot", "slot_obtained", "slot_obtained($Slot)"   )  
 						}
 						else
 						 {answer("ask_for_slot", "slots_unavailable", "slots_unavailable(0)"   )  
@@ -69,8 +71,10 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("container_deployed(Slot,Code)"), Term.createTerm("container_deployed(Slot,Code)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
+								 	   
 								 val Slot = payloadArg(0); val Code = payloadArg(1)  
-								CommUtils.outcyan("HOLD | assigned code: $Code")
+								CommUtils.outcyan("HOLD | assigned slot: code: $Slot: $Code")
 								if(  map.containsKey(Slot)  
 								 ){ map[Slot] = Code  
 								}
