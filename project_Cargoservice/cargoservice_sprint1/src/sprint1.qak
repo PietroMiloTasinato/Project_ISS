@@ -410,7 +410,7 @@ QActor hold context ctx_cargoservice{
   }
   Transition t0
   	whenRequest ask_for_slot -> choose_slot
-  	whenMsg container_deployed -> update_map
+  	
   
   State choose_slot{
   	println ("HOLD | Choosing a slot...") color cyan
@@ -421,12 +421,11 @@ QActor hold context ctx_cargoservice{
   	} else {
 		replyTo ask_for_slot with slots_unavailable:slots_unavailable(0)
 	}
-  }
-  Goto idle
+  } Transition t1
+ 		whenMsg container_deployed -> update_map
   
   State update_map{
   	onMsg(container_deployed: container_deployed(Slot, Code)){
-  		printCurrentMessage color cyan
   		[# val Slot = payloadArg(0); val Code = payloadArg(1) #]
   		println("HOLD | assigned slot: code: $Slot: $Code") color cyan 
   		if [# map.containsKey(Slot) #]{

@@ -47,7 +47,6 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					sysaction { //it:State
 					}	 	 
 					 transition(edgeName="t022",targetState="choose_slot",cond=whenRequest("ask_for_slot"))
-					transition(edgeName="t023",targetState="update_map",cond=whenDispatch("container_deployed"))
 				}	 
 				state("choose_slot") { //this:State
 					action { //it:State
@@ -65,14 +64,12 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
+					 transition(edgeName="t123",targetState="update_map",cond=whenDispatch("container_deployed"))
 				}	 
 				state("update_map") { //this:State
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("container_deployed(Slot,Code)"), Term.createTerm("container_deployed(Slot,Code)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
-								 	   
 								 val Slot = payloadArg(0); val Code = payloadArg(1)  
 								CommUtils.outcyan("HOLD | assigned slot: code: $Slot: $Code")
 								if(  map.containsKey(Slot)  
