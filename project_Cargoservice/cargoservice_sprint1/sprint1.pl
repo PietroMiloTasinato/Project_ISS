@@ -25,6 +25,10 @@ request( moverobot, moverobot(SLOT) ).
 request( moverobot, moverobot(TARGETX,TARGETY,STEPTIME) ).
 reply( moverobotdone, moverobotdone(ARG) ).  %%for moverobot
 reply( moverobotfailed, moverobotfailed(PLANDONE,PLANTODO) ).  %%for moverobot
+dispatch( setrobotstate, setpos(X,Y,D) ). %set robot position to (X,Y) direction D=up|down|left|right
+dispatch( setplanbuildelay, value(V) ). %parameter = V >= 0
+request( tuneAtHome, tuneAtHome(X) ). %reposition in home X don't care
+reply( tuneDone, tuneDone(X) ).  %%for tuneAtHome
 %====================================================================================
 context(ctx_cargoservice, "localhost",  "TCP", "8000").
 context(ctx_smartrobot, "127.0.0.1",  "TCP", "8020").
@@ -46,9 +50,9 @@ context(ctx_devices, "localhost",  "TCP", "8003").
  static(hold).
   qactor( sonar, ctx_cargoservice, "it.unibo.sonar.Sonar").
  static(sonar).
-  qactor( led, ctx_devices, "it.unibo.led.Led").
+  qactor( led, ctx_cargoservice, "it.unibo.led.Led").
  static(led).
-  qactor( pushbutton, ctx_ioport, "it.unibo.pushbutton.Pushbutton").
+  qactor( pushbutton, ctx_cargoservice, "it.unibo.pushbutton.Pushbutton").
  static(pushbutton).
   qactor( io_port, ctx_cargoservice, "it.unibo.io_port.Io_port").
  static(io_port).

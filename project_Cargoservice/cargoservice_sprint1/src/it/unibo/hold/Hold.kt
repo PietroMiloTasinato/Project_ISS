@@ -31,7 +31,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		 
 				
-				val map = mapOf(
+				val map = mutableMapOf(
 					"slot1" to "",
 					"slot2" to "",
 					"slot3" to "",
@@ -40,6 +40,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
+						CommUtils.outcyan("HOLD | ready ")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -50,8 +51,8 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 				}	 
 				state("choose_slot") { //this:State
 					action { //it:State
-						 val Slot = map.firstOrNull{ it.value.isBlank() }?.key  
-						if(  if Slot != null  
+						 val Slot = map.entries.firstOrNull{ it.value.isBlank() }?.key  
+						if(  Slot != null  
 						 ){answer("ask_for_slot", "slot_obtained", "slot_obtained(slot1)"   )  
 						}
 						else
@@ -69,6 +70,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 						if( checkMsgContent( Term.createTerm("container_deployed(Slot,Code)"), Term.createTerm("container_deployed(Slot,Code)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 val Slot = payloadArg(0); val Code = payloadArg(1)  
+								CommUtils.outcyan("HOLD | assigned code: $Code")
 								if(  map.containsKey(Slot)  
 								 ){ map[Slot] = Code  
 								}

@@ -33,15 +33,13 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
           display=Custom('display','./qakicons/symActorWithobjSmall.png')
           hold=Custom('hold','./qakicons/symActorWithobjSmall.png')
           sonar=Custom('sonar','./qakicons/symActorWithobjSmall.png')
+          led=Custom('led','./qakicons/symActorWithobjSmall.png')
+          pushbutton=Custom('pushbutton','./qakicons/symActorWithobjSmall.png')
           io_port=Custom('io_port','./qakicons/symActorWithobjSmall.png')
      with Cluster('ctx_smartrobot', graph_attr=nodeattr):
           robotsmart=Custom('robotsmart(ext)','./qakicons/externalQActor.png')
-     with Cluster('ctx_ioport', graph_attr=nodeattr):
-          pushbutton=Custom('pushbutton','./qakicons/symActorWithobjSmall.png')
      with Cluster('ctx_client', graph_attr=nodeattr):
           external_client=Custom('external_client','./qakicons/symActorWithobjSmall.png')
-     with Cluster('ctx_devices', graph_attr=nodeattr):
-          led=Custom('led','./qakicons/symActorWithobjSmall.png')
      sys >> Edge( label='system_failure', **evattr, decorate='true', fontcolor='darkgreen') >> cargoservice_handler
      sys >> Edge( label='container_marked', **evattr, decorate='true', fontcolor='darkgreen') >> cargoservice_worker
      cargoservice_worker >> Edge( label='system_failure', **eventedgeattr, decorate='true', fontcolor='red') >> sys

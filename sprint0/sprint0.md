@@ -77,7 +77,7 @@ Il DDR supporta le seguenti mosse elementari:
 - rotazione di 90° a destra;
 - rotazione di 90° a sinistra.
 
-![Wenv & DDR](/img/CargoBot.png)
+![Wenv & DDR](../img/CargoBot.png)
 
 ### Componenti software da sviluppare
 
@@ -156,7 +156,7 @@ Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo 
 - ctx_devices: led;
 - ctx_client: client. <!-- realizza il cliente -->
 
-![Wenv & DDR](/img/sprint0_arch.png)
+![Wenv & DDR](../img/sprint0_arch.png)
 
 ## Piano di test
 

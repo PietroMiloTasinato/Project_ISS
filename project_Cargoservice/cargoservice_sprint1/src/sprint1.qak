@@ -31,6 +31,13 @@ Request moverobot: moverobot(TARGETX, TARGETY,STEPTIME)
 Reply moverobotdone  :  moverobotdone(ARG)                    for moverobot
 Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
 
+Dispatch setrobotstate: setpos(X,Y,D) 		"set robot position to (X,Y) direction D=up|down|left|right"
+
+Dispatch setplanbuildelay : value(V)		"parameter = V >= 0"
+
+Request tuneAtHome   : tuneAtHome(X)                  "reposition in home X don't care"
+Reply tuneDone       : tuneDone(X)  for tuneAtHome
+
 Context ctx_cargoservice 			ip [host="localhost" port=8000]
 Context ctx_smartrobot 				ip [host="127.0.0.1" port=8020]
 Context ctx_ioport 					ip [host="localhost" port=8001]
@@ -225,6 +232,7 @@ QActor cargoservice_worker context ctx_cargoservice {
 	
 }
 
+
 QActor cargorobot context ctx_cargoservice {
 
     [#
@@ -297,6 +305,8 @@ QActor cargorobot context ctx_cargoservice {
 
     Goto wait
 }
+
+
  
 QActor marker context ctx_cargoservice {
 	
@@ -386,7 +396,7 @@ QActor hold context ctx_cargoservice{
 	
 	[# 
 		
-		val map = mapOf(
+		val map = mutableMapOf(
 			"slot1" to "",
 			"slot2" to "",
 			"slot3" to "",
@@ -396,15 +406,15 @@ QActor hold context ctx_cargoservice{
 	
 	
   State idle initial {
-  
+  	println("HOLD | ready ") color cyan 
   }
   Transition t0
   	whenRequest ask_for_slot -> choose_slot
   	whenMsg container_deployed -> update_map
   
   State choose_slot{
-  	[# val Slot = map.firstOrNull{ it.value.isBlank() }?.key #]
-  	if [# if Slot != null #]{
+  	[# val Slot = map.entries.firstOrNull{ it.value.isBlank() }?.key #]
+  	if [# Slot != null #]{
   		replyTo ask_for_slot with slot_obtained:slot_obtained(slot1)
   	} else {
 		replyTo ask_for_slot with slots_unavailable:slots_unavailable(0)
@@ -415,6 +425,7 @@ QActor hold context ctx_cargoservice{
   State update_map{
   	onMsg(container_deployed: container_deployed(Slot, Code)){
   		[# val Slot = payloadArg(0); val Code = payloadArg(1) #]
+  		println("HOLD | assigned code: $Code") color cyan 
   		if [# map.containsKey(Slot) #]{
   			[# map[Slot] = Code #]
   		} else{
@@ -430,12 +441,12 @@ QActor sonar context ctx_cargoservice{
   	} 
 }
 
-QActor led context ctx_devices{
+QActor led context ctx_cargoservice{
  	State s0 initial {
   	} 
 }
 
-QActor pushbutton context ctx_ioport{
+QActor pushbutton context ctx_cargoservice{
 	State s0 initial {
   	} 
 }
