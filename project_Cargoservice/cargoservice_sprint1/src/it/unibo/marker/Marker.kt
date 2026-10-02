@@ -50,8 +50,8 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 						delay(2000) 
 						CommUtils.outmagenta("MARKER | Container marked")
 						 
-									val Code = "code + $CodeNumber" 
-									CodeNumber++
+									val Code = "code$CodeNumber" 
+									CodeNumber = CodeNumber + 1
 						emit("container_marked", "container_marked($Code)" ) 
 						updateResourceRep(
 						            "marker(completed,code001)"
