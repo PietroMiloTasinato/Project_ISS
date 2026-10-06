@@ -65,6 +65,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 				state("acceptRequest") { //this:State
 					action { //it:State
@@ -115,7 +116,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t511",targetState="move_container_to_slot",cond=whenEvent("container_marked"))
+					 transition(edgeName="t511",targetState="move_container_to_slot",cond=whenReply("container_marked"))
 				}	 
 				state("move_container_to_slot") { //this:State
 					action { //it:State

@@ -41,11 +41,9 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
      with Cluster('ctx_client', graph_attr=nodeattr):
           external_client=Custom('external_client','./qakicons/symActorWithobjSmall.png')
      sys >> Edge( label='system_failure', **evattr, decorate='true', fontcolor='darkgreen') >> cargoservice_handler
-     sys >> Edge( label='container_marked', **evattr, decorate='true', fontcolor='darkgreen') >> cargoservice_worker
      cargoservice_worker >> Edge( label='system_failure', **eventedgeattr, decorate='true', fontcolor='red') >> sys
-     marker >> Edge( label='container_marked', **eventedgeattr, decorate='true', fontcolor='red') >> sys
      hold >> Edge( label='system_failure', **eventedgeattr, decorate='true', fontcolor='red') >> sys
-     cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<start_marking &nbsp; >',  fontcolor='magenta') >> marker
+     cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<start_marking<font color="darkgreen"> container_marked</font> &nbsp; >',  fontcolor='magenta') >> marker
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> cargorobot
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<load_container<font color="darkgreen"> load_done</font> &nbsp; >',  fontcolor='magenta') >> io_port
      cargoservice_worker >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_obtained slots_unavailable</font> &nbsp; >',  fontcolor='magenta') >> hold

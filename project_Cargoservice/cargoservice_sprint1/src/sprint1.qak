@@ -17,7 +17,8 @@ Dispatch startWorking : startWorking(ARG)
 Dispatch taskCompleted : taskCompleted(ARG)
 
 Request start_marking: start_marking(ARG)
-Event container_marked : container_marked(BARCODE)
+Reply container_marked : container_marked(BARCODE) for start_marking
+
 Event robot_detected : robot_detected(DISTANCE)
 Event sonar_failure : sonar_failure(DISTANCE)
 Event system_failure: system_failure(ARG)
@@ -151,7 +152,7 @@ QActor cargoservice_worker context ctx_cargoservice {
 		[# Slot = "" #]
 		println("CARGOSERVICE_WORKER | Request refused!") color yellow
 		forward cargoservice_handler -m taskCompleted:taskCompleted(ARG)
-	}
+	}Goto idle
 	
 	// accetta la richiesta di carico
 	State acceptRequest {
@@ -187,7 +188,7 @@ QActor cargoservice_worker context ctx_cargoservice {
 		println("CARGOSERVICE_WORKER | Cargorbot at marker") color yellow
 		request marker -m start_marking:start_marking(ARG)
 	}Transition t5 
-		whenEvent container_marked -> move_container_to_slot
+		whenReply container_marked -> move_container_to_slot
 		
 	State move_container_to_slot{
 		onMsg(container_marked: container_marked(CODE)){
@@ -329,10 +330,10 @@ QActor marker context ctx_cargoservice {
 			val Code = "code$CodeNumber" 
 			CodeNumber = CodeNumber + 1
 		#]
-        emit container_marked :container_marked($Code)
+        replyTo start_marking with container_marked:container_marked($Code)
 
         updateResource [#
-            "marker(completed,code001)"
+            "marker(completed,$Code)"
         #]
     }
 

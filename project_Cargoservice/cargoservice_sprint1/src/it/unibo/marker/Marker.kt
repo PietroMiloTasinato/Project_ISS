@@ -52,9 +52,9 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 						 
 									val Code = "code$CodeNumber" 
 									CodeNumber = CodeNumber + 1
-						emit("container_marked", "container_marked($Code)" ) 
+						answer("start_marking", "container_marked", "container_marked($Code)"   )  
 						updateResourceRep(
-						            "marker(completed,code001)"
+						            "marker(completed,$Code)"
 						)
 						//genTimer( actor, state )
 					}

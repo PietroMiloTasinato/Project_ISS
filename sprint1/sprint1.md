@@ -18,11 +18,14 @@
       - [Prelievo del container dall'IOPort](#prelievo-del-container-dallioport)
       - [Prenotazione dello slot nell'hold](#prenotazione-dello-slot-nellhold)
       - [Marcatura del container](#marcatura-del-container)
-      - [Movimentazione del robot](#movimentazione-del-robot)
+      - [Navigazione del robot](#Navigazione-del-robot)
     - [Diagramma dell'architettura](#diagramma-dellarchitettura)
   - [Piano di test](#piano-di-test)
   - [Piano di lavoro](#piano-di-lavoro)
   - [Ripartizione del lavoro](#ripartizione-del-lavoro)
+
+
+<!--devo fare analisi del problema, piano di test e diag architettura -->
 
 ## Punto di Partenza
 
@@ -60,7 +63,7 @@ Lo stato di realizzazione di ciascuna funzionalità è discusso nelle sezioni di
 - **Scomposizione del cargoservice** in due attori: `cargoservice_handler` (interazione con il cliente e stato globale del servizio) e `cargoservice_worker` (esecuzione del ciclo di carico).
 - **Nuovo attore `marker`**, che simula la marcatura assegnando al container un codice progressivo al posto del codice a barre.
 - **`cargorobot` come astrazione dello SmartRobot**: il resto del sistema usa nomi di posizione (`io_port`, `slot1`, …) invece di coordinate.
-- **Nuovi messaggi** per prenotazione dello slot, prelievo dall'IOPort, marcatura e movimentazione (descritti nella sezione _Messaggi_).
+- **Nuovi messaggi** per prenotazione dello slot, prelievo dall'IOPort, marcatura e Navigazione (descritti nella sezione _Messaggi_).
 
 ## Analisi del Problema
 
@@ -89,9 +92,9 @@ Le attività di `cargoservice_worker` sono:
 
 ![Wenv & DDR](../img/CargoBot.png)
 
-Analizziamo più in dettaglio il VirtualRobot fornito dal committente:
+Analizziamo più in dettaglio il VirtualRobot26 fornito dal committente:
 
-Utilizzeremo il servizio WEnv come un virtual environment per simulare un Differential Drive Robot composto da 3 ruote di cui due sono ruote motrici, che si muove all'interno di un rettangolo contenente vari elementi descritti dal committente (slots, marker, sonar,...). Le capacità del robot di navigare l'environment virtuale verrano esplorate in seguito.
+Utilizzeremo il servizio WEnv come un virtual environment per simulare un Differential Drive Robot composto da 3 ruote di cui due sono ruote motrici, che si muove all'interno di un rettangolo contenente vari elementi descritti dal committente (slot, marker, sonar,...).
 
 La comunicazione con il virtual environment viene effettuata in due modi:
 
@@ -108,12 +111,15 @@ CMDMOVE ::= turnLeft | turnRight | moveForward | moveBackward | alarm
 
 Un comando in esecuzione può essere interrotto solo tramite un'allarme, un qualsiasi altro comando asincrono ricevuto durante l'esecuzione è rifiutato mentre l'originale continua la sua esecuzione fino alla sua terminazione. In caso di una collisione, il movimento dura comunque un tempo T, ma i WS clients ottengono {"collision":"MOVEID","target":"OBSTACLEID"}.
 
-Per quanto riguarda la semantica dei messaggi asincroni, si mantiene la struttura dei messaggi cril e si utilizzano i dati ricevuti dal server per rilevare la distanza tra gli altri oggetti dell'environment:
-({"sonarName":..,"distance":..,"axis":"x|y"})
+Per quanto riguarda la semantica dei messaggi asincroni, invece di utilizzare il linguaggio cril, viene introdotto il linguaggio aril (Abstract Robot Interaction Lanaguage). Aril è definito come segue:
+```
+MOVE = w | s | l | a | r | d | h
+```
+dove ww : muove avanti per 2500 msec; s: muove indietro per 2500 msec; l, a: gira a sinistra di 90 per 300msec; r, d: gira a destra di 90 per 300 msec; h: indica al robot di fermarsi
 
 Il WEnv è deployable attraverso una docker image, anch'essa fornita dal committente. Insieme al WEnv viene fornita una NaiveGui, ovvero un'interfaccia gfrafica con cui comandare direttamente il robot nell ambiente virtuale da tastiera (i tasti w/a/s/d vengono utilizzati per muovere il robot). La NaiveGui permette anche di modificare l'ambiente virtuale: aggiungere oggetti o spostare quelli già presenti, e modificare la velocità del robot.
 
-Il committente ha presentato varie versioni del VirtualRobot, e abbiamo scelto di implementare cargorobot utilizzando lo SmartRobot invece del semplice BasicRobot per sfruttare le capacità dello SmartRobot di navigare il VirtualEnvironment utilizzando un sistema di coordinate invece di richiedere multipli comandi cril. In aggiunta a queste funzionalità, SmartRobot dispone di un'ulteriore Gui oltre a NaiveGui, accedibile appa porta 9085 dopo aver lanciato il container usando il file `vrWithGui26.yaml`. Questa Gui contiene anche una rappresentazione a griglia del Virtual Environment, che viene aggiornata utilizzando la memoria interna del robot, non utilizzando la conologia dei comandi ricevuti dal server. Questa rappresentazione poi verrà usata per individuare le coordinate dove muovere il robot.
+Il committente ha presentato varie versioni del VirtualRobot26, e abbiamo scelto di implementare cargorobot utilizzando lo SmartRobot26 invece del semplice BasicRobot26 per sfruttare le capacità dello SmartRobot26 di navigare il VirtualEnvironment utilizzando un sistema di coordinate invece di richiedere multipli comandi aril. In aggiunta a queste funzionalità, SmartRobot26 dispone di un'ulteriore Gui oltre a NaiveGui, accedibile appa porta 9085 dopo aver lanciato il container usando il file `vrWithGui26.yaml`. Questa Gui contiene anche una rappresentazione a griglia del Virtual Environment, che viene aggiornata utilizzando la memoria interna del robot, non utilizzando la conologia dei comandi ricevuti dal server. Questa rappresentazione poi verrà usata per individuare le coordinate dove muovere il robot.
 
 ![SmartRobot e GridGUI](../img/SmartRobotGrid.png)
 
@@ -125,10 +131,11 @@ L'algoritmo usato dal robot per navigare l'Ambiente Virtuale è A\*.
 
 Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 
-- **cargoservice**
+- **cargoservice_handler**
+- **cargoservice_worker**
 - **cargorobot**
-- **sonar**
-- **IOPort**: composto da un _display_ (web-gui) + _pushbutton_
+- **marker**
+
 - **hold** <!-- cosa si intende per stato corrente dell'hold -->
 - **led** <!-- chiedere se va tenuto come componente separato o inserirlo dentro IOPort -->
 
@@ -313,7 +320,7 @@ idle → ask_holding → acceptRequest → at_io_port → move_to_marker
 
 ### Messaggi
 
-Lo Sprint1 mantiene i messaggi definiti nello Sprint0 e introduce i contratti di interazione necessari a realizzare il ciclo di carico: prenotazione dello slot nell'`hold`, prelievo del container dall'`io_port`, marcatura e movimentazione del robot. Di seguito sono descritti solo i **nuovi messaggi**, così come dichiarati in `sprint1.qak`.
+Lo Sprint1 mantiene i messaggi definiti nello Sprint0 e introduce i contratti di interazione necessari a realizzare il ciclo di carico: prenotazione dello slot nell'`hold`, prelievo del container dall'`io_port`, marcatura e Navigazione del robot. Di seguito sono descritti solo i **nuovi messaggi**, così come dichiarati in `sprint1.qak`.
 
 ```
 Request load_container : load_container(ARG)
@@ -386,7 +393,7 @@ Reply tuneDone : tuneDone(X) for tuneAtHome
 - **Payload**: `ARG` è un argomento segnaposto.
 - **Risposta**: il `marker` non risponde con una Reply, ma emette l'Event `container_marked(BARCODE)` (definito nello Sprint0) al termine della marcatura; il worker lo attende con `whenEvent`. La Request serve quindi ad avviare l'attività, mentre l'esito è reso osservabile a tutti gli attori interessati.
 
-#### Movimentazione del robot
+#### Navigazione del robot
 
 Il nome `moverobot` identifica due Request distinte, corrispondenti a due livelli di astrazione. Esse sono distinte dal destinatario e dal numero di argomenti del payload.
 
@@ -428,14 +435,9 @@ Il nome `moverobot` identifica due Request distinte, corrispondenti a due livell
 
 ### Diagramma dell'architettura
 
-Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1.
+Il seguente diagramma rappresenta l'architettura completa del sistema nello sprint 1.
 
-- ctx_cargoservice: cargoservice, hold, cargorobot, marker, sonar;
-- ctx_ioport: ioport, display, pushbutton;
-- ctx_devices: led;
-- ctx_client: client. <!-- realizza il cliente -->
-
-![Wenv & DDR](/img/sprint0_arch.png)
+![Wenv & DDR](/img/sprint1arch.png)
 
 ## Piano di test
 

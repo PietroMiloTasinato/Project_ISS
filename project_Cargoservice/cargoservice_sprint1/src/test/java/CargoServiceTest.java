@@ -28,7 +28,7 @@ public class CargoServiceTest {
         //Costruzione di richiesta 
 
         IApplMessage requestStr = CommUtils.buildRequest("tester",
-                "load_container", "load_container(\"args\")", //FIXME CAMBIARE IL NOME load_container IN start_engage
+                "start_engage", "start_engage(\"args\")", 
                 "cargoservice_handler");
         
         System.out.println("Richiesta: " + requestStr.toString());
@@ -40,9 +40,9 @@ public class CargoServiceTest {
         
         //Verifica che sia stata accettata
         assertTrue("TEST: richiesta accettata", 
-                 response.contains("load_accepted"));
+                 response.contains("engage_successful"));
         
-        TimeUnit.SECONDS.sleep(1); // wait for robot to finish
+        TimeUnit.SECONDS.sleep(40); // wait for robot to finish
     }
 	
     //Scenario di test 2: Doppia richiesta di carico 
@@ -51,7 +51,7 @@ public class CargoServiceTest {
     public void testDoubleLoadRequest() throws Exception {
 	    // Costruzione della prima richiesta 
 	    String request1 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container(\"args\")", 
+	            "start_engage", "start_engage(\"args\")", 
 	            "cargoservice_handler").toString();
 	
 	    //Risposta accettata perchè robot e marker sono liberi
@@ -59,20 +59,21 @@ public class CargoServiceTest {
 	    
 	    System.out.println("Risposta: " + response1); // Risposta contenente lo slot libero dove posizionare il container
 	    assertTrue("TEST: Prima richiesta accettata", 
-	             response1.contains("load_accepted")); 
+	             response1.contains("engage_successful")); 
 	    
 	   // Costruzione della seconda richiesta
 	    String request2 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container(\"args\")", 
+	            "start_engage", "start_engage(\"args\")", 
 	            "cargoservice_handler").toString();
 	
 	    //Risposta negativa perchè robot e marker non sono liberi
 	    String response2 = conn.request(request2);
 	    System.out.println("Risposta: " + response2); // Risposta contenente la causa del rifiuto
 	    assertTrue("TEST: Seconda richiesta rifiutata",
-	    		response2.contains("load_refused") && 
+	    		response2.contains("engage_refused") && 
 	    		response2.contains("ioport_occupied"));
     }
+
 
 /*
     //Scenario di test 3: richiesta di carico rifiutata perchè robot e marker non sono liberi senza arrivo concorrenziale di due load_request

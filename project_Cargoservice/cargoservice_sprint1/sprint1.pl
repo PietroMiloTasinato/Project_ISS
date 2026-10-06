@@ -14,7 +14,7 @@ reply( slots_unavailable, slots_unavailable(ARG) ).  %%for ask_for_slot
 dispatch( startWorking, startWorking(ARG) ).
 dispatch( taskCompleted, taskCompleted(ARG) ).
 request( start_marking, start_marking(ARG) ).
-event( container_marked, container_marked(BARCODE) ).
+reply( container_marked, container_marked(BARCODE) ).  %%for start_marking
 event( robot_detected, robot_detected(DISTANCE) ).
 event( sonar_failure, sonar_failure(DISTANCE) ).
 event( system_failure, system_failure(ARG) ).

@@ -1,8 +1,10 @@
+
 package test.java;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import java.util.concurrent.TimeUnit;
 
 import unibo.basicomm23.interfaces.IApplMessage;
 import unibo.basicomm23.interfaces.Interaction;
@@ -26,15 +28,20 @@ public class CargoServiceWorkerTest {
 		System.out.println("TESTER | Starting...");
 		IApplMessage request = CommUtils.buildDispatch("tester", "startWorking", "startWorking(ARG)", "cargoservice_worker");
 		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
+		
+		conn.forward(request);
+		
+		TimeUnit.SECONDS.sleep(40);
+		
+		request = CommUtils.buildRequest("tester", "start_marking", "start_marking(ARG)", "marker");
+		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
+		
 		String response = conn.request(request).toString();
 		System.out.println("CARGOROBOT | Risposta: " + response.toString());
 		
-		assertTrue(true);
-		/*IApplMessage request = CommUtils.buildRequest("tester",
-                "get_robot_state", "get_robot_state(0)",
-                "smartrobot");*/
+		assertTrue("TEST: Seconda richiesta rifiutata",
+	    		response.contains("code2"));
 		
 	}
-	
 	
 }
