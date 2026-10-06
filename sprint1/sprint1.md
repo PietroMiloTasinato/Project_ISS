@@ -441,63 +441,32 @@ Il seguente diagramma rappresenta l'architettura completa del sistema nello spri
 
 ## Piano di test
 
-Questa prima fase di test seve ad effettuare un collaudo interno che in questa prima fase ha il preciso compito di confermare il corretto funzionamento della rete e delle interazioni via messaggi attraverso di essa dei vari componenti.
+In questa fase di test verifichiamo il funzionamento corretto dei componenti implementati. In particolare sfruttiamo il fatto che i codici assegnati dal marker sono incrementali, quindi dopo un'iniziale esecuzione del percorso completo (home-ioPort-matrker-slot-home) chiediamo di effettuare una marcatura "a vuoto" per verificare che il codice emesso sia quello corretto. 
 
-Il primo test ha l'obiettivo di confermare la ricezione dei messaggi da parte degli attori qak e la corretta formazione dei messaggi.
-
-```text
-@Test
-    public void testLoadRequestAccepted() throws Exception {
-        //Costruzione di richiesta
-
-        IApplMessage requestStr = CommUtils.buildRequest("tester",
-                "load_container", "load_container(\"args\")",
-                "cargoservice_handler");
-
-        System.out.println("Richiesta: " + requestStr.toString());
-
-        //Risposta accettata perchè robot e marker sono liberi
-        String response = conn.request(requestStr).toString();
-
-        System.out.println("Risposta: " + response); // Risposta contenente lo slot libero dove posizionare il container
-
-        //Verifica che sia stata accettata
-        assertTrue("TEST: richiesta accettata",
-                 response.contains("load_accepted"));
-
-        TimeUnit.SECONDS.sleep(1); // wait for robot to finish
-    }
-```
-
-Il secondo test ha l'obiettivo di confermare il corretto funzionamento del sistema in caso di arrivo concorrente di due richieste di carico
+In questo modo possiamo verificare il corretto funzionamento di tutti i componenti in un solo test. Lo svantaggio di questo approccio sta nel fatto che complica l'individuazione della causa del fallimento (non testiamo i singolo componenti ma il sistema). Per ovviare a questo svantaggio utilizziamo la Gui per monitorare il progresso del robot e stampiamo a terminale tutti i passaggi di stato dei QActors necessari per il corretto funzionamento del sistema.
 
 ```text
-@Test
-public void testDoubleLoadRequest() throws Exception {
-	    // Costruzione della prima richiesta
-	    String request1 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container(\"args\")",
-	            "cargoservice_handler").toString();
-
-	    //Risposta accettata perchè robot e marker sono liberi
-	    String response1 = conn.request(request1);
-
-	    System.out.println("Risposta: " + response1); // Risposta contenente lo slot libero dove posizionare il container
-	    assertTrue("TEST: Prima richiesta accettata",
-	             response1.contains("load_accepted"));
-
-	   // Costruzione della seconda richiesta
-	    String request2 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container(\"args\")",
-	            "cargoservice_handler").toString();
-
-	    //Risposta negativa perchè robot e marker non sono liberi
-	    String response2 = conn.request(request2);
-	    System.out.println("Risposta: " + response2); // Risposta contenente la causa del rifiuto
-	    assertTrue("TEST: Seconda richiesta rifiutata",
-	    		response2.contains("load_refused") &&
-	    		response2.contains("ioport_occupied"));
-    }
+	
+	@Test
+	public void testMoveRobot() throws Exception{
+		System.out.println("TESTER | Starting...");
+		IApplMessage request = CommUtils.buildDispatch("tester", "startWorking", "startWorking(ARG)", "cargoservice_worker");
+		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
+		
+		conn.forward(request);
+		
+		TimeUnit.SECONDS.sleep(40);
+		
+		request = CommUtils.buildRequest("tester", "start_marking", "start_marking(ARG)", "marker");
+		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
+		
+		String response = conn.request(request).toString();
+		System.out.println("CARGOROBOT | Risposta: " + response.toString());
+		
+		assertTrue("TEST: Seconda richiesta rifiutata",
+	    		response.contains("code2"));
+		
+	}
 ```
 
 ## Piano di lavoro

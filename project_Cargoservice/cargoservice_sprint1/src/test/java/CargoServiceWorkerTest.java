@@ -31,7 +31,7 @@ public class CargoServiceWorkerTest {
 		
 		conn.forward(request);
 		
-		TimeUnit.SECONDS.sleep(40);
+		TimeUnit.SECONDS.sleep(40);//attesa per il robot
 		
 		request = CommUtils.buildRequest("tester", "start_marking", "start_marking(ARG)", "marker");
 		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
