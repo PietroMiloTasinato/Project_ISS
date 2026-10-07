@@ -70,7 +70,6 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 						 else
 						  {CommUtils.outgreen("CARGOSERVICE_HANDLER | System is now engaged")
 						   Engaged = true  
-						  answer("start_engage", "engage_successful", "engage_successful(0)"   )  
 						  forward("startWorking", "startWorking(0)" ,"cargoservice_worker" ) 
 						  }
 						 }
@@ -83,8 +82,18 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 				}	 
 				state("resetEngaged") { //this:State
 					action { //it:State
-						CommUtils.outgreen("CARGOSERVICE_HANDLER | No more Engaged")
-						 Engaged = false  
+						if( checkMsgContent( Term.createTerm("taskCompleted(ARG)"), Term.createTerm("taskCompleted(MSG)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 val Msg = payloadArg(0)  
+								CommUtils.outgreen("CARGOSERVICE_HANDLER | No more Engaged")
+								if(  Msg == "successful"  
+								 ){answer("start_engage", "engage_successful", "engage_successful(0)"   )  
+								}
+								else
+								 {answer("start_engage", "engage_refused", "engage_refused($Msg)"   )  
+								 }
+								 Engaged = false  
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -94,7 +103,9 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 				}	 
 				state("system_out_of_service") { //this:State
 					action { //it:State
-						 ServiceWorking = false  
+						 
+									ServiceWorking = false 
+									Engaged = false
 						CommUtils.outgreen("CARGOSERVICE_HANDLER | System out of service!")
 						//genTimer( actor, state )
 					}

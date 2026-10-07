@@ -59,7 +59,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					action { //it:State
 						 Slot = ""  
 						CommUtils.outyellow("CARGOSERVICE_WORKER | Request refused!")
-						forward("taskCompleted", "taskCompleted(ARG)" ,"cargoservice_handler" ) 
+						forward("taskCompleted", "taskCompleted(slots_unavailable)" ,"cargoservice_handler" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -151,7 +151,7 @@ class Cargoservice_worker ( name: String, scope: CoroutineScope, isconfined: Boo
 					action { //it:State
 						CommUtils.outyellow("CARGOSERVICE_WORKER | Task completed succesfully!")
 						 Slot = ""; Code = ""  
-						forward("taskCompleted", "taskCompleted(ARG)" ,"cargoservice_handler" ) 
+						forward("taskCompleted", "taskCompleted(successful)" ,"cargoservice_handler" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

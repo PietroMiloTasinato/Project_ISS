@@ -24,17 +24,16 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
           ActorBasicFsm( name, scope, confined=isconfined, dynamically=isdynamic ){
 
 	override fun getInitialState() : String{
-		return "wait"
+		return "idle"
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		 var CodeNumber = 1  
 		return { //this:ActionBasciFsm
-				state("wait") { //this:State
+				state("idle") { //this:State
 					action { //it:State
-						updateResourceRep( "marker(idle)"  
-						)
+						CommUtils.outmagenta("MARKER | Ready...")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -54,14 +53,14 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 									CodeNumber = CodeNumber + 1
 						answer("start_marking", "container_marked", "container_marked($Code)"   )  
 						updateResourceRep(
-						            "marker(completed,$Code)"
+						            "marker($CodeNumber)"
 						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="wait", cond=doswitch() )
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 			}
 		}

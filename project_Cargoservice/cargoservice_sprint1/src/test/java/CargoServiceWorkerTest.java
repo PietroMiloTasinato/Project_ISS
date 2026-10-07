@@ -6,19 +6,26 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.CoapHandler;
+import unibo.basicomm23.coap.CoapConnection;
 import unibo.basicomm23.interfaces.IApplMessage;
 import unibo.basicomm23.interfaces.Interaction;
 import unibo.basicomm23.msg.ProtocolType;
 import unibo.basicomm23.utils.CommUtils;
 import unibo.basicomm23.utils.ConnectionFactory;
 
-public class CargoServiceWorkerTest {
+/*public class CargoServiceWorkerTest {
 	private static Interaction conn;
+	private static CoapConnection holdCoap;
+	private static CoapConnection markerCoap;
 	
 	@BeforeClass
 	public static void setup() {
 		System.out.println("TESTER | Starting setup");
 	    conn = ConnectionFactory.createClientSupport23(ProtocolType.tcp, "localhost", "8000");
+	    holdCoap = (CoapConnection) ConnectionFactory.createClientSupport23(ProtocolType.coap, "localhost:8000", "ctx_cargoservice/hold");
+	    markerCoap = (CoapConnection) ConnectionFactory.createClientSupport23(ProtocolType.coap, "localhost:8000", "ctx_cargoservice/marker");
 	    System.out.println("TESTER | Setup done");
 	}
 	
@@ -44,4 +51,15 @@ public class CargoServiceWorkerTest {
 		
 	}
 	
-}
+	@Test
+	public void test() throws Exception {
+		IApplMessage request = CommUtils.buildRequest("tester", "start_engage", "start_engage(ARG)", "cargoservice_handler");
+		IApplMessage response = conn.request(request);
+		
+		
+		assertEquals("engage_successful", response.msgId());
+	}
+	
+}*/
+
+

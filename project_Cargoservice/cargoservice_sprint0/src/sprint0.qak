@@ -32,7 +32,6 @@ QActor cargoservice_handler context ctx_cargoservice {
 	
 	State idle initial{
 		println("CARGOSERVICE_HANDLER | Ready") color green
-		delay 2000
         updateResource [#
             "cargoservice(idle," +
             "serviceWorking=$ServiceWorking," +

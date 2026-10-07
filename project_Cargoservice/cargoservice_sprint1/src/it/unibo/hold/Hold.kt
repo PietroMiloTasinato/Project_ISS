@@ -31,7 +31,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		 
 				
-				val map = mutableMapOf(
+				val Map = mutableMapOf(
 					"slot1" to "",
 					"slot2" to "",
 					"slot3" to "",
@@ -51,7 +51,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 				state("choose_slot") { //this:State
 					action { //it:State
 						CommUtils.outcyan("HOLD | Choosing a slot...")
-						 val Slot = map.entries.firstOrNull{ it.value.isBlank() }?.key  
+						 val Slot = Map.entries.firstOrNull{ it.value.isBlank() }?.key  
 						CommUtils.outcyan("HOLD | $Slot")
 						if(  Slot != null  
 						 ){answer("ask_for_slot", "slot_obtained", "slot_obtained($Slot)"   )  
@@ -72,8 +72,10 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 val Slot = payloadArg(0); val Code = payloadArg(1)  
 								CommUtils.outcyan("HOLD | assigned slot: code: $Slot: $Code")
-								if(  map.containsKey(Slot)  
-								 ){ map[Slot] = Code  
+								if(  Map.containsKey(Slot)  
+								 ){ Map[Slot] = Code  
+								updateResourceRep( "hold_state($Map)"  
+								)
 								}
 								else
 								 {emit("system_failure", "system_failure(0)" ) 

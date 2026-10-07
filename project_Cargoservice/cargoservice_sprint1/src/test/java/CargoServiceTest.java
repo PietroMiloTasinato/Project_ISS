@@ -28,7 +28,7 @@ public class CargoServiceTest {
         //Costruzione di richiesta 
 
         IApplMessage requestStr = CommUtils.buildRequest("tester",
-                "start_engage", "start_engage(\"args\")", 
+                "start_engage", "start_engage(ARG)", 
                 "cargoservice_handler");
         
         System.out.println("Richiesta: " + requestStr.toString());
@@ -51,7 +51,7 @@ public class CargoServiceTest {
     public void testDoubleLoadRequest() throws Exception {
 	    // Costruzione della prima richiesta 
 	    String request1 = CommUtils.buildRequest("tester",
-	            "start_engage", "start_engage(\"args\")", 
+	            "start_engage", "start_engage(ARG)", 
 	            "cargoservice_handler").toString();
 	
 	    //Risposta accettata perchè robot e marker sono liberi
@@ -73,7 +73,6 @@ public class CargoServiceTest {
 	    		response2.contains("engage_refused") && 
 	    		response2.contains("ioport_occupied"));
     }
-
 
 /*
     //Scenario di test 3: richiesta di carico rifiutata perchè robot e marker non sono liberi senza arrivo concorrenziale di due load_request

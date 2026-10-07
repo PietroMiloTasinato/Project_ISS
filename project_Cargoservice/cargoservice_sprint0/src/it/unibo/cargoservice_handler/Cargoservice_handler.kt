@@ -38,7 +38,6 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 				state("idle") { //this:State
 					action { //it:State
 						CommUtils.outgreen("CARGOSERVICE_HANDLER | Ready")
-						delay(2000) 
 						updateResourceRep(
 						            "cargoservice(idle," +
 						            "serviceWorking=$ServiceWorking," +
