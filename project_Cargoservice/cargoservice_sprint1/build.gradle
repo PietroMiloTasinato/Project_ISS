@@ -61,6 +61,9 @@ dependencies {
     // Use the Kotlin JUnit integration.
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.9.22"
 
+    // Gson
+    implementation 'com.google.code.gson:gson:2.14.0'
+
     /* COROUTINES ******************************************************************************* */
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: "$kotlinVersion"   //, ext: 'pom'
@@ -129,6 +132,15 @@ dependencies {
     
 }
 	
+//sourceSets {
+//    main.java.srcDirs += 'src'
+//    main.java.srcDirs += 'src/main/java'
+//    main.java.srcDirs += 'src/main/kotlin'
+//    main.java.srcDirs += 'src/main/resources'
+//    test.java.srcDirs += 'src/main/java/test'		//test is specific
+//    test.java.srcDirs += 'src/main/kotlin/test'
+//}
+
 sourceSets {
     main.java.srcDirs += 'src'
     main.java.srcDirs += 'src/main/java'

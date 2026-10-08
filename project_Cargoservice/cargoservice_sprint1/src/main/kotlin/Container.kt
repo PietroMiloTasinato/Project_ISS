@@ -1,4 +1,3 @@
 package main.kotlin
 
-class Container {
-}
+data class Container(override val code: Int? = null) : IContainer
