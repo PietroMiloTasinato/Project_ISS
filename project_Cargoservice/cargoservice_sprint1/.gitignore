@@ -5,6 +5,7 @@ bin/default
 .project
 .idea
 .gradle
+.settings
 build
 logs 
 

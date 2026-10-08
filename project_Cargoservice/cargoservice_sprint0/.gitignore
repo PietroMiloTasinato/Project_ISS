@@ -4,6 +4,8 @@ bin/default
 .classpath
 .project
 .idea
+.gradle
+.settings
 build
 logs 
 
