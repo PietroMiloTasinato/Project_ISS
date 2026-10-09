@@ -19,15 +19,46 @@
   - [Piano di lavoro](#piano-di-lavoro)
   - [Team di lavoro e attività specifiche](#team-di-lavoro-e-attività-specifiche)
 
-## Obiettivi
+## Introduzione
 
 Lo Sprint0 ha lo scopo di formalizzare i requisiti espressi dal committente nel documento [TemaFinale26](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#chapter.31) e di definire un primo modello del sistema da utilizzare come riferimento negli sprint successivi.
 
 ## Requisiti
 
-I requisiti sono descritti dal committente nel documento [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1).
+I requisiti sono descritti dal committente nel documento [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1).Per comodità, riportiamo di seguito il suddetto documento: 
 
-### Requisiti funzionali individuati
+Una compagnia di trasporto marittimo merci, da ora in poi semplicemente **company**, intende automatizzare le operazioni di carico dei **container** nella stiva della nave, da ora in poi semplicemente **hold**. A tale scopo, la compagnia intende impiegare un robot a guida differenziale, da ora in poi chiamato **cargorobot**.
+
+La hold è un’area rettangolare e piana dotata di una porta di Input/Output, chiamata **IOPort**. L’area fornisce `4 slot` per immagazzinare i container e uno slot chiamato **slot5**.
+
+![Wenv & DDR](../img/CargoBot.png)
+
+Nella figura sopra:
+
+- I **slots1-4** rappresentano le aree della stiva riservate a contenere un *container* ciascuna.
+- Lo **slot5** rappresenta un’area in cui il *cargorobot* deve depositare temporaneamente un container prima di collocarlo in uno degli *slots1-4*. Durante questa sosta temporanea, un dispositivo chiamato marker etichetta il container con un codice a barre identificativo e segnala quando l’attività di marcatura è completata.
+- L’**IOPort** è un dispositivo dotato di un **pushbutton** e di un **display**. Il *pushbutton* viene premuto dal cliente per inviare una richiesta di carico di un container nella stiva. Il *display* viene usato per mostrare la risposta alla richiesta e per mostrare lo stato corrente dell'*hold*.
+- Il **sensore** associato all’*IOPort* è un dispositivo, cioè un *sonar*, usato per rilevare la presenza di un container quando misura una distanza D tale che D < DFREE / 2 per un tempo ragionevole, per esempio 3 secondi.
+
+
+Requisiti
+La compagnia ci chiede di costruire un servizio chiamato **cargoservice**, che deve funzionare come segue. Il *cargoservice* è in grado di ricevere una **richiesta di carico** di un container inviata da un cliente tramite il *pushbutton* dell’*IOPort*.
+
+Il servizio:
+
+- Invia la risposta `retrylater` se l’**IOPort** è attualmente occupato da un container oppure se il sistema è *Out of service*.
+- Rifiuta la richiesta quando la stiva è già piena, cioè quando gli `slots1-4` sono già occupati.
+- Altrimenti, considera il sistema come **engaged**, individua uno slot libero e restituisce come risposta il nome dello slot riservato. Mentre il sistema è engaged, deve lampeggiare un LED.
+
+Quando la *richiesta di carico* viene accettata, il cliente deve spostare il container nell’area del *sensore* entro un tempo prefissato, per esempio 30 secondi; altrimenti il sistema torna nello stato **disengaged**. Successivamente, il *cargoservice* usa il *cargorobot* per spostare il container dall’*IOPort* allo *slot5*, dove il container viene marcato, e poi allo slot riservato.
+
+Il servizio deve inoltre mostrare sul *display* dell’*IOPort*:
+
+lo stato corrente dell'*hold*;
+il messaggio **'Service working'**, quando tutto procede correttamente;
+il messaggio **'Out of service'** se il *sensore sonar* misura una distanza D > DFREE per almeno 3 secondi, evento che potrebbe indicare un guasto del *sonar*.
+
+<!-- ### Requisiti funzionali individuati
 
 Dall'analisi del documento dei requisiti emergono i seguenti comportamenti osservabili:
 
@@ -44,9 +75,34 @@ Dall'analisi del documento dei requisiti emergono i seguenti comportamenti osser
 - **RF11 - Trasporto finale**: dopo il completamento della marcatura, il cargorobot trasporta il container dallo slot5 allo slot precedentemente riservato.
 - **RF12 - Aggiornamento della hold**: al termine del trasporto, lo slot riservato diventa occupato e il nuovo stato della hold viene mostrato sul display.
 - **RF13 - Stato del servizio**: il display deve mostrare il messaggio `Service working` quando il sistema opera correttamente.
-- **RF14 - Guasto del sonar**: se il sonar misura una distanza `D > DFREE` per almeno 3 secondi, il sistema deve passare allo stato `out_of_service` e il display deve mostrare `Out of service`.
+- **RF14 - Guasto del sonar**: se il sonar misura una distanza `D > DFREE` per almeno 3 secondi, il sistema deve passare allo stato `out_of_service` e il display deve mostrare `Out of service`. -->
 
-## Motivazione sull'utilizzo del metamodello Qak
+## Analisi dei Requisiti
+
+<!--In questa fase dobbiamo formalizzare i requisiti espressi in linguaggio umano, traducendoli in un linguaggio che sia comprensibile ad una macchina.
+Innanzitutto dobbiamo trovare il linguaggio che più si adatta al sistema che dobbiamo implementare. In particolare, il committente richiede un sistema eterogeneo, dato che dobbiamo integrare almeno 3 dispositivi (computer dove esguire *cargoservice*, sonar e un dispositivo che gestisca l'*IOPort*)
+-->
+
+Seguendo i requisiti del committente, abbiamo individuato i seguenti **macrocomponenti:**
+
+- **cargoservice**
+- **cargorobot**
+- **sonar**
+- **IOPort**
+- **hold** 
+- **led** 
+- **slot** numerati dall' 1 al 4
+- **slot 5**, d'ora in poi identificato con **marker**
+- **container**
+
+*Cargoservice* è composto da un servizio che si occupa di ricevere la richiesta di carico dal cliente. Successivamente deve ricevere e gestire le possibili risposte:
+```
+- Request accepted
+- Request refused
+- Riprova più tardi
+```
+
+<!--## Motivazione sull'utilizzo del metamodello Qak
 
 In questo progetto abbiamo scelto di utilizzare il metamodello **Quasi Actor Kotlin** (Qak) per 2 vantaggi principali offerti da questo metamodello rispetto ad altri General Purpose Language (GPL):
 
@@ -56,7 +112,7 @@ In questo progetto abbiamo scelto di utilizzare il metamodello **Quasi Actor Kot
 
 Queste due caratteristiche permettono di ridurre significativamente l'**Abstraction Gap** tra Qak e il dominio del problema. Utilizzare solamente un GPL presenterebbe un Abstraction gap maggiore che comporterebbe a maggiore complessità nelle fasi di implementazione del progetto.
 
-Infine, l'adozione del metamodello QAK è anche motivata dalla presenza di una **Software Factory** che è in grado di generare automaticamente codice Kotlin a partire dai modelli scritti in linguaggio QAK. Questo permette non solo di ottenere dei modelli eseguibili "off-the-bat", ma supporta anche un processo di **Rapida Prototipazione** in cui si permette agli sviluppatori di valutare la fattibilità di particolari soluzioni implementative già nelle fasi di progettazione.
+Infine, l'adozione del metamodello QAK è anche motivata dalla presenza di una **Software Factory** che è in grado di generare automaticamente codice Kotlin a partire dai modelli scritti in linguaggio QAK. Questo permette non solo di ottenere dei modelli eseguibili "off-the-bat", ma supporta anche un processo di **Rapida Prototipazione** in cui si permette agli sviluppatori di valutare la fattibilità di particolari soluzioni implementative già nelle fasi di progettazione.-->
 
 ## Macrocomponenti
 
@@ -83,16 +139,10 @@ Il DDR supporta le seguenti mosse elementari:
 
 Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 
-- **cargoservice**: composto da _cargoservice_handler_ e _cargoservice_worker_
-- **cargorobot**
-- **sonar**
-- **IOPort**: composto da un _display_ (web-gui) + _pushbutton_
-- **hold** <!-- cosa si intende per stato corrente dell'hold -->
-- **led** <!-- chiedere se va tenuto come componente separato o inserirlo dentro IOPort -->
-
+in questa fase iniziale il display verrà simulato con il terminale, e il pushbutton invece verrà simulato da una ?
 ## Core business
 
-Il core business del sistema è la gestione coordinata del processo di caricamento di un container, dalla richiesta iniziale fino al suo deposito nello slot finale. Il processo principale è costituito dalle seguenti fasi:
+Il core business del sistema è la gestione coordinata del processo di carico di un container, dalla richiesta iniziale fino al suo deposito nello slot finale. Il processo principale è costituito dalle seguenti fasi:
 
 1. il cliente preme il pushbutton della IOPort;
 2. l'IOPort inoltra la richiesta al cargoservice_handler;
