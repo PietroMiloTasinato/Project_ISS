@@ -1,0 +1,72 @@
+System sprint_0
+
+Request request_to_load: request_to_load(ARG)
+Reply retry_later: retry_later(ARG) for request_to_load
+Reply rejected: rejected(ARG) for request_to_load
+Reply engaged: engaged(SLOT) for request_to_load
+
+
+Request ask_for_slot:ask_for_slot(ARG)
+Reply slot_assigned:slot_assigned(SLOT) for ask_for_slot
+Reply hold_full:hold_full(ARG) for ask_for_slot
+
+
+/* ----------- Messaggi per il testing ---------------- */
+
+Dispatch set_slot:set_slot(VALUE)
+
+Context ctx_cargoservice ip [host="localhost" port=8000]
+
+QActor cargo_service context ctx_cargoservice{
+	
+	[#
+		val Timeout = 30000L
+		var Io_port_occupied = false
+		var System_out_of_service = false
+		var Is_engaged = false
+		var Is_hold_full = false
+	#]
+	
+	State idle initial{
+		println("CARGOSERVICE_HANDLER | Ready") color green
+	} Transition t0
+		whenRequest request_to_load -> start_engage
+		
+	State start_engage{
+		if [# Io_port_occupied || System_out_of_service #]{
+			replyTo request_to_load with retry_later: retry_later(0)
+		}
+		 if [# Is_hold_full #] {
+			replyTo request_to_load with rejected: rejected(ARG)
+		}
+			
+		[# Is_engaged = true #]
+		
+		request hold -m ask_for_slot: ask_for_slot(ARG)
+		
+	}
+	
+}
+
+QActor hold context ctx_cargoservice{
+	
+	[# var Slot: String? = null #]
+	
+	State idle initial{
+		println("HOLD_MOCK | Ready") color green
+	}Transition t0
+		whenRequest ask_for_slot -> get_slot
+		whenMsg set_slot -> set_slot
+	
+	State set_slot{
+		onMsg(set_slot:set_slot(VALUE)){
+			[# Slot = payloadArg(0)#]
+			println("HOLD_MOCK | Set slot to $Slot") color green
+		}
+	}
+		
+	State get_slot {
+		replyTo ask_for_slot with slot_assigned:slot_assigned($Slot1)
+	}
+	
+}

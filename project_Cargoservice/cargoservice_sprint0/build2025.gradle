@@ -139,7 +139,7 @@ tasks.withType(Copy).configureEach {
 
 application {
     //Define the main class for the application.
-    mainClassName    = 'it.unibo.ctx_devices.MainCtx_devicesKt'
+    mainClassName    = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
 }
  
  jar {
@@ -162,9 +162,9 @@ task dovesiamo {
 
 distributions {
     main {
-        distributionBaseName = 'sprint0'
+        distributionBaseName = 'sprint_0'
         contents { 
-             from './sprint0.pl'
+             from './sprint_0.pl'
              from './sysRules.pl'
         }
     }
@@ -174,7 +174,7 @@ task run0(type: JavaExec) {
     group = "Execution"
     description = "Run the main class with JavaExecTask"
     classpath = sourceSets.main.runtimeClasspath
-    main = 'it.unibo.ctx_devices.MainCtx_devicesKt'
+    main = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
 }
 
 /*

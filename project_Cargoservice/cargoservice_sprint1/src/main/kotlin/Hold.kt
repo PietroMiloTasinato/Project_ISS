@@ -9,9 +9,12 @@ import java.io.File
 class Hold(
     override val holdMap: Map<IPoint, ISlot>,
     override val home: IPoint,
-    override val marker: IPoint,
-    override val ioPort: Pair<IPoint, IContainer>
+    override val slot5: IPoint,
+    override val ioPort: Pair<IPoint, IContainer?>
 ): IHold{
+
+    override fun getFreeSlot() = holdMap.values.firstOrNull { it.container == null }
+
 
     companion object{
         fun createHoldFromConfig(file: File): Hold {
