@@ -110,10 +110,16 @@ Il `cargoservice` rappresenta il servizio applicativo responsabile della ricezio
 
 Una volta rilevata la presenza del container, il cargoservice si avvale del cargorobot per trasferirlo dalla IOPort allo slot5, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura. Successivamente, il robot provvede al trasferimento del container nello slot precedentemente riservato. Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
 
-Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici, la cui distribuzione sui nodi computazionali non è esplicitamente definita dal committente. Sebbene il testo dei requisiti non imponga un’architettura distribuita, gli obiettivi del corso orientano verso la realizzazione di un sistema distribuito, potenzialmente eterogeneo, costituito da più nodi computazionali. Il numero di nodi computazionali ricavato dai requisiti è almeno 2 (sonar e un computer per eseguire `cargoservice`), in caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. In questa fase iniziale è quindi possibile prevedere un primo modello del sistema organizzato in un unico Context, eventualmente mediante componenti mock, senza vincolare l’architettura definitiva. Analogamente, il committente non prescrive l’utilizzo di uno o più linguaggi di programmazione. Dopo un confronto con il commitente, sono sorti altri requisiti, in particolare: 
- - la presenza di una Web GUI per la IOPort
- -  un dispositivo PicoW per il sonar e il LED
-Questi ulteriori requisiti introducono dei vincoli tecnologici che potrebbero richiedere l’impiego di tecnologie e linguaggi differenti (**da capire bene come introdurre questi ulteriori requisiti specificati nel file AboutSprint del prof**).
+Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici, la cui distribuzione sui nodi computazionali non è esplicitamente definita dal committente. Sebbene il testo dei requisiti non imponga un’architettura distribuita, gli obiettivi del corso orientano verso la realizzazione di un sistema distribuito, potenzialmente eterogeneo, costituito da più nodi computazionali. Il numero di nodi computazionali ricavato dai requisiti è almeno 2 (un dispositivo per il sonar e un computer per eseguire `cargoservice`), in caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il `cargoservice` è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia e un sottosistema robotico. Perciò, la loro rappresentazione come attori, oggetti o servizi richiede ulteriore analisi.
+
+Quindi, in questa fase iniziale è possibile prevedere un primo modello del sistema organizzato in un unico Context, eventualmente mediante componenti mock, senza vincolare l’architettura definitiva. Analogamente, il committente non prescrive l’utilizzo di uno o più linguaggi di programmazione.
+
+Dopo un primo confronto con il commitente, sono sorti altri requisiti, in particolare:
+
+- la presenza di una Web GUI per la IOPort
+- un dispositivo PicoW per il sonar e il led
+
+Questi ulteriori requisiti introducono dei vincoli tecnologici che potrebbero richiedere l’impiego di tecnologie e linguaggi differenti (**da capire bene se specificarlo qui o nello sprint1**).
 
 L'interazione principale è una richiesta dalla IOPort al cargoservice, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente, è:
 
@@ -124,7 +130,17 @@ Reply load_refused : load_refused(CAUSE) for load_container
 Reply retrylater : retrylater(CAUSE) for load_container
 ```
 
-Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint.
+Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/IOPort per la richiesta, cargoservice/cargorobot per movimentazione, sonar per rilevamento, marker per la segnalazione di marcatura, display per la visualizzazione e LED per il lampeggio.
+
+Infine, non è definito nei requisiti dove collocare i macro-componenti individuati, quindi si evita di fissare fin d'ora Context Qak o indirizzi di rete definitivi. Mentre, le responsabilità funzionali sono distribuite nel modo seguente:
+
+- il servizio (`cargoservice`) gestisce il caricamento;
+- la `IOPort` gestisce il contatto con il cliente;
+- il `sonar` misura;
+- il `marker` marca;
+- il `cargorobot` trasporta.
+
+Nessuna ulteriore scomposizione interna del servizio è imposta dal committente.
 
 ## Analisi del problema
 
@@ -152,7 +168,7 @@ Cliente → IOPort → cargoservice → esito della richiesta
                                  slot riservato
 ```
 
-Questo è un flusso funzionale, non un diagramma di attori Qak o di deployment. Le transizioni del LED e il rilascio della prenotazione dopo il timeout non vengono completati arbitrariamente laddove il testo non li specifica.
+Questo è un flusso funzionale, non un diagramma di attori Qak o di deployment. Le transizioni del led e il rilascio della prenotazione dopo il timeout non vengono completati arbitrariamente laddove il testo non li specifica.
 
 <!-- Il core business del sistema è la gestione coordinata del processo di carico di un container, dalla richiesta iniziale fino al suo deposito nello slot finale. Il processo principale è costituito dalle seguenti fasi:
 
@@ -293,34 +309,35 @@ public void testDoubleLoadRequest() throws Exception {
 
 Non previsto per lo Sprint0: non è ancora disponibile un prototipo da distribuire.
 
-## Piano di lavoro e mantenimento
+## Piano di lavoro
 
-Oltre a questo sprint 0 iniziale, dedicato all'impostazione del progetto, nel nostro processo Scrum abbiamo previsto tre sprint operativi:
+Oltre a questo Sprint0 iniziale, nel nostro processo Scrum abbiamo previsto tre sprint operativi:
 
 1. Sprint 1
    - cargoservice (core business del sistema)
    - cargorobot
    - marker
-1. Sprint 2
-   - sonar
    - hold
-   - IO port e pushbutton
-1. Sprint 3
+2. Sprint 2
+   - sonar
    - led
+   - IOPort
+3. Sprint 3
    - web-gui
-   - display
+   - display e pushbutton
 
-| Numero sprint | Data inizio (indicativa) | Data fine (indicativa) | Lavoro Stimato Totale (h) |
+<!-- | Numero sprint | Data inizio (indicativa) | Data fine (indicativa) | Lavoro Stimato Totale (h) |
 | ------------- | ------------------------ | ---------------------- | ------------------------- |
 | Sprint 1      | 03/08/2026               | 8/08/2026              | 30                        |
 | Sprint 2      | 10/08/2026               | 14/08/2026             | 20                        |
 | Sprint 3      | 17/08/2026               | 21/08/2026             | 20                        |
 
-La pianificazione temporale costituisce un riferimento per il team.  
-Sono comunque contemplate variazioni, nel limite del ragionevole, purché non compromettano il ritmo generale del lavoro.  
+La pianificazione temporale costituisce un riferimento per il team.
+Sono comunque contemplate variazioni, nel limite del ragionevole, purché non compromettano il ritmo generale del lavoro.-->
+
 Eventuali modifiche significative potranno essere apportate solo in presenza di esigenze straordinarie, cambiamenti rilevanti durante il percorso progettuale, o situazioni tali da non poter essere ignorate.
 
-## Team di lavoro e attività specifiche
+## Team di lavoro
 
 Francesco Cenerini, Niccolò Leoncini, Pietro Milo Tasinato.
 Tutti e tre i componenti del team hanno partecipato attivamente a tutte le fasi di scrittura e stesura dello sprint, dando il loro contributo in forma di conoscenze e ore di lavoro.
