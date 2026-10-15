@@ -26,7 +26,7 @@ In particolare, il primo modello dei requisiti prodotto deve essere comprensibil
 
 ## Requisiti
 
-I requisiti sono descritti dal committente nel documento [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1).Per comodità, riportiamo di seguito il suddetto documento, tradotto in lingua italiana:
+I requisiti sono descritti dal committente nel documento [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1). Per comodità, riportiamo di seguito il suddetto documento, tradotto in lingua italiana:
 
 Una compagnia di trasporto marittimo merci, da ora in poi semplicemente **company**, intende automatizzare le operazioni di carico dei **container** nella stiva della nave, da ora in poi semplicemente **hold**. A tale scopo, la compagnia intende impiegare un robot a guida differenziale, da ora in poi chiamato **cargorobot**.
 
@@ -56,6 +56,8 @@ Il servizio deve inoltre mostrare sul _display_ dell’_IOPort_:
 - lo stato corrente dell'_hold_;
 - il messaggio **'Service working'**, quando tutto procede correttamente;
 - il messaggio **'Out of service'** se il _sensore sonar_ misura una distanza D > DFREE per almeno 3 secondi, evento che potrebbe indicare un guasto del _sonar_.
+
+**Nota**: Si precisa che il testo riportato sopra costituisce una traduzione in lingua italiana, realizzata esclusivamente per facilitarne la lettura e rimanere coerenti con la lingua del documento. La specifica ufficiale del committente rimane quella contenuta nel documento originale **TemaFinale26**, in particolare nella sezione [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1), redatta in lingua inglese. Pertanto, la traduzione non intende sostituire né modificare la specifica originale, che costituisce l'unico riferimento autorevole per l'analisi e la formalizzazione dei requisiti del sistema
 
 <!-- ### Requisiti funzionali individuati
 
@@ -119,7 +121,7 @@ Dopo un primo confronto con il commitente, sono sorti altri requisiti, in partic
 - la presenza di una Web GUI per la IOPort
 - un dispositivo PicoW per il sonar e il led
 
-Questi ulteriori requisiti introducono dei vincoli tecnologici che potrebbero richiedere l’impiego di tecnologie e linguaggi differenti (**da capire bene se specificarlo qui o nello sprint1**).
+Questi ulteriori requisiti introducono dei vincoli tecnologici che potrebbero richiedere l’impiego di tecnologie e linguaggi differenti.
 
 L'interazione principale è una richiesta dalla IOPort al cargoservice, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente, è:
 
@@ -216,16 +218,16 @@ La motivazione di Qak non determina automaticamente il numero degli attori o dei
 
 ## Piano di Test
 
-Primi casi funzionali da formalizzare in test automatici quando sarà disponibile il prototipo:
+In questa fase iniziale sono stati individuati i seguenti casi di test funzionali, derivati direttamente dai requisiti del committente, con l'obiettivo di verificare il comportamento del sistema in risposta a una richiesta di caricamento.
 
-| Condizione iniziale e richiesta                     | Risultato atteso                       |
-| --------------------------------------------------- | -------------------------------------- |
-| IOPort libera, servizio operativo, slot disponibile | Risposta con nome dello slot riservato |
-| IOPort occupata da un container                     | `retrylater`                           |
-| Servizio Out of service                             | `retrylater`                           |
-| Hold piena, IOPort libera e servizio operativo      | Richiesta rifiutata                    |
+| Condizione iniziale e richiesta                     | Risultato atteso    |
+| --------------------------------------------------- | ------------------- |
+| IOPort libera, servizio operativo, slot disponibile | Risposta accettata  |
+| IOPort occupata da un container                     | `retrylater`        |
+| Servizio Out of service                             | `retrylater`        |
+| Hold piena, IOPort libera e servizio operativo      | Richiesta rifiutata |
 
-Non sono test già eseguiti. I casi relativi a timeout, trasporto e sonar saranno approfonditi negli sprint che li affronteranno.
+I casi individuati costituiscono un primo TestPlan funzionale, che verrà progressivamente formalizzato in test automatizzati durante gli sprint successivi, parallelamente allo sviluppo dei componenti software necessari. Ulteriori TestPlan, relativi alle altre funzionalità del sistema, saranno definiti e approfonditi negli sprint che le affronteranno.
 
 ## Project
 
@@ -233,77 +235,18 @@ Non sono test già eseguiti. I casi relativi a timeout, trasporto e sonar sarann
 
 I requisiti permettono una vista logica delle macro-parti, ma non ancora una distribuzione sui nodi. Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1 e le relazioni qui sotto mostrano chi interagisce funzionalmente con chi, senza imporre un protocollo concreto o un attore per ogni dispositivo.
 
+- ctx_cargoservice: cargoservice, hold, cargorobot, marker, sonar, led, ioport;
+
 **TODO**:
-
-- ctx_cargoservice: cargoservice_handler, cargoservice_worker, hold, cargorobot, marker, sonar;
-- ctx_ioport: ioport, display, pushbutton;
-- ctx_devices: led;
-- ctx_client: client. <!-- realizza il cliente -->
-
 ![Wenv & DDR](../img/sprint0_arch.png)
 
 **Goal dello Sprint1**: realizzare un primo prototipo dell'interazione IOPort–cargoservice che gestisca accettazione, rifiuto e retrylater, utilizzando mock se necessari. Il trasporto effettivo e l'integrazione dei dispositivi sono rinviati ai successivi incrementi.
 
 ## Testing
 
-Questa prima fase di test seve ad effettuare un collaudo interno che in questa prima fase ha il preciso compito di confermare il corretto funzionamento della rete e delle interazioni via messaggi attraverso di essa dei vari componenti.
+Durante lo Sprint0 non sono stati implementati né eseguiti test automatici, poiché non è ancora disponibile un prototipo del sistema su cui verificarne il comportamento.
 
-Il primo test ha l'obiettivo di confermare la ricezione dei messaggi da parte degli attori qak e la corretta formazione dei messaggi.
-
-```text
-@Test
-    public void testLoadRequestAccepted() throws Exception {
-        //Costruzione di richiesta
-
-        IApplMessage requestStr = CommUtils.buildRequest("tester",
-                "load_container", "load_container(\"args\")",
-                "cargoservice_handler");
-
-        System.out.println("Richiesta: " + requestStr.toString());
-
-        //Risposta accettata perchè robot e marker sono liberi
-        String response = conn.request(requestStr).toString();
-
-        System.out.println("Risposta: " + response); // Risposta contenente lo slot libero dove posizionare il container
-
-        //Verifica che sia stata accettata
-        assertTrue("TEST: richiesta accettata",
-                 response.contains("load_accepted"));
-
-        TimeUnit.SECONDS.sleep(1); // wait for robot to finish
-    }
-```
-
-Il secondo test ha l'obiettivo di confermare il corretto funzionamento del sistema in caso di arrivo concorrente di due richieste di carico
-
-```text
-@Test
-public void testDoubleLoadRequest() throws Exception {
-	    // Costruzione della prima richiesta
-	    String request1 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container(\"args\")",
-	            "cargoservice_handler").toString();
-
-	    //Risposta accettata perchè robot e marker sono liberi
-	    String response1 = conn.request(request1);
-
-	    System.out.println("Risposta: " + response1); // Risposta contenente lo slot libero dove posizionare il container
-	    assertTrue("TEST: Prima richiesta accettata",
-	             response1.contains("load_accepted"));
-
-	   // Costruzione della seconda richiesta
-	    String request2 = CommUtils.buildRequest("tester",
-	            "load_container", "load_container(\"args\")",
-	            "cargoservice_handler").toString();
-
-	    //Risposta negativa perchè robot e marker non sono liberi
-	    String response2 = conn.request(request2);
-	    System.out.println("Risposta: " + response2); // Risposta contenente la causa del rifiuto
-	    assertTrue("TEST: Seconda richiesta rifiutata",
-	    		response2.contains("load_refused") &&
-	    		response2.contains("ioport_occupied"));
-    }
-```
+L'implementazione e l'esecuzione dei test funzionali definiti nel Piano di Test sono pertanto rimandate agli sprint successivi, durante i quali verranno sviluppati progressivamente gli attori Qak e le interazioni necessarie, eventualmente ricorrendo a componenti mock per le funzionalità non ancora realizzate.
 
 ## Deployment
 
@@ -322,7 +265,6 @@ Oltre a questo Sprint0 iniziale, nel nostro processo Scrum abbiamo previsto tre 
    - sonar
    - led
    - IOPort
-3. Sprint 3
    - web-gui
    - display e pushbutton
 
