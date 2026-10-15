@@ -5,7 +5,7 @@ interface IHold {
     val home: IPoint
     val ioPort: Pair<IPoint, IContainer?>
     val slot5: IPoint
-    val holdMap: Map<IPoint, ISlot>
+    val holdMap: MutableMap<IPoint, ISlot>
 
     fun getFreeSlot(): ISlot?
 

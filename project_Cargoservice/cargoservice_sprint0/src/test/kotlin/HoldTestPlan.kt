@@ -1,6 +1,5 @@
 package test.kotlin
 
-import main.kotlin.IContainer
 import main.kotlin.IHold
 import main.kotlin.ISlot
 import org.junit.Before
