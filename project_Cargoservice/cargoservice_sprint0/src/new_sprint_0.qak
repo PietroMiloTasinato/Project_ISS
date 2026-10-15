@@ -24,27 +24,43 @@ QActor cargo_service context ctx_cargoservice{
 		var Io_port_occupied = false
 		var System_out_of_service = false
 		var Is_engaged = false
-		var Is_hold_full = false
+		var Slot = "" 
 	#]
 	
 	State idle initial{
+		// Stop blinking led
 		println("CARGOSERVICE_HANDLER | Ready") color green
 	} Transition t0
 		whenRequest request_to_load -> start_engage
+		// whenMsg out_of_serive -> ...
 		
 	State start_engage{
 		if [# Io_port_occupied || System_out_of_service #]{
 			replyTo request_to_load with retry_later: retry_later(0)
 		}
-		 if [# Is_hold_full #] {
-			replyTo request_to_load with rejected: rejected(ARG)
-		}
 			
-		[# Is_engaged = true #]
+		request hold -m ask_for_slot:ask_for_slot(ARG)
 		
-		request hold -m ask_for_slot: ask_for_slot(ARG)
+	} Transition t0
+		whenReply slot_assigned -> engaged
+		whenReply hold_full -> hold_full
 		
-	}
+	
+	State engaged{
+		onMsg(ask_for_slot:ask_for_slot(ARG)){
+			
+			// Start blinking the led
+			// Wait for sonar reply
+		}
+	} Transition t1
+		whenTimeVar Timeout -> idle
+		// when Sonar reply
+		
+		
+	State hold_full{
+		replyTo request_to_load with rejected: rejected(ARG)
+	} Goto idle
+
 	
 }
 
@@ -55,18 +71,21 @@ QActor hold context ctx_cargoservice{
 	State idle initial{
 		println("HOLD_MOCK | Ready") color green
 	}Transition t0
-		whenRequest ask_for_slot -> get_slot
-		whenMsg set_slot -> set_slot
-	
-	State set_slot{
-		onMsg(set_slot:set_slot(VALUE)){
-			[# Slot = payloadArg(0)#]
-			println("HOLD_MOCK | Set slot to $Slot") color green
-		}
-	}
-		
-	State get_slot {
-		replyTo ask_for_slot with slot_assigned:slot_assigned($Slot1)
-	}
 	
 }
+
+
+QActor io_port context ctx_cargoservice {
+	
+	
+	State idle initial {
+		println("IOPORT_MOCK | Ready") color green
+	}
+	
+	
+}
+
+
+
+
+

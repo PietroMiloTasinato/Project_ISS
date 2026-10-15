@@ -39,30 +39,6 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t01",targetState="get_slot",cond=whenRequest("ask_for_slot"))
-					transition(edgeName="t02",targetState="set_slot",cond=whenDispatch("set_slot"))
-				}	 
-				state("set_slot") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("set_slot(VALUE)"), Term.createTerm("set_slot(VALUE)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								 Slot = payloadArg(0) 
-								CommUtils.outgreen("HOLD_MOCK | Set slot to $Slot")
-						}
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-				}	 
-				state("get_slot") { //this:State
-					action { //it:State
-						answer("ask_for_slot", "slot_assigned", "slot_assigned($Slot1)"   )  
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
 				}	 
 			}
 		}

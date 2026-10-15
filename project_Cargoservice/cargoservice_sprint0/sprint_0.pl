@@ -15,3 +15,5 @@ context(ctx_cargoservice, "localhost",  "TCP", "8000").
  static(cargo_service).
   qactor( hold, ctx_cargoservice, "it.unibo.hold.Hold").
  static(hold).
+  qactor( io_port, ctx_cargoservice, "it.unibo.io_port.Io_port").
+ static(io_port).

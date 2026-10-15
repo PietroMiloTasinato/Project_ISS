@@ -28,5 +28,6 @@ with Diagram('sprint_0Arch', show=False, outformat='png', graph_attr=graphattr) 
      with Cluster('ctx_cargoservice', graph_attr=nodeattr):
           cargo_service=Custom('cargo_service','./qakicons/symActorWithobjSmall.png')
           hold=Custom('hold','./qakicons/symActorWithobjSmall.png')
+          io_port=Custom('io_port','./qakicons/symActorWithobjSmall.png')
      cargo_service >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_assigned hold_full</font> &nbsp; >',  fontcolor='magenta') >> hold
 diag

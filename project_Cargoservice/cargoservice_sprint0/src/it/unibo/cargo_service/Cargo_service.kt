@@ -34,7 +34,7 @@ class Cargo_service ( name: String, scope: CoroutineScope, isconfined: Boolean=f
 				var Io_port_occupied = false
 				var System_out_of_service = false
 				var Is_engaged = false
-				var Is_hold_full = false
+				var Slot = "" 
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
@@ -51,16 +51,38 @@ class Cargo_service ( name: String, scope: CoroutineScope, isconfined: Boolean=f
 						if(  Io_port_occupied || System_out_of_service  
 						 ){answer("request_to_load", "retry_later", "retry_later(0)"   )  
 						}
-						if(  Is_hold_full  
-						 ){answer("request_to_load", "rejected", "rejected(ARG)"   )  
-						}
-						 Is_engaged = true  
 						request("ask_for_slot", "ask_for_slot(ARG)" ,"hold" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition(edgeName="t01",targetState="engaged",cond=whenReply("slot_assigned"))
+					transition(edgeName="t02",targetState="hold_full",cond=whenReply("hold_full"))
+				}	 
+				state("engaged") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("ask_for_slot(ARG)"), Term.createTerm("ask_for_slot(ARG)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+				 	 		stateTimer = TimerActor("timer_engaged", 
+				 	 					  scope, context!!, "local_tout_"+name+"_engaged", Timeout )  //OCT2023
+					}	 	 
+					 transition(edgeName="t13",targetState="idle",cond=whenTimeout("local_tout_"+name+"_engaged"))   
+				}	 
+				state("hold_full") { //this:State
+					action { //it:State
+						answer("request_to_load", "rejected", "rejected(ARG)"   )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 			}
 		}
