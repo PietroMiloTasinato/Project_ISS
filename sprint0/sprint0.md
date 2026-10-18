@@ -105,14 +105,61 @@ Seguendo i requisiti del committente, abbiamo individuato i seguenti **macrocomp
 ``` -->
 
 Il sistema richiesto dal committente ha l’obiettivo di automatizzare le operazioni di caricamento e deposito dei container all’interno della stiva di una nave, mediante l’impiego di un robot a guida differenziale denominato `cargorobot`, coordinato dal servizio software `cargoservice`.
-L'`hold` (stiva) costituisce l’ambiente fisico operativo ed è organizzata in quattro aree di deposito permanente, denominate `slot1–slot4`, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, `slot5`, dedicata alle operazioni di marcatura. L’interazione con il sistema avviene attraverso la `IOPort`, interfaccia verso il cliente, dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sul funzionamento del servizio.
+L'`hold` (stiva) costituisce l’ambiente fisico operativo ed è organizzata in quattro aree di deposito permanente, denominate `slot1–slot4`, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, `slot5`, dedicata alle operazioni di marcatura. Segue la formalizzazione dell'Hold:
+
+```
+interface IHold {  
+    val home: IPoint  
+    val ioPort: Pair<IPoint, IContainer?>
+    val slot5: IPoint  
+    val holdMap: MutableMap<IPoint, ISlot> // slot1-4 
+    fun getFreeSlot(): ISlot?  
+}
+```
+
+ L’interazione con il sistema avviene attraverso la `IOPort`, interfaccia verso il cliente, dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sul funzionamento del servizio.
 Alla IOPort è associato un sensore `sonar`, incaricato di rilevare la presenza di un container nell’area di ingresso e di segnalare eventuali condizioni anomale della distanza misurata.
 
 Il `cargoservice` rappresenta il servizio applicativo responsabile della ricezione e della valutazione delle richieste di caricamento, nonché del coordinamento delle operazioni necessarie al loro completamento. In particolare, il servizio restituisce la risposta _retrylater_ qualora la IOPort risulti occupata da un container oppure il sistema si trovi nella condizione _Out of service_; rifiuta invece la richiesta quando tutti gli slot di deposito permanente risultano occupati. In presenza di almeno uno slot disponibile e in assenza delle precedenti condizioni, il servizio accetta la richiesta, individua e riserva uno slot libero, ne comunica il nome al cliente e pone il sistema nello stato _engaged_, durante il quale un `led` deve lampeggiare. A seguito dell'accettazione, il cliente è tenuto a collocare il container nell’area di rilevamento del sonar entro un intervallo di tempo prefissato, trascorso il quale, in assenza del container, il sistema torna nello stato _disengaged_.
 
-Una volta rilevata la presenza del container, il cargoservice si avvale del cargorobot per trasferirlo dalla IOPort allo slot5, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura. Successivamente, il robot provvede al trasferimento del container nello slot precedentemente riservato. Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
+Una volta rilevata la presenza del container, il cargoservice si avvale del cargorobot per trasferirlo dalla IOPort allo slot5, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura.
+
+Successivamente, il robot provvede al trasferimento del container nello slot precedentemente riservato. Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
 
 Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici, la cui distribuzione sui nodi computazionali non è esplicitamente definita dal committente. Sebbene il testo dei requisiti non imponga un’architettura distribuita, gli obiettivi del corso orientano verso la realizzazione di un sistema distribuito, potenzialmente eterogeneo, costituito da più nodi computazionali. Il numero di nodi computazionali ricavato dai requisiti è almeno 2 (un dispositivo per il sonar e un computer per eseguire `cargoservice`), in caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il `cargoservice` è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia e un sottosistema robotico. Perciò, la loro rappresentazione come attori, oggetti o servizi richiede ulteriore analisi.
+
+Segue la formalizzazione delle entità del sistema sopra descritte tramite interfacce kotlin.
+
+```
+interface IHold {  
+    val home: IPoint  
+    val ioPort: Pair<IPoint, IContainer?>  
+    val slot5: IPoint  
+    val holdMap: MutableMap<IPoint, ISlot>    
+    fun getFreeSlot(): ISlot?  
+}
+```
+
+```
+interface ISlot {  
+    val id: String  
+    val container: IContainer?  
+}
+```
+
+```
+interface IPoint {  
+    val x: Int  
+    val y: Int  
+}
+```
+
+```
+interface IContainer {  
+    val code: Int?  
+}
+```
+
 
 Quindi, in questa fase iniziale è possibile prevedere un primo modello del sistema organizzato in un unico Context, eventualmente mediante componenti mock, senza vincolare l’architettura definitiva. Analogamente, il committente non prescrive l’utilizzo di uno o più linguaggi di programmazione.
 
@@ -219,6 +266,39 @@ La motivazione di Qak non determina automaticamente il numero degli attori o dei
 ## Piano di Test
 
 In questa fase iniziale sono stati individuati i seguenti casi di test funzionali, derivati direttamente dai requisiti del committente, con l'obiettivo di verificare il comportamento del sistema in risposta a una richiesta di caricamento.
+
+```
+abstract class HoldTestPlan {  
+  
+    IHold hold;  
+  
+    abstract ISlot createSlot();  
+  
+    abstract IHold createHold();  
+  
+    @Before  
+    public void setUp() {  
+       hold = createHold();  
+    }  
+  
+    @Test  
+    public void getting_a_slot_while_all_hold_slots_are_free_should_return_a_non_null_value() {  
+       ISlot freeSlot = hold.getFreeSlot();  
+       assertNotNull(freeSlot, "There are no slots available");  
+    }  
+  
+    @Test  
+    public void getting_a_slot_while_they_are_all_occupied_should_return_a_null_value() {  
+       for (Map.Entry<IPoint, ISlot> entry : hold.getHoldMap().entrySet()) {  
+          ISlot newSlot = createSlot();  
+          assertNotNull(newSlot.getContainer());  
+          entry.setValue(newSlot);  
+       }  
+       assertNull(hold.getFreeSlot());  
+    }  
+}
+```
+
 
 | Condizione iniziale e richiesta                     | Risultato atteso    |
 | --------------------------------------------------- | ------------------- |

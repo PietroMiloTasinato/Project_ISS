@@ -10,11 +10,6 @@ Request ask_for_slot:ask_for_slot(ARG)
 Reply slot_assigned:slot_assigned(SLOT) for ask_for_slot
 Reply hold_full:hold_full(ARG) for ask_for_slot
 
-
-/* ----------- Messaggi per il testing ---------------- */
-
-Dispatch set_slot:set_slot(VALUE)
-
 Context ctx_cargoservice ip [host="localhost" port=8000]
 
 QActor cargo_service context ctx_cargoservice{
@@ -54,7 +49,11 @@ QActor cargo_service context ctx_cargoservice{
 		}
 	} Transition t1
 		whenTimeVar Timeout -> idle
-		// when Sonar reply
+		// when Sonar reply move_robot
+		
+	State move_robot{
+		// move robot
+	}
 		
 		
 	State hold_full{
@@ -65,8 +64,6 @@ QActor cargo_service context ctx_cargoservice{
 }
 
 QActor hold context ctx_cargoservice{
-	
-	[# var Slot: String? = null #]
 	
 	State idle initial{
 		println("HOLD_MOCK | Ready") color green

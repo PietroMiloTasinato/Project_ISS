@@ -74,6 +74,14 @@ class Cargo_service ( name: String, scope: CoroutineScope, isconfined: Boolean=f
 					}	 	 
 					 transition(edgeName="t13",targetState="idle",cond=whenTimeout("local_tout_"+name+"_engaged"))   
 				}	 
+				state("move_robot") { //this:State
+					action { //it:State
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+				}	 
 				state("hold_full") { //this:State
 					action { //it:State
 						answer("request_to_load", "rejected", "rejected(ARG)"   )  

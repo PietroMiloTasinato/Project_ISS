@@ -29,7 +29,6 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
-		 var Slot: String? = null  
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
