@@ -13,7 +13,7 @@ abstract class HoldTestPlan {
 
 	IHold hold;
 
-	abstract ISlot createSlot();
+	abstract ISlot createSlot(String id);
 
 	abstract IHold createHold();
 
@@ -31,7 +31,7 @@ abstract class HoldTestPlan {
 	@Test
 	public void getting_a_slot_while_they_are_all_occupied_should_return_a_null_value() {
 		for (Map.Entry<IPoint, ISlot> entry : hold.getHoldMap().entrySet()) {
-			ISlot newSlot = createSlot();
+			ISlot newSlot = createSlot(entry.getValue().getId());
 			assertNotNull(newSlot.getContainer());
 			entry.setValue(newSlot);
 		}
