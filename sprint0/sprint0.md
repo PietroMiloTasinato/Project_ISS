@@ -15,8 +15,8 @@
   - [Diagramma dell'architettura iniziale](#diagramma-dellarchitettura-iniziale)
 - [Testing](#testing)
 - [Deployment](#deployment)
-- [Piano di lavoro e mantenimento](#piano-di-lavoro-e-mantenimento)
-- [Team di lavoro e attività specifiche](#team-di-lavoro-e-attività-specifiche)
+- [Piano di lavoro](#piano-di-lavoro)
+- [Team di lavoro](#team-di-lavoro)
 
 ## Introduzione
 
@@ -57,26 +57,7 @@ Il servizio deve inoltre mostrare sul _display_ dell’_IOPort_:
 - il messaggio **'Service working'**, quando tutto procede correttamente;
 - il messaggio **'Out of service'** se il _sensore sonar_ misura una distanza D > DFREE per almeno 3 secondi, evento che potrebbe indicare un guasto del _sonar_.
 
-**Nota**: Si precisa che il testo riportato sopra costituisce una traduzione in lingua italiana, realizzata esclusivamente per facilitarne la lettura e rimanere coerenti con la lingua del documento. La specifica ufficiale del committente rimane quella contenuta nel documento originale **TemaFinale26**, in particolare nella sezione [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1), redatta in lingua inglese. Pertanto, la traduzione non intende sostituire né modificare la specifica originale, che costituisce l'unico riferimento autorevole per l'analisi e la formalizzazione dei requisiti del sistema
-
-<!-- ### Requisiti funzionali individuati
-
-Dall'analisi del documento dei requisiti emergono i seguenti comportamenti osservabili:
-
-- **RF1 - Richiesta di carico**: il cliente invia una richiesta di carico mediante il pushbutton dell'IOPort.
-- **RF2 - IOPort occupato**: se l'IOPort è già occupato da un container, il sistema risponde `retrylater`.
-- **RF3 - Servizio non disponibile**: se il sistema si trova nello stato `out_of_service`, il sistema risponde `retrylater`.
-- **RF4 - Hold piena**: se gli slot1-4 sono tutti occupati, la richiesta viene rifiutata.
-- **RF5 - Accettazione della richiesta**: se il sistema è operativo, l'IOPort è libero ed esiste almeno uno slot disponibile, il sistema riserva uno slot e restituisce al cliente il nome dello slot riservato.
-- **RF6 - Stato engaged**: dopo l'accettazione della richiesta il sistema entra nello stato `engaged` e il LED deve lampeggiare.
-- **RF7 - Timeout di deposito**: il cliente deve collocare il container nell'area del sensore entro un intervallo di tempo prefissato, indicativamente 30 secondi. In caso contrario, il sistema torna `disengaged` e lo slot riservato viene liberato.
-- **RF8 - Rilevamento del container**: il sonar rileva la presenza del container quando misura una distanza `D < DFREE/2` per un intervallo ragionevole, indicativamente 3 secondi.
-- **RF9 - Trasporto verso slot5**: dopo il rilevamento, il cargorobot trasporta il container dall'IOPort allo slot5.
-- **RF10 - Marcatura**: nello slot5 il marker assegna al container un codice a barre e segnala il completamento della marcatura.
-- **RF11 - Trasporto finale**: dopo il completamento della marcatura, il cargorobot trasporta il container dallo slot5 allo slot precedentemente riservato.
-- **RF12 - Aggiornamento della hold**: al termine del trasporto, lo slot riservato diventa occupato e il nuovo stato della hold viene mostrato sul display.
-- **RF13 - Stato del servizio**: il display deve mostrare il messaggio `Service working` quando il sistema opera correttamente.
-- **RF14 - Guasto del sonar**: se il sonar misura una distanza `D > DFREE` per almeno 3 secondi, il sistema deve passare allo stato `out_of_service` e il display deve mostrare `Out of service`. -->
+**Nota**: Si precisa che il testo riportato sopra costituisce una traduzione in lingua italiana, realizzata esclusivamente per facilitarne la lettura e rimanere coerenti con la lingua del documento. La specifica ufficiale del committente rimane quella contenuta nel documento originale **TemaFinale26**, in particolare nella sezione [TF2026 Requirements](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1), redatta in lingua inglese. Pertanto, la traduzione non intende sostituire né modificare la specifica originale, che costituisce l'unico riferimento autorevole per l'analisi e la formalizzazione dei requisiti del sistema.
 
 ## Analisi dei Requisiti
 
@@ -96,28 +77,20 @@ Seguendo i requisiti del committente, abbiamo individuato i seguenti **macrocomp
 - **slot 5**, d'ora in poi identificato con **marker**
 - **container**
 
-<!-- `cargoservice` è composto da un servizio che si occupa di ricevere la richiesta di carico dal cliente. Successivamente deve ricevere e gestire le possibili risposte:
-
-```
-- Request accepted
-- Request refused
-- Riprova più tardi
-``` -->
-
 Il sistema richiesto dal committente ha l’obiettivo di automatizzare le operazioni di caricamento e deposito dei container all’interno della stiva di una nave, mediante l’impiego di un robot a guida differenziale denominato `cargorobot`, coordinato dal servizio software `cargoservice`.
 L'`hold` (stiva) costituisce l’ambiente fisico operativo ed è organizzata in quattro aree di deposito permanente, denominate `slot1–slot4`, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, `slot5`, dedicata alle operazioni di marcatura. Segue la formalizzazione dell'Hold:
 
 ```
-interface IHold {  
-    val home: IPoint  
+interface IHold {
+    val home: IPoint
     val ioPort: Pair<IPoint, IContainer?>
-    val slot5: IPoint  
-    val holdMap: MutableMap<IPoint, ISlot> // slot1-4 
-    fun getFreeSlot(): ISlot?  
+    val slot5: IPoint
+    val holdMap: MutableMap<IPoint, ISlot> // slot1-4
+    fun getFreeSlot(): ISlot?
 }
 ```
 
- L’interazione con il sistema avviene attraverso la `IOPort`, interfaccia verso il cliente, dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sul funzionamento del servizio.
+L’interazione con il sistema avviene attraverso la `IOPort`, interfaccia verso il cliente, dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sul funzionamento del servizio.
 Alla IOPort è associato un sensore `sonar`, incaricato di rilevare la presenza di un container nell’area di ingresso e di segnalare eventuali condizioni anomale della distanza misurata.
 
 Il `cargoservice` rappresenta il servizio applicativo responsabile della ricezione e della valutazione delle richieste di caricamento, nonché del coordinamento delle operazioni necessarie al loro completamento. In particolare, il servizio restituisce la risposta _retrylater_ qualora la IOPort risulti occupata da un container oppure il sistema si trovi nella condizione _Out of service_; rifiuta invece la richiesta quando tutti gli slot di deposito permanente risultano occupati. In presenza di almeno uno slot disponibile e in assenza delle precedenti condizioni, il servizio accetta la richiesta, individua e riserva uno slot libero, ne comunica il nome al cliente e pone il sistema nello stato _engaged_, durante il quale un `led` deve lampeggiare. A seguito dell'accettazione, il cliente è tenuto a collocare il container nell’area di rilevamento del sonar entro un intervallo di tempo prefissato, trascorso il quale, in assenza del container, il sistema torna nello stato _disengaged_.
@@ -131,35 +104,34 @@ Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione
 Segue la formalizzazione delle entità del sistema sopra descritte tramite interfacce kotlin.
 
 ```
-interface IHold {  
-    val home: IPoint  
-    val ioPort: Pair<IPoint, IContainer?>  
-    val slot5: IPoint  
-    val holdMap: MutableMap<IPoint, ISlot>    
-    fun getFreeSlot(): ISlot?  
+interface IHold {
+    val home: IPoint
+    val ioPort: Pair<IPoint, IContainer?>
+    val slot5: IPoint
+    val holdMap: MutableMap<IPoint, ISlot>
+    fun getFreeSlot(): ISlot?
 }
 ```
 
 ```
-interface ISlot {  
-    val id: String  
-    val container: IContainer?  
+interface ISlot {
+    val id: String
+    val container: IContainer?
 }
 ```
 
 ```
-interface IPoint {  
-    val x: Int  
-    val y: Int  
+interface IPoint {
+    val x: Int
+    val y: Int
 }
 ```
 
 ```
-interface IContainer {  
-    val code: Int?  
+interface IContainer {
+    val code: Int?
 }
 ```
-
 
 Quindi, in questa fase iniziale è possibile prevedere un primo modello del sistema organizzato in un unico Context, eventualmente mediante componenti mock, senza vincolare l’architettura definitiva. Analogamente, il committente non prescrive l’utilizzo di uno o più linguaggi di programmazione.
 
@@ -268,37 +240,36 @@ La motivazione di Qak non determina automaticamente il numero degli attori o dei
 In questa fase iniziale sono stati individuati i seguenti casi di test funzionali, derivati direttamente dai requisiti del committente, con l'obiettivo di verificare il comportamento del sistema in risposta a una richiesta di caricamento.
 
 ```
-abstract class HoldTestPlan {  
-  
-    IHold hold;  
-  
-    abstract ISlot createSlot();  
-  
-    abstract IHold createHold();  
-  
-    @Before  
-    public void setUp() {  
-       hold = createHold();  
-    }  
-  
-    @Test  
-    public void getting_a_slot_while_all_hold_slots_are_free_should_return_a_non_null_value() {  
-       ISlot freeSlot = hold.getFreeSlot();  
-       assertNotNull(freeSlot, "There are no slots available");  
-    }  
-  
-    @Test  
-    public void getting_a_slot_while_they_are_all_occupied_should_return_a_null_value() {  
-       for (Map.Entry<IPoint, ISlot> entry : hold.getHoldMap().entrySet()) {  
-          ISlot newSlot = createSlot();  
-          assertNotNull(newSlot.getContainer());  
-          entry.setValue(newSlot);  
-       }  
-       assertNull(hold.getFreeSlot());  
-    }  
+abstract class HoldTestPlan {
+
+    IHold hold;
+
+    abstract ISlot createSlot();
+
+    abstract IHold createHold();
+
+    @Before
+    public void setUp() {
+       hold = createHold();
+    }
+
+    @Test
+    public void getting_a_slot_while_all_hold_slots_are_free_should_return_a_non_null_value() {
+       ISlot freeSlot = hold.getFreeSlot();
+       assertNotNull(freeSlot, "There are no slots available");
+    }
+
+    @Test
+    public void getting_a_slot_while_they_are_all_occupied_should_return_a_null_value() {
+       for (Map.Entry<IPoint, ISlot> entry : hold.getHoldMap().entrySet()) {
+          ISlot newSlot = createSlot();
+          assertNotNull(newSlot.getContainer());
+          entry.setValue(newSlot);
+       }
+       assertNull(hold.getFreeSlot());
+    }
 }
 ```
-
 
 | Condizione iniziale e richiesta                     | Risultato atteso    |
 | --------------------------------------------------- | ------------------- |
@@ -348,18 +319,9 @@ Oltre a questo Sprint0 iniziale, nel nostro processo Scrum abbiamo previsto tre 
    - web-gui
    - display e pushbutton
 
-<!-- | Numero sprint | Data inizio (indicativa) | Data fine (indicativa) | Lavoro Stimato Totale (h) |
-| ------------- | ------------------------ | ---------------------- | ------------------------- |
-| Sprint 1      | 03/08/2026               | 8/08/2026              | 30                        |
-| Sprint 2      | 10/08/2026               | 14/08/2026             | 20                        |
-| Sprint 3      | 17/08/2026               | 21/08/2026             | 20                        |
-
-La pianificazione temporale costituisce un riferimento per il team.
-Sono comunque contemplate variazioni, nel limite del ragionevole, purché non compromettano il ritmo generale del lavoro.-->
-
 Eventuali modifiche significative potranno essere apportate solo in presenza di esigenze straordinarie, cambiamenti rilevanti durante il percorso progettuale, o situazioni tali da non poter essere ignorate.
 
 ## Team di lavoro
 
-Francesco Cenerini, Niccolò Leoncini, Pietro Milo Tasinato.
+**Francesco Cenerini, Niccolò Leoncini, Pietro Milo Tasinato**.
 Tutti e tre i componenti del team hanno partecipato attivamente a tutte le fasi di scrittura e stesura dello sprint, dando il loro contributo in forma di conoscenze e ore di lavoro.

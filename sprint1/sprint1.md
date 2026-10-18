@@ -2,68 +2,46 @@
 
 ## Indice
 
-- [Sprint1](#sprint1)
-  - [Indice](#indice)
-  - [Punto di Partenza](#punto-di-partenza)
-  - [Obiettivi](#obiettivi)
-  - [Analisi del Problema](#analisi-del-problema)
-    - [Componenti Software già implementate](#componenti-software-già-implementate)
-    - [Componenti software](#componenti-software)
-      - [Interazioni tra i quattro attori](#interazioni-tra-i-quattro-attori)
-      - [cargoservice_handler](#cargoservice_handler)
-      - [cargoservice_worker](#cargoservice_worker)
-      - [cargorobot](#cargorobot)
-      - [marker](#marker)
-    - [Messaggi](#messaggi)
-      - [Prelievo del container dall'IOPort](#prelievo-del-container-dallioport)
-      - [Prenotazione dello slot nell'hold](#prenotazione-dello-slot-nellhold)
-      - [Marcatura del container](#marcatura-del-container)
-      - [Navigazione del robot](#Navigazione-del-robot)
-    - [Diagramma dell'architettura](#diagramma-dellarchitettura)
-  - [Piano di test](#piano-di-test)
-  - [Piano di lavoro](#piano-di-lavoro)
-  - [Ripartizione del lavoro](#ripartizione-del-lavoro)
+- [Punto di partenza e Goal dello Sprint](#punto-di-partenza-e-goal-dello-sprint)
+- [Analisi dei requisiti](#analisi-dei-requisiti)
+- [Analisi del Problema](#analisi-del-problema)
+  - [Componenti Software già implementate](#componenti-software-già-implementate)
+    - [Interazioni tra i quattro attori](#interazioni-tra-i-quattro-attori)
+    - [cargoservice_handler](#cargoservice_handler)
+    - [cargoservice_worker](#cargoservice_worker)
+    - [cargorobot](#cargorobot)
+    - [marker](#marker)
+  - [Messaggi](#messaggi)
+    - [Prelievo del container dall'IOPort](#prelievo-del-container-dallioport)
+    - [Prenotazione dello slot nell'hold](#prenotazione-dello-slot-nellhold)
+    - [Marcatura del container](#marcatura-del-container)
+    - [Navigazione del robot](#navigazione-del-robot)
+- [Project](#project)
+  - [Diagramma dell'architettura](#diagramma-dellarchitettura)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Piano di lavoro](#piano-di-lavoro)
 
+## Punto di partenza e Goal dello Sprint
 
-<!--devo fare analisi del problema, piano di test e diag architettura -->
+Il committente richiede un servizio software, denominato **cargoservice**, per automatizzare il caricamento dei container nella stiva (_hold_) di una nave. Il sistema deve ricevere le richieste tramite una **IOPort**, verificare la disponibilità della stiva e coordinare, quando la richiesta è accettata, il trasporto del container mediante **cargorobot**, il passaggio nello **slot5** per la marcatura e il deposito in uno degli **slot1–slot4**. L'interazione con il cliente include un pushbutton e un display; il rilevamento della presenza dei container e dei guasti previsti è affidato a un sonar.
 
-## Punto di Partenza
+Lo **Sprint0** ha prodotto:
 
-Il committente (una compagnia di trasporto marittimo) vuole automatizzare il carico di container nella stiva di una nave (_hold_) impiegando un robot a trazione differenziale (_cargorobot_). L'hold è un'area rettangolare piana con una porta di ingresso/uscita (**IOPort**), quattro **slot** (`slot1`…`slot4`) in cui depositare un container ciascuno e un'area temporanea, **slot5**, in cui il cargorobot deposita il container per la marcatura: un dispositivo **marker** applica un codice a barre identificativo e segnala il termine dell'operazione.
+- un'analisi dei requisiti del committente e l'identificazione dei macro-componenti (`cargoservice`, `cargorobot`, `IOPort`, `hold`, `sonar`, `led`, `marker`, slot e container);
+- l'individuazione del **core business** nel coordinamento della procedura di carico;
+- un primo vocabolario per gli esiti delle richieste e un insieme di casi di test funzionali;
+- una vista architetturale di riferimento, senza imporre distribuzione, numero definitivo di QActor o protocolli di comunicazione;
+- la scelta motivata del metamodello **QAK** come strumento di modellazione dei componenti interagenti;
+- la ricognizione dei servizi robotici forniti: **WEnv**, **RobotObj26**, **VirtualRobot26**, **VirtuRobotService26** e **RobotSmart26**.
 
-L'IOPort è composto da un **pushbutton**, premuto dal cliente per richiedere il carico, e da un **display**, che mostra la risposta alla richiesta e lo stato corrente dell'hold. Il **sonar** associato all'IOPort rileva la presenza di un container quando misura una distanza `D < DFREE/2` per un tempo ragionevole (es. 3 s). Un **led** deve lampeggiare finché il sistema è _engaged_.
+Il committente ha inoltre precisato due vincoli implementativi riportati nello Sprint0: **IOPort come Web GUI** e **sonar e led sul dispositivo Pico W**. In questo Sprint tali vincoli sono tenuti presenti, ma la realizzazione dei dispositivi e dell'interfaccia definitiva è distinta dai mock usati nella prototipazione e non rientra nel goal di questo Sprint.
 
-Il servizio da realizzare è il **cargoservice**, che si comporta come segue:
+A differenza di una specifica dei requisiti, il progetto di Sprint1 può introdurre ulteriori componenti e messaggi, purché le scelte siano motivate dall'analisi. Perciò, l'obiettivo di questo Sprint è quello di realizzare un prototipo eseguibile dell'interazione IOPort–cargoservice, capace di gestire una richiesta di carico in base allo stato del servizio, alla disponibilità dell'IOPort e agli slot della hold. L'interfaccia IOPort e le condizioni dipendenti dai dispositivi possono essere simulate. Il risultato atteso comprende tre esiti: **`retrylater`** per IOPort occupata o servizio _Out of service_, **rifiuto** per hold piena e **accettazione** con comunicazione dello slot effettivamente riservato. L'attività di progettazione affronta inoltre il coordinamento del ciclo di carico con `cargorobot` e `marker`, attraverso un prototipo simulato.
 
-- risponde `retrylater` se l'IOPort è occupato da un container o se il sistema è _out of service_;
-- rifiuta la richiesta se l'hold è pieno (slot1–4 tutti occupati);
-- altrimenti considera il sistema _engaged_, individua uno slot libero e ne restituisce il nome come risposta; durante l'_engaged_ il led lampeggia;
-- una volta accettata la richiesta, il cliente deve portare il container nell'area del sonar entro un tempo prefissato (es. 30 s), altrimenti il sistema torna _disengaged_;
-- a container presente, il cargorobot lo sposta dall'IOPort allo slot5 (marcatura) e poi allo slot riservato;
-- il display mostra lo stato dell'hold, il messaggio "Service working" nel funzionamento normale e "Out of service" se il sonar misura `D > DFREE` per almeno 3 s (possibile guasto del sonar).
+## Analisi dei requisiti
 
-Lo Sprint0 ha analizzato questi requisiti e definito l'architettura iniziale, con quattro contesti (`ctx_cargoservice`, `ctx_ioport`, `ctx_devices`, `ctx_client`), i messaggi di base (ad esempio `system_failure` e `container_marked`) e il modello `Arch_sprint0` con gli attori principali, per lo più come _stub_ privi di comportamento.
-
-![Architettura Sprint 0](../img/sprint0_arch.png)
-
-## Obiettivi
-
-Lo Sprint1 ha lo scopo di realizzare il **core business** del sistema: il ciclo di carico di un container, dalla richiesta accettata al deposito nello slot riservato e al ritorno del robot in `home`. Gli attori coinvolti sono **cargoservice**, **cargorobot** e **marker**; sonar, hold, IOPort, led e display sono presenti come supporto o stub e vengono completati negli sprint successivi.
-
-| Componente   | Funzionalità da realizzare                                                                                                                                                                                                                                                                                                                                                 |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Cargoservice | gestire le richieste di carico (`retrylater` per IOPort occupato o sistema _out of service_, rifiuto per hold pieno, altrimenti risposta con lo slot riservato); informare il cliente sulla disponibilità del sistema; guidare il cargorobot lungo il ciclo di carico; mantenere una rappresentazione dell'hold; gestire il ritorno a _disengaged_ dopo 30 s senza container; gestire l'_out of service_ per `D > DFREE` misurata dal sonar |
-| Cargorobot   | muoversi tra le posizioni note (`home`, `io_port`, `marker`/slot5, `slot1`…`slot4`) distinguendo il movimento con e senza container; gestire carico e scarico del container; comunicare l'esito dei movimenti al cargoservice                                                                                                                                              |
-| Marker       | ricevere la richiesta di marcatura dal cargoservice e notificarne il completamento                                                                                                                                                                                                                                                                                        |
-
-Lo stato di realizzazione di ciascuna funzionalità è discusso nelle sezioni di analisi, dove sono indicati anche i punti ancora aperti (marcati come _TODO_ nel modello `sprint1.qak`).
-
-### Modifiche introdotte rispetto allo Sprint0
-
-- **Scomposizione del cargoservice** in due attori: `cargoservice_handler` (interazione con il cliente e stato globale del servizio) e `cargoservice_worker` (esecuzione del ciclo di carico).
-- **Nuovo attore `marker`**, che simula la marcatura assegnando al container un codice progressivo al posto del codice a barre.
-- **`cargorobot` come astrazione dello SmartRobot**: il resto del sistema usa nomi di posizione (`io_port`, `slot1`, …) invece di coordinate.
-- **Nuovi messaggi** per prenotazione dello slot, prelievo dall'IOPort, marcatura e Navigazione (descritti nella sezione _Messaggi_).
+I requisiti e l'architettura iniziale sono riportati nello [Sprint0](../sprint0.md). Questo particolare sprint non richiede che venga specificato nient'altro in questa sezione. Di seguito, verranno analizzati soltanto i problemi introdotti dalla costruzione del prototipo.
 
 ## Analisi del Problema
 
@@ -112,9 +90,11 @@ CMDMOVE ::= turnLeft | turnRight | moveForward | moveBackward | alarm
 Un comando in esecuzione può essere interrotto solo tramite un'allarme, un qualsiasi altro comando asincrono ricevuto durante l'esecuzione è rifiutato mentre l'originale continua la sua esecuzione fino alla sua terminazione. In caso di una collisione, il movimento dura comunque un tempo T, ma i WS clients ottengono {"collision":"MOVEID","target":"OBSTACLEID"}.
 
 Per quanto riguarda la semantica dei messaggi asincroni, invece di utilizzare il linguaggio cril, viene introdotto il linguaggio aril (Abstract Robot Interaction Lanaguage). Aril è definito come segue:
+
 ```
 MOVE = w | s | l | a | r | d | h
 ```
+
 dove ww : muove avanti per 2500 msec; s: muove indietro per 2500 msec; l, a: gira a sinistra di 90 per 300msec; r, d: gira a destra di 90 per 300 msec; h: indica al robot di fermarsi
 
 Il WEnv è deployable attraverso una docker image, anch'essa fornita dal committente. Insieme al WEnv viene fornita una NaiveGui, ovvero un'interfaccia gfrafica con cui comandare direttamente il robot nell ambiente virtuale da tastiera (i tasti w/a/s/d vengono utilizzati per muovere il robot). La NaiveGui permette anche di modificare l'ambiente virtuale: aggiungere oggetti o spostare quelli già presenti, e modificare la velocità del robot.
@@ -127,7 +107,7 @@ SmartRobot inoltre è capace di creare una Context map: una matrice di interi co
 
 L'algoritmo usato dal robot per navigare l'Ambiente Virtuale è A\*.
 
-### Componenti software
+<!-- ### Componenti software
 
 Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 
@@ -137,6 +117,7 @@ Per quanto riguarda, i macrocomponenti da sviluppare riportiamo:
 - **marker**
 
 - **hold** <!-- cosa si intende per stato corrente dell'hold -->
+
 - **led** <!-- chiedere se va tenuto come componente separato o inserirlo dentro IOPort -->
 
 In questo sprint vengono modellati, nel file `sprint1.qak`, i QActors che realizzano il core business: **cargoservice_handler**, **cargoservice_worker**, **cargorobot** e **marker**. Tutti e quattro appartengono al contesto `ctx_cargoservice` (porta 8000). Gli altri attori del modello (`hold`, `io_port`, `display`, `sonar`, `led`, `pushbutton`, `external_client`) sono presenti come supporto o come _stub_ e verranno raffinati negli sprint successivi.
@@ -431,63 +412,67 @@ Il nome `moverobot` identifica due Request distinte, corrispondenti a due livell
 **`setplanbuildelay: value(V)`**, **`tuneAtHome: tuneAtHome(X)`**, **`tuneDone: tuneDone(X)`** — fanno parte dell'interfaccia dello SmartRobot e sono dichiarati nel modello per completezza, ma non sono ancora utilizzati dagli attori dello Sprint1.
 
 - `setplanbuildelay(V)` (_Dispatch_): imposta un ritardo `V ≥ 0` nella costruzione del piano di movimento.
-- `tuneAtHome(X)` (_Request_) e `tuneDone(X)` (_Reply_): riallineano il robot alla posizione `home`; il valore `X` è ininfluente.
+- `tuneAtHome(X)` (_Request_) e `tuneDone(X)` (_Reply_): riallineano il robot alla posizione `home`; il valore `X` è ininfluente. -->
+
+## Project
+
+Il prototipo prevede i seguenti componenti applicativi, modellati mediante QAK:
+
+| Componente     | Responsabilità                                                                                                  |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| `cargoservice` | Gestione della richiesta e restituzione dell'esito con prenotazione, sequenza di carico e gestione degli errori |
+| `hold`         | Disponibilità, prenotazione e occupazione degli slot                                                            |
+| `cargorobot`   | Traduzione delle destinazioni logiche e gestione degli esiti del movimento                                      |
+| `marker`       | Simulazione della marcatura e notifica del completamento                                                        |
+| `io_port` mock | Simulazione della disponibilità e del prelievo del container                                                    |
 
 ### Diagramma dell'architettura
 
 Il seguente diagramma rappresenta l'architettura completa del sistema nello sprint 1.
-
 ![Wenv & DDR](/img/sprint1arch.png)
 
-## Piano di test
+## Testing
 
-In questa fase di test verifichiamo il funzionamento corretto dei componenti implementati. In particolare sfruttiamo il fatto che i codici assegnati dal marker sono incrementali, quindi dopo un'iniziale esecuzione del percorso completo (home-ioPort-matrker-slot-home) chiediamo di effettuare una marcatura "a vuoto" per verificare che il codice emesso sia quello corretto. 
+In questa fase di test verifichiamo il funzionamento corretto dei componenti implementati. In particolare sfruttiamo il fatto che i codici assegnati dal marker sono incrementali, quindi dopo un'iniziale esecuzione del percorso completo (home-ioPort-matrker-slot-home) chiediamo di effettuare una marcatura "a vuoto" per verificare che il codice emesso sia quello corretto.
 
 In questo modo possiamo verificare il corretto funzionamento di tutti i componenti in un solo test. Lo svantaggio di questo approccio sta nel fatto che complica l'individuazione della causa del fallimento (non testiamo i singolo componenti ma il sistema). Per ovviare a questo svantaggio utilizziamo la Gui per monitorare il progresso del robot e stampiamo a terminale tutti i passaggi di stato dei QActors necessari per il corretto funzionamento del sistema.
 
 ```text
-	
+
 	@Test
 	public void testMoveRobot() throws Exception{
 		System.out.println("TESTER | Starting...");
 		IApplMessage request = CommUtils.buildDispatch("tester", "startWorking", "startWorking(ARG)", "cargoservice_worker");
 		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
-		
+
 		conn.forward(request);
-		
+
 		TimeUnit.SECONDS.sleep(40); //attesa per il robot
-		
+
 		request = CommUtils.buildRequest("tester", "start_marking", "start_marking(ARG)", "marker");
 		System.out.println("CARGOROBOT | Richiesta: " + request.toString());
-		
+
 		String response = conn.request(request).toString();
 		System.out.println("CARGOROBOT | Risposta: " + response.toString());
-		
+
 		assertTrue("TEST: Seconda richiesta rifiutata",
 	    		response.contains("code2"));
-		
+
 	}
 ```
 
+## Deployment
+
+L'esecuzione del prototipo richiede l'ambiente QAK, **WEnv** e, per le prove di movimentazione, il servizio **RobotSmart26**. Le richieste vengono inviate attraverso il client o il mock predisposto per l'IOPort; i risultati si osservano nei messaggi degli attori e nei test.
+
+**Istruzioni per riprodurre il prototipo:** [inserire comandi di avvio, configurazione delle porte e comando per eseguire i test].
+
+Il deployment documenta esclusivamente i servizi necessari a eseguire il prototipo.
+
 ## Piano di lavoro
 
-Rispetto a quanto dichiarato nello Sprint0 le tempistiche dello Sprint1 non sono state rispettate; la pianificazione è stata quindi rivista in modo da concludere il progetto entro fine ottobre 2026.
+Tutti i membri del gruppo hanno partecipato attivamente a tutte le fasi dello sviluppo. Le maggiori difficoltà progettuali hanno riguardato la separazione delle responsabilità e la definizione delle interazioni tra gli attori e sono state affrontate con sessioni di brainstorming collettivo: il confronto tra punti di vista diversi ha portato a soluzioni condivise e permettendo di individuare errori e fraintendimenti.
 
-1. Sprint 1 (conclusione entro il 6/10)
-   - cargoservice (core business del sistema)
-   - cargorobot e marker
-   - piano di test del core business
-1. Sprint 2 (7/10 – 15/10)
-   - sonar
-   - hold
-   - IO port e pushbutton
-1. Sprint 3 (16/10 – 22/10)
-   - led
-   - web-gui
-   - display
+Il risultato progettuale dello Sprint è la separazione fra **gestione delle richieste**, **coordinamento del carico**, **stato dell'hold** e **servizi di movimentazione e marcatura**. Il prototipo utilizza mock per isolare le funzionalità non ancora integrate.
 
-La pianificazione temporale costituisce un riferimento per il team: sono contemplate variazioni nel limite del ragionevole, purché non compromettano la consegna entro fine ottobre.
-
-## Ripartizione del lavoro
-
-Tutti i membri del gruppo hanno partecipato attivamente a tutte le fasi dello sviluppo. Le difficoltà principali hanno riguardato l'analisi e la progettazione più che l'implementazione, e sono state affrontate con sessioni di brainstorming collettivo: il confronto tra punti di vista diversi porta a soluzioni condivise e permette di individuare presto errori e fraintendimenti.
+**Goal dello Sprint2:** integrare l'IOPort come Web GUI e i dispositivi sonar/led sul Pico W, completando le funzionalità di rilevamento e segnalazione previste dal committente.
