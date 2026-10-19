@@ -63,7 +63,7 @@ QActor cargoservice context ctx_cargoservice{
 	
 }
 
-QActor cargorobbot context ctx_cargoservice{
+QActor cargorobot context ctx_cargoservice{
 	
 	State idle initial{
 		println("CARGOOROBOT_MOCK | Ready") color green
