@@ -39,7 +39,7 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t019",targetState="marking",cond=whenRequest("start_marking"))
+					 transition(edgeName="t08",targetState="marking",cond=whenRequest("start_marking"))
 				}	 
 				state("marking") { //this:State
 					action { //it:State

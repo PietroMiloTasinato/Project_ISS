@@ -1,247 +1,127 @@
-System sprint0
+System sprint_0
 
-Request start_engage:start_engage(ARG)
-Reply engage_successful: engage_successful(ARG) for start_engage
-Reply engage_refused: engage_refused(ARG) for start_engage
-Reply retrylater : retrylater(CAUSE) for start_engage
+Request request_to_load: request_to_load(ARG)
+Reply retry_later: retry_later(ARG) for request_to_load
+Reply rejected: rejected(ARG) for request_to_load
+Reply engaged: engaged(SLOT) for request_to_load
 
-Dispatch move_container_to_slot : move_container_to_slot(SLOT)
-Dispatch startWorking : startWorking(ARG)
-Dispatch taskCompleted : taskCompleted(ARG)
 
-Event container_marked : container_marked(BARCODE)
-Event robot_detected : robot_detected(DISTANCE)
-Event sonar_failure : sonar_failure(DISTANCE)
-Event system_failure: system_failure(ARG)
+Request ask_for_slot:ask_for_slot(ARG)
+Reply slot_assigned:slot_assigned(SLOT) for ask_for_slot
+Reply hold_full:hold_full(ARG) for ask_for_slot
 
-Dispatch show_hold_state : show_hold_state(STATE) // STATE: engaged o disengaged
-Dispatch show_service_status : show_service_status(STATUS) //STATUS: working o out_of_service
+Context ctx_cargoservice ip [host="localhost" port=8000]
 
-Context ctx_cargoservice 			ip [host="localhost" port=8000]
-Context ctx_ioport 					ip [host="localhost" port=8001]
-Context ctx_client 					ip [host="localhost" port=8002]
-Context ctx_devices 				ip [host="localhost" port=8003]
-
-QActor cargoservice_handler context ctx_cargoservice {
+QActor cargoservice context ctx_cargoservice{
+	
 	[#
-		// stato e costanti
-		var ServiceWorking = true
-		var IOPortOccupied = false
-        var Engaged = false
-	#] 
+		val Timeout = 30000L
+		var Io_port_occupied = false
+		var System_out_of_service = false
+		var Is_engaged = false
+		var Slot = "" 
+	#]
 	
 	State idle initial{
+		// Stop blinking led
 		println("CARGOSERVICE_HANDLER | Ready") color green
-        updateResource [#
-            "cargoservice(idle," +
-            "serviceWorking=$ServiceWorking," +
-            "ioportOccupied=$IOPortOccupied)"
-				
-        #]
-        
-        forward display -m show_service_status :
-            show_service_status(service_working)
-    }
- 
- 	
-	Transition t0
-	   whenRequest start_engage -> handleLoadRequest
-	   whenMsg taskCompleted -> resetEngaged
-	   whenEvent system_failure -> system_out_of_service
-	   
-	   // whenEvent robot_detected -> setIOPortOccupied
-	   // whenEvent sonar_failure -> outOfService
-	
-	/*
-     * Template gestione della richiesta.
-     *
-     * Ordine delle verifiche:
-     * 1. il sistema è fuori servizio o IOPort occupato 
-     * 2. hold full (slot1-4 già occupati)
-     * 3. sistema engaged
-     * 4. richiesta di prenotazione al hold
-     */
-	State handleLoadRequest {
-		println("CARGOSERVICE_HANDLER | Serving") color green
+	} Transition t0
+		whenRequest request_to_load -> start_engage
+		// whenMsg out_of_serive -> ...
 		
-		 if [# !ServiceWorking #] {
-		 	println("CARGOSERVICE_HANDLER | System set to out of service") color green
-		 	
-		 	replyTo start_engage with retrylater :retrylater(out_of_service)
-		 }else{ 
-		 	if [# IOPortOccupied || Engaged #] {
-		 		println("CARGOSERVICE_HANDLER | Already Engaged") color green
-		 		 replyTo start_engage with engage_refused :engage_refused(ioport_occupied)
-		 	}else{
-		 		println("CARGOSERVICE_HANDLER | System is now engaged") color green
-		 		[# Engaged = true #]
-		 		
-		 		replyTo start_engage with engage_successful :engage_successful(0)
-		 		
-		 		forward cargoservice_worker -m startWorking :startWorking(0)
-		 		
-		 		//simulate execution
-		 		// quindi riserva lo slot (1-4) dove posizionare il container alla fine
-		 	}
-		 }
-		 
+	State start_engage{
+		if [# Io_port_occupied || System_out_of_service #]{
+			replyTo request_to_load with retry_later: retry_later(0)
+		}
+			
+		request hold -m ask_for_slot:ask_for_slot(ARG)
+		
+	} Transition t0
+		whenReply slot_assigned -> engaged
+		whenReply hold_full -> hold_full
+		
+	
+	State engaged{
+		onMsg(ask_for_slot:ask_for_slot(ARG)){
+			
+			// Start blinking the led
+			// Wait for sonar reply
+		}
+	} Transition t1
+		whenTimeVar Timeout -> idle
+		// when Sonar reply move_robot
+		
+	State move_robot{
+		// move robot
 	}
-	Goto idle
-	
-	State resetEngaged {
-		println("CARGOSERVICE_HANDLER | No more Engaged") color green
-		[# Engaged = false #]
-	}
-	Goto idle
-	
-	State system_out_of_service{
 		
-		[# ServiceWorking = false #]
-		println("CARGOSERVICE_HANDLER | System out of service!") color green
 		
+	State hold_full{
+		replyTo request_to_load with rejected: rejected(ARG)
 	} Goto idle
+
+	
 }
 
-QActor cargoservice_worker context ctx_cargoservice {
-
+QActor cargorobot context ctx_cargoservice{
+	
 	State idle initial{
-		println("CARGOSERVICE_WORKER | Ready") color yellow
-	}
-	
-	Transition t0
-	   whenMsg startWorking -> acceptRequest
-	
-	// accetta la richiesta di carico
-	State acceptRequest {
-		delay 100 
-		
-		forward cargoservice_handler -m taskCompleted :
-       	taskCompleted(1)
-		
-	}
-	Goto idle
-	
-	// rifiuta la richiesta di carico
-	State refuseRequest {
-		
-	}
-	
-	// comanda il robot per portare il container fino allo slot 5 per la fase di marcatura
-	State moveToSlot5 {
-		
-	}
-	
-	// comanda il robot per depositare il container nello slot precedentemente riservato
-	State moveToReservedSlot {
-		
-	}
-	
-	// gestione ioport occupata
-	State setIOPortOccupied {
-		
-	}
-	
-	// gestione failure sonar
-	State outOfService {
-		
-	}
+		println("CARGOOROBOT_MOCK | Ready") color green
+	}Transition t0
 	
 }
 
-QActor cargorobot context ctx_cargoservice {
 
-    State wait initial {
-        updateResource [# "cargorobot(idle)" #]
-    }
-}
- 
 QActor marker context ctx_cargoservice {
-
-    State wait initial {
-        updateResource [# "marker(idle)" #]
-    }
-}
-
-QActor display context ctx_cargoservice {
-
-    [# var DisplayValue = "none" #]
-
-    State wait initial {
-        updateResource [# "display(service_working)" #]
-    }
-
-    Transition t0
-        whenMsg  show_hold_state -> showHold
-        whenMsg  show_service_status -> showService
-
-
-    State showHold {
-
-        onMsg(
-            show_hold_state :
-            show_hold_state(STATE)
-        ) {
-            [#
-                DisplayValue =
-                    "display(hold,${payloadArg(0)})"
-            #]
-        }
-
-        println("DISPLAY | $DisplayValue") color magenta
-
-        updateResource [# DisplayValue #]
-    }
-
-    Goto wait
-
-
-    State showService {
-
-        onMsg(
-            show_service_status :
-            show_service_status(STATUS)
-        ) {
-            [#
-                DisplayValue =
-                    "display(service,${payloadArg(0)})"
-            #]
-        }
-
-        println("DISPLAY | $DisplayValue") color magenta
-
-        updateResource [# DisplayValue #]
-    }
-
-    Goto wait
-}
 	
-QActor hold context ctx_cargoservice{
-  State s0 initial {
-  } 
+	
+	State idle initial {
+		println("MARKER_MOCK | Ready") color green
+	}
+	
+	
 }
 
 QActor sonar context ctx_cargoservice{
- 	State s0 initial {
-  	} 
-}
-
-QActor led context ctx_devices{
- 	State s0 initial {
-  	} 
-}
-
-QActor pushbutton context ctx_ioport{
-	State s0 initial {
-  	} 
-}
-
-QActor ioport context ctx_ioport{
-	State s0 initial {
-  	} 
+	
+	State idle initial{
+		println("SONAR_MOCK | Ready") color green
+	}Transition t0
+	
 }
 
 
-QActor external_client context ctx_client{
-	State s0 initial {
-  	} 
+QActor led context ctx_cargoservice {
+	
+	
+	State idle initial {
+		println("LED_MOCK | Ready") color green
+	}
+	
+	
 }
+
+
+QActor hold context ctx_cargoservice{
+	
+	State idle initial{
+		println("HOLD_MOCK | Ready") color green
+	}Transition t0
+	
+}
+
+
+QActor io_port context ctx_cargoservice {
+	
+	
+	State idle initial {
+		println("IOPORT_MOCK | Ready") color green
+	}
+	
+	
+}
+
+
+
+
+

@@ -1,4 +1,12 @@
-package PACKAGE_NAME;
+import main.kotlin.*;
 
-public class HoldTest {
+import java.io.File;
+
+public class HoldTest extends HoldTestPlan {
+
+    @Override
+    IHold createHold() {
+        return Hold.Companion.createHoldFromConfig(Hold.Companion.getDEFAULT_CONFIG_FILE());
+    }
+
 }

@@ -32,25 +32,12 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
-						CommUtils.outblue("IO_PORT | Ready")
+						CommUtils.outgreen("IOPORT | Ready")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t024",targetState="load_container",cond=whenRequest("load_container"))
-				}	 
-				state("load_container") { //this:State
-					action { //it:State
-						CommUtils.outblack("IO_PORT | Loading the container")
-						delay(2000) 
-						answer("load_container", "load_done", "load_done(ARG)"   )  
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 			}
 		}

@@ -1,6 +1,8 @@
+import main.kotlin.Container;
 import main.kotlin.IHold;
 import main.kotlin.IPoint;
 import main.kotlin.ISlot;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,8 +15,6 @@ abstract class HoldTestPlan {
 
 	IHold hold;
 
-	abstract ISlot createSlot();
-
 	abstract IHold createHold();
 
 	@Before
@@ -25,15 +25,15 @@ abstract class HoldTestPlan {
 	@Test
 	public void getting_a_slot_while_all_hold_slots_are_free_should_return_a_non_null_value() {
 		ISlot freeSlot = hold.getFreeSlot();
-		assertNotNull(freeSlot, "There are no slots available");
+		Assert.assertNotNull("There are no slots available", freeSlot);
 	}
 
 	@Test
 	public void getting_a_slot_while_they_are_all_occupied_should_return_a_null_value() {
-		for (Map.Entry<IPoint, ISlot> entry : hold.getHoldMap().entrySet()) {
-			ISlot newSlot = createSlot();
-			assertNotNull(newSlot.getContainer());
-			entry.setValue(newSlot);
+		for (int i = 0; i < hold.getSlotNumber(); i++) {
+			ISlot slot = hold.getFreeSlot();
+            Assert.assertNotNull(slot);
+            slot.setContainer(new Container());
 		}
 
 		assertNull(hold.getFreeSlot());

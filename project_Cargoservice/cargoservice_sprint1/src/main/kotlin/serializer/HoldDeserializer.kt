@@ -25,7 +25,7 @@ class HoldDeserializer : JsonDeserializer<IHold> {
         typeOfT: Type?,
         context: JsonDeserializationContext?
     ): IHold? = runCatching {
-        val map = mutableMapOf<IPoint, ISlot>()
+        val map = mutableMapOf<String, ISlot>()
         var home: IPoint? = null
         var slot5: IPoint? = null
         var ioPort: Pair<IPoint, IContainer?>? = null
@@ -37,12 +37,12 @@ class HoldDeserializer : JsonDeserializer<IHold> {
                 "io_port" -> ioPort = point to null
                 "home" -> home = point
                 else -> {
-                    val slot = Slot(set.key, null)
-                    map[point] = slot
+                    val slot = Slot(set.key, null, point)
+                    map[slot.id] = slot
                 }
             }
         }
-        Hold(map, home!!, slot5!!, ioPort!!)
+        Hold(map, ioPort!!, home!!, slot5!!)
     }.getOrNull()
 
 }

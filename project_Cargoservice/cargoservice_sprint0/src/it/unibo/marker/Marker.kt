@@ -24,16 +24,15 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
           ActorBasicFsm( name, scope, confined=isconfined, dynamically=isdynamic ){
 
 	override fun getInitialState() : String{
-		return "wait"
+		return "idle"
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		return { //this:ActionBasciFsm
-				state("wait") { //this:State
+				state("idle") { //this:State
 					action { //it:State
-						updateResourceRep( "marker(idle)"  
-						)
+						CommUtils.outgreen("MARKER_MOCK | Ready")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
