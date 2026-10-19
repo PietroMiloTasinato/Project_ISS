@@ -288,7 +288,7 @@ I requisiti permettono una vista logica delle macro-parti, ma non ancora una dis
 
 - ctx_cargoservice: cargoservice, hold, cargorobot, marker, sonar, led, ioport;
 
-**TODO**:
+
 ![Wenv & DDR](../img/sprint0_arch.png)
 
 **Goal dello Sprint1**: realizzare un primo prototipo dell'interazione IOPort–cargoservice che gestisca accettazione, rifiuto e retrylater, utilizzando mock se necessari. Il trasporto effettivo e l'integrazione dei dispositivi sono rinviati ai successivi incrementi.
