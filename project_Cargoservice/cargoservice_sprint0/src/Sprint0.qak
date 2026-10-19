@@ -12,7 +12,7 @@ Reply hold_full:hold_full(ARG) for ask_for_slot
 
 Context ctx_cargoservice ip [host="localhost" port=8000]
 
-QActor cargo_service context ctx_cargoservice{
+QActor cargoservice context ctx_cargoservice{
 	
 	[#
 		val Timeout = 30000L
@@ -62,6 +62,45 @@ QActor cargo_service context ctx_cargoservice{
 
 	
 }
+
+QActor cargorobbot context ctx_cargoservice{
+	
+	State idle initial{
+		println("CARGOOROBOT_MOCK | Ready") color green
+	}Transition t0
+	
+}
+
+
+QActor marker context ctx_cargoservice {
+	
+	
+	State idle initial {
+		println("MARKER_MOCK | Ready") color green
+	}
+	
+	
+}
+
+QActor sonar context ctx_cargoservice{
+	
+	State idle initial{
+		println("SONAR_MOCK | Ready") color green
+	}Transition t0
+	
+}
+
+
+QActor led context ctx_cargoservice {
+	
+	
+	State idle initial {
+		println("LED_MOCK | Ready") color green
+	}
+	
+	
+}
+
 
 QActor hold context ctx_cargoservice{
 	
