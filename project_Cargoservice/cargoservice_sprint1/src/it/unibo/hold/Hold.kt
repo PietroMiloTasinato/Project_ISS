@@ -28,7 +28,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
 		 val Hold = main.kotlin.Hold.Companion.createHoldFromConfig()  
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
@@ -39,9 +39,9 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t09",targetState="get_slot",cond=whenRequest("ask_for_slot"))
-					transition(edgeName="t010",targetState="get_point",cond=whenRequest("ask_for_point"))
-					transition(edgeName="t011",targetState="update_map",cond=whenDispatch("container_deployed"))
+					 transition(edgeName="t013",targetState="get_slot",cond=whenRequest("ask_for_slot"))
+					transition(edgeName="t014",targetState="get_point",cond=whenRequest("ask_for_point"))
+					transition(edgeName="t015",targetState="update_map",cond=whenDispatch("container_deployed"))
 				}	 
 				state("get_slot") { //this:State
 					action { //it:State
@@ -84,9 +84,19 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 				}	 
 				state("update_map") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("container_deplyed(SlotId,Code)"), Term.createTerm("container_deployed(SlotId,Code)"), 
+						if( checkMsgContent( Term.createTerm("container_deployed(SlotId,Code)"), Term.createTerm("container_deployed(SlotId,Code)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 Hold.markSlot(payloadArg(0), payloadArg(1).toIntOrNull())  
+								
+									            val ReceivedSlot = payloadArg(0)
+									            val ReceivedCode = payloadArg(1).toIntOrNull()
+								if(  ReceivedCode != null  
+								 ){
+									                Hold.markSlot(ReceivedSlot, ReceivedCode)
+								CommUtils.outgreen("HOLD | Container registration requested")
+								}
+								else
+								 {CommUtils.outred("HOLD | Invalid container code")
+								 }
 						}
 						//genTimer( actor, state )
 					}

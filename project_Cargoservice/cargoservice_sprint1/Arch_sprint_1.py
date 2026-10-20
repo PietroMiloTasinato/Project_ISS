@@ -38,7 +38,8 @@ with Diagram('sprint_1Arch', show=False, outformat='png', graph_attr=graphattr) 
      cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<start_marking<font color="darkgreen"> container_marked</font> &nbsp; >',  fontcolor='magenta') >> marker
      cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> robotsmart
      cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<detect_container<font color="darkgreen"> container_detected sonar_timeout</font> &nbsp; >',  fontcolor='magenta') >> sonar_mock
-     cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_assigned hold_full</font> &nbsp; ask_for_point &nbsp; >',  fontcolor='magenta') >> hold
+     io_port >> Edge(color='magenta', style='solid', decorate='true', label='<request_to_load<font color="darkgreen"> retrylater rejected engaged</font> &nbsp; >',  fontcolor='magenta') >> cargoservice
+     cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_assigned hold_full</font> &nbsp; ask_for_point<font color="darkgreen"> point_found point_not_found</font> &nbsp; >',  fontcolor='magenta') >> hold
      cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<setrobotstate &nbsp; >',  fontcolor='blue') >> robotsmart
      cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<stop_blinking &nbsp; start_blinking &nbsp; >',  fontcolor='blue') >> led_mock
      cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<container_deployed &nbsp; >',  fontcolor='blue') >> hold
