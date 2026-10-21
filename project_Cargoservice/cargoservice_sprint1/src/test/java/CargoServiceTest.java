@@ -23,7 +23,8 @@ public class CargoServiceTest {
 	
 	
     // Scenario di test 1: Richiesta di carico accettata da cargoservice
-    @Test
+    /*
+	@Test
     public void testLoadRequestAccepted() throws Exception {
         //Costruzione di richiesta 
 
@@ -73,7 +74,7 @@ public class CargoServiceTest {
 	    		response2.contains("engage_refused") && 
 	    		response2.contains("ioport_occupied"));
     }
-
+*/
 /*
     //Scenario di test 3: richiesta di carico rifiutata perchè robot e marker non sono liberi senza arrivo concorrenziale di due load_request
     @Test

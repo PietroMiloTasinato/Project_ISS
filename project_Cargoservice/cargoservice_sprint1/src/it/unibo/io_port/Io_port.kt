@@ -29,21 +29,44 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		
+		        var RequestsSent = 0
+		        var PendingRequests = 0
+		
+		        var AcceptedRequests = 0
+		        var RejectedRequests = 0
+		        var RetryRequests = 0
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
 						CommUtils.outgreen("IOPORT_MOCK | Ready")
-						delay(1000) 
-						CommUtils.outyellow("IOPORT_MOCK | Button pressed")
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t016",targetState="handle_press",cond=whenDispatch("press_button"))
+					transition(edgeName="t017",targetState="accepted",cond=whenReply("engaged"))
+					transition(edgeName="t018",targetState="rejected_state",cond=whenReply("rejected"))
+					transition(edgeName="t019",targetState="retry_state",cond=whenReply("retrylater"))
+				}	 
+				state("handle_press") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("press_button(ARG)"), Term.createTerm("press_button(ARG)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								
+								                RequestsSent++
+								                PendingRequests++
+								CommUtils.outyellow("IOPORT_MOCK | Button pressed")
+								CommUtils.outyellow("IOPORT_MOCK | Sending load request")
+						}
 						request("request_to_load", "request_to_load(0)" ,"cargoservice" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t016",targetState="accepted",cond=whenReply("engaged"))
-					transition(edgeName="t017",targetState="rejected_state",cond=whenReply("rejected"))
-					transition(edgeName="t018",targetState="retry_state",cond=whenReply("retrylater"))
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 				state("accepted") { //this:State
 					action { //it:State
@@ -51,6 +74,8 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								
 								                val AssignedSlot = payloadArg(0)
+								                AcceptedRequests++
+								                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
 								CommUtils.outgreen("IOPORT_MOCK | Request accepted")
 								CommUtils.outgreen("IOPORT_MOCK | Assigned slot: $AssignedSlot")
 						}
@@ -59,37 +84,40 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="finished", cond=doswitch() )
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 				state("rejected_state") { //this:State
 					action { //it:State
-						CommUtils.outred("IOPORT_MOCK | Request rejected")
-						CommUtils.outred("IOPORT_MOCK | Hold is full")
+						if( checkMsgContent( Term.createTerm("rejected(ARG)"), Term.createTerm("rejected(ARG)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								
+								                RejectedRequests++
+								                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+								CommUtils.outred("IOPORT_MOCK | Request rejected")
+								CommUtils.outred("IOPORT_MOCK | Hold is full")
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="finished", cond=doswitch() )
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 				state("retry_state") { //this:State
 					action { //it:State
-						CommUtils.outyellow("IOPORT_MOCK | Retry later")
+						if( checkMsgContent( Term.createTerm("retrylater(ARG)"), Term.createTerm("retrylater(ARG)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								
+								                RetryRequests++
+								                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+								CommUtils.outyellow("IOPORT_MOCK | Retry later")
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="finished", cond=doswitch() )
-				}	 
-				state("finished") { //this:State
-					action { //it:State
-						CommUtils.outgreen("IOPORT_MOCK | Waiting for next test")
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 			}
 		}

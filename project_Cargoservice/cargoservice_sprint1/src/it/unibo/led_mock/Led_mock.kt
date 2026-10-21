@@ -32,25 +32,25 @@ class Led_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=false,
 		return { //this:ActionBasciFsm
 				state("off") { //this:State
 					action { //it:State
-						CommUtils.outred("LED_MOCK | OFF")
+						CommUtils.outred("LED_MOCK | Off")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t021",targetState="on",cond=whenDispatch("start_blinking"))
-					transition(edgeName="t022",targetState="off",cond=whenDispatch("stop_blinking"))
+					 transition(edgeName="t022",targetState="on",cond=whenDispatch("start_blinking"))
+					transition(edgeName="t023",targetState="off",cond=whenDispatch("stop_blinking"))
 				}	 
 				state("on") { //this:State
 					action { //it:State
-						CommUtils.outgreen("LED_MOCK | BLINKING")
+						CommUtils.outgreen("LED_MOCK | Blinking")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t123",targetState="off",cond=whenDispatch("stop_blinking"))
-					transition(edgeName="t124",targetState="on",cond=whenDispatch("start_blinking"))
+					 transition(edgeName="t124",targetState="off",cond=whenDispatch("stop_blinking"))
+					transition(edgeName="t125",targetState="on",cond=whenDispatch("start_blinking"))
 				}	 
 			}
 		}

@@ -22,6 +22,7 @@ request( moverobot, moverobot(TARGETX,TARGETY,STEPTIME) ).
 reply( moverobotdone, moverobotdone(ARG) ).  %%for moverobot
 reply( moverobotfailed, moverobotfailed(PLANDONE,PLANTODO) ).  %%for moverobot
 event( ioport_occupied, io_port_occupied(ARG) ).
+dispatch( press_button, press_button(ARG) ).
 request( start_marking, start_marking(ARG) ).
 reply( container_marked, container_marked(BARCODE) ).  %%for start_marking
 %====================================================================================
