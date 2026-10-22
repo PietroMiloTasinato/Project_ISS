@@ -42,6 +42,7 @@ QActor cargoservice context ctx_cargoservice{
 		var Io_port_occupied = false
 		var System_out_of_service = false
 		var Is_engaged = false
+		var FirstStart = true
 		var Slot_id: String = ""
 		var Robot_path = mutableListOf<String>()
 		var Target = ""
@@ -56,8 +57,13 @@ QActor cargoservice context ctx_cargoservice{
 	//attesa di una nuova richiesta
 	State disengaged{
 		[# Is_engaged = false #]
-		// Stop blinking led
-		forward led_mock -m  stop_blinking:stop_blinking(0)
+		
+		// se non è il primo avvio posso inviare il messaggio al led
+		if [# !FirstStart #] {
+        	forward led_mock -m stop_blinking:stop_blinking(0)
+    	}
+	    [# FirstStart = false #]
+	    
 		println("CARGOSERVICE | Ready") color green
 	} Transition t0
 		whenRequest request_to_load -> start_engage
@@ -69,6 +75,8 @@ QActor cargoservice context ctx_cargoservice{
 		else ask_slot
 		
 	State retry_state {
+		
+		println("CARGOSERVICE | Retry later: service unavailable") color yellow
 		replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto disengaged
@@ -127,7 +135,8 @@ QActor cargoservice context ctx_cargoservice{
         whenRequest request_to_load -> retry_wait_sonar
 	
 	State retry_wait_sonar {
-
+		
+		println("CARGOSERVICE | Retry later: waiting for sonar") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto wait_sonar
@@ -176,6 +185,7 @@ QActor cargoservice context ctx_cargoservice{
 	
 	State retry_wait_point {
 
+		println("CARGOSERVICE | Retry later: waiting for point") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto wait_point
@@ -202,6 +212,7 @@ QActor cargoservice context ctx_cargoservice{
         
     State retry_wait_robot {
 
+		println("CARGOSERVICE | Retry later: robot busy") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
         
     } Goto wait_robot
@@ -237,6 +248,7 @@ QActor cargoservice context ctx_cargoservice{
 
     State retry_wait_marker {
 
+		println("CARGOSERVICE | Retry later: marking container") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto wait_marker

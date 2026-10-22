@@ -37,12 +37,6 @@ public class Sprint1Test {
         if (conn != null) conn.close();
     }
 
-    private static void scenario(String required) {
-    	Assume.assumeTrue(
-    		    required.equals(System.getenv("SPRINT1_SCENARIO"))
-    		);
-    }
-
     private IApplMessage request(String actor, String id, String payload) throws Exception {
         IApplMessage req = CommUtils.buildRequest(SENDER, id, payload, actor);
         IApplMessage reply = conn.request(req, REQUEST_TIMEOUT_MS);
@@ -143,7 +137,6 @@ public class Sprint1Test {
 
     @Test(timeout = 30000)
     public void test05_cargoserviceContratto() throws Exception {
-        scenario("contract");
         // Da eseguire isolatamente: se engaged, questa richiesta avvia davvero la movimentazione.
         IApplMessage reply = request("cargoservice", "request_to_load", "request_to_load(0)");
         String id = reply.msgId();
@@ -156,7 +149,6 @@ public class Sprint1Test {
 
     @Test(timeout = 60000)
     public void test06_holdDaVuotoAPieno() throws Exception {
-        //scenario("holdfull");
         // Test DESTRUTTIVO: usare solo un'istanza appena avviata e senza altri carichi.
         Set<String> used = new HashSet<>();
         IApplMessage initial = slot();
@@ -266,6 +258,118 @@ public class Sprint1Test {
         );
         System.out.println(
             "[SPRINT1 E2E] TEST SUPERATO: caricamento completato"
+        );
+    }
+    
+    @Test(timeout = 20000)
+    public void test08_richiestaRifiutataConHoldPieno() throws Exception {
+
+        System.out.println("[SPRINT1 E2E] Verifica hold pieno");
+
+        // Precondizione: tutti e quattro gli slot devono essere occupati.
+        IApplMessage before = slot();
+
+        isReply(before, "hold_full");
+        assertEquals("0", oneArg(before));
+
+        System.out.println("[SPRINT1 E2E] Hold pieno confermato");
+
+        // La richiesta attraversa il vero QActor io_port.
+        dispatch(
+            "io_port",
+            "press_button",
+            "press_button(0)"
+        );
+
+        System.out.println("[SPRINT1 E2E] Quinta pressione del pulsante inviata");
+
+        // Verifica che l'hold rimanga pieno.
+        Thread.sleep(2000);
+
+        IApplMessage after = slot();
+
+        isReply(after, "hold_full");
+        assertEquals("0", oneArg(after));
+
+        System.out.println("[SPRINT1 E2E] Hold ancora pieno");
+        System.out.println(
+            "[SPRINT1 E2E] Verificare nella console QAK: IOPORT_MOCK | Request rejected"
+        );
+    }
+    
+    @Test(timeout = 60000)
+    public void test09_richiestaDuranteCaricamento_RetryLater() throws Exception {
+        System.out.println(
+            "[SPRINT1 E2E] Avvio test richiesta durante caricamento"
+        );
+
+        // 1. Verifica che ci sia almeno uno slot libero
+        IApplMessage before = slot();
+
+        isReply(before, "slot_assigned");
+
+        String initialSlot = oneArg(before);
+        validSlot(initialSlot);
+
+        System.out.println(
+            "[SPRINT1 E2E] Slot disponibile: " + initialSlot
+        );
+
+        // 2. Prima richiesta: deve essere accettata
+        IApplMessage firstReply = request(
+            "cargoservice",
+            "request_to_load",
+            "request_to_load(0)"
+        );
+
+        isReply(firstReply, "engaged");
+
+        String assignedSlot = oneArg(firstReply);
+        validSlot(assignedSlot);
+
+        assertEquals(
+            "Lo slot assegnato non corrisponde a quello disponibile",
+            initialSlot,
+            assignedSlot
+        );
+
+        System.out.println(
+            "[SPRINT1 E2E] Prima richiesta accettata: " + assignedSlot
+        );
+
+        // 3. Attende brevemente affinché il caricamento
+        //    entri nella fase di movimentazione.
+        TimeUnit.SECONDS.sleep(2);
+
+        // 4. Seconda richiesta mentre il primo caricamento è in corso
+        System.out.println(
+            "[SPRINT1 E2E] Invio seconda richiesta durante il caricamento"
+        );
+
+        IApplMessage secondReply = request(
+            "cargoservice",
+            "request_to_load",
+            "request_to_load(0)"
+        );
+
+        // 5. La seconda richiesta deve ricevere retrylater
+        isReply(secondReply, "retrylater");
+
+        assertEquals(
+            "0",
+            oneArg(secondReply)
+        );
+
+        System.out.println(
+            "[SPRINT1 E2E] Seconda richiesta correttamente rifiutata temporaneamente"
+        );
+
+        System.out.println(
+            "[SPRINT1 E2E] Risposta ricevuta: retrylater(0)"
+        );
+
+        System.out.println(
+            "[SPRINT1 E2E] TEST SUPERATO!"
         );
     }
 }
