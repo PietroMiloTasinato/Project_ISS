@@ -23,7 +23,7 @@ Reply sonar_timeout:sonar_timeout(ARG) for detect_container
 
 Dispatch setrobotstate: setpos(X,Y,D)
 Request moverobot: moverobot(TARGETX, TARGETY,STEPTIME)
-Reply moverobotdone  :  moverobotdone(ARG) for moverobot //non dovrebbe essere Reply moverobotdone:moverobotok(ARG) for moverobot??
+Reply moverobotdone  :  moverobotdone(ARG) for moverobot
 Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
 
 Event ioport_occupied:io_port_occupied(ARG)
