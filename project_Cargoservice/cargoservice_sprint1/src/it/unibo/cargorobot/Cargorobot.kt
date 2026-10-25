@@ -28,7 +28,7 @@ class Cargorobot ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		
 		    	var currentPos = arrayOf<Int>()
 		    	var (Xtemp, Ytemp) = -1 to -1

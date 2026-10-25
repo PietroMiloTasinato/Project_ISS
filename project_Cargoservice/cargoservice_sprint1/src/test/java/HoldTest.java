@@ -9,4 +9,8 @@ public class HoldTest extends HoldTestPlan {
         return Hold.Companion.createHoldFromConfig(Hold.Companion.getDEFAULT_CONFIG_FILE());
     }
 
+    @Override
+    IContainer createContainer() {
+        return new Container();
+    }
 }

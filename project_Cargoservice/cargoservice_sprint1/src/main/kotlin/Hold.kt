@@ -25,7 +25,7 @@ class Hold(
 
     override fun getFreeSlot() = slotMap.values.firstOrNull { it.container == null }
     override fun getPoint(id: String) = pointMap[id]
-    override fun markSlot(id: String, code: Int?){
+    override fun codeAssigned(id: String, code: Int?){
         slotMap[id]?.container = Container(code)
     }
 

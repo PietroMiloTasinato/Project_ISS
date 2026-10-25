@@ -28,74 +28,57 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
-		 val Hold = main.kotlin.Hold.Companion.createHoldFromConfig()  
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		 
+				
+				val Map = mutableMapOf(
+					"slot1" to "",
+					"slot2" to "",
+					"slot3" to "",
+					"slot4" to ""
+				)
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
-						CommUtils.outgreen("HOLD | Ready")
+						CommUtils.outcyan("HOLD | ready ")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t013",targetState="get_slot",cond=whenRequest("ask_for_slot"))
-					transition(edgeName="t014",targetState="get_point",cond=whenRequest("ask_for_point"))
-					transition(edgeName="t015",targetState="update_map",cond=whenDispatch("container_deployed"))
+					 transition(edgeName="t022",targetState="choose_slot",cond=whenRequest("ask_for_slot"))
 				}	 
-				state("get_slot") { //this:State
+				state("choose_slot") { //this:State
 					action { //it:State
-						 val SlotAssigned = Hold.getFreeSlot()  
-						if(  SlotAssigned != null  
-						 ){ val Id = SlotAssigned.id  
-						answer("ask_for_slot", "slot_assigned", "slot_assigned($Id)"   )  
+						CommUtils.outcyan("HOLD | Choosing a slot...")
+						 val Slot = Map.entries.firstOrNull{ it.value.isBlank() }?.key  
+						CommUtils.outcyan("HOLD | $Slot")
+						if(  Slot != null  
+						 ){answer("ask_for_slot", "slot_obtained", "slot_obtained($Slot)"   )  
 						}
 						else
-						 {answer("ask_for_slot", "hold_full", "hold_full(0)"   )  
+						 {answer("ask_for_slot", "slots_unavailable", "slots_unavailable(0)"   )  
 						 }
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
-				}	 
-				state("get_point") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("ask_for_point(ID)"), Term.createTerm("ask_for_point(ID)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								 val point = Hold.getPoint(payloadArg(0))  
-								if(  point != null  
-								 ){
-													val X = point.x
-													val Y = point.y
-								answer("ask_for_point", "point_found", "point_found($X,$Y)"   )  
-								}
-								else
-								 {answer("ask_for_point", "point_not_found", "point_not_found(0)"   )  
-								 }
-						}
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
+					 transition(edgeName="t123",targetState="update_map",cond=whenDispatch("container_deployed"))
 				}	 
 				state("update_map") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("container_deployed(SlotId,Code)"), Term.createTerm("container_deployed(SlotId,Code)"), 
+						if( checkMsgContent( Term.createTerm("container_deployed(Slot,Code)"), Term.createTerm("container_deployed(Slot,Code)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								
-									            val ReceivedSlot = payloadArg(0)
-									            val ReceivedCode = payloadArg(1).toIntOrNull()
-								if(  ReceivedCode != null  
-								 ){
-									                Hold.markSlot(ReceivedSlot, ReceivedCode)
-								CommUtils.outgreen("HOLD | Container registration requested")
+								 val Slot = payloadArg(0); val Code = payloadArg(1)  
+								CommUtils.outcyan("HOLD | assigned slot: code: $Slot: $Code")
+								if(  Map.containsKey(Slot)  
+								 ){ Map[Slot] = Code  
+								updateResourceRep( "hold_state($Map)"  
+								)
 								}
 								else
-								 {CommUtils.outred("HOLD | Invalid container code")
+								 {emit("system_failure", "system_failure(0)" ) 
 								 }
 						}
 						//genTimer( actor, state )

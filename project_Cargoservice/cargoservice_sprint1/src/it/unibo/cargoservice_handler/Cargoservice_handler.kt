@@ -28,7 +28,7 @@ class Cargoservice_handler ( name: String, scope: CoroutineScope, isconfined: Bo
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		
 				// stato e costanti
 				var ServiceWorking = true

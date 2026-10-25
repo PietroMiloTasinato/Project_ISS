@@ -6,5 +6,5 @@ interface IHold {
     val slotNumber: Int
     fun getFreeSlot(): ISlot?
     fun getPoint(id: String): IPoint?
-    fun markSlot(id: String, code: Int?)
+    fun codeAssigned(id: String, code: Int?)
 }

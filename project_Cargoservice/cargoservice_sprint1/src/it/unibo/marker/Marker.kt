@@ -28,7 +28,7 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		 var CodeNumber = 1  
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
@@ -39,7 +39,7 @@ class Marker ( name: String, scope: CoroutineScope, isconfined: Boolean=false, i
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t012",targetState="marking",cond=whenRequest("start_marking"))
+					 transition(edgeName="t019",targetState="marking",cond=whenRequest("start_marking"))
 				}	 
 				state("marking") { //this:State
 					action { //it:State

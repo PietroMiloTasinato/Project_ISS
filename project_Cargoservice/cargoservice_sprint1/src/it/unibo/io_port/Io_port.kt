@@ -28,68 +28,29 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
 					action { //it:State
-						CommUtils.outgreen("IOPORT_MOCK | Ready")
-						delay(1000) 
-						CommUtils.outyellow("IOPORT_MOCK | Button pressed")
-						request("request_to_load", "request_to_load(0)" ,"cargoservice" )  
+						CommUtils.outblue("IO_PORT | Ready")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t016",targetState="accepted",cond=whenReply("engaged"))
-					transition(edgeName="t017",targetState="rejected_state",cond=whenReply("rejected"))
-					transition(edgeName="t018",targetState="retry_state",cond=whenReply("retrylater"))
+					 transition(edgeName="t024",targetState="load_container",cond=whenRequest("load_container"))
 				}	 
-				state("accepted") { //this:State
+				state("load_container") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("engaged(SLOT)"), Term.createTerm("engaged(SLOT)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								
-								                val AssignedSlot = payloadArg(0)
-								CommUtils.outgreen("IOPORT_MOCK | Request accepted")
-								CommUtils.outgreen("IOPORT_MOCK | Assigned slot: $AssignedSlot")
-						}
+						CommUtils.outblack("IO_PORT | Loading the container")
+						delay(2000) 
+						answer("load_container", "load_done", "load_done(ARG)"   )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="finished", cond=doswitch() )
-				}	 
-				state("rejected_state") { //this:State
-					action { //it:State
-						CommUtils.outred("IOPORT_MOCK | Request rejected")
-						CommUtils.outred("IOPORT_MOCK | Hold is full")
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="finished", cond=doswitch() )
-				}	 
-				state("retry_state") { //this:State
-					action { //it:State
-						CommUtils.outyellow("IOPORT_MOCK | Retry later")
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="finished", cond=doswitch() )
-				}	 
-				state("finished") { //this:State
-					action { //it:State
-						CommUtils.outgreen("IOPORT_MOCK | Waiting for next test")
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
+					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
 				}	 
 			}
 		}
