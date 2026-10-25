@@ -5,7 +5,6 @@ Reply retrylater: retrylater(ARG) for request_to_load
 Reply rejected: rejected(ARG) for request_to_load
 Reply engaged: engaged(SLOT) for request_to_load
 
-
 Request ask_for_slot:ask_for_slot(ARG)
 Reply slot_assigned:slot_assigned(ID) for ask_for_slot
 Reply hold_full:hold_full(ARG) for ask_for_slot
@@ -24,10 +23,11 @@ Reply sonar_timeout:sonar_timeout(ARG) for detect_container
 
 Dispatch setrobotstate: setpos(X,Y,D)
 Request moverobot: moverobot(TARGETX, TARGETY,STEPTIME)
-Reply moverobotdone  :  moverobotdone(ARG) for moverobot //non dovrebbe essere Reply moverobotdone:moverobotok(ARG) for moverobot??
+Reply moverobotdone  :  moverobotdone(ARG) for moverobot
 Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
 
 Event ioport_occupied:io_port_occupied(ARG)
+Dispatch press_button:press_button(ARG) //simulazione della pressione del pulsante IOPort
 Request start_marking: start_marking(ARG)
 Reply container_marked : container_marked(BARCODE) for start_marking
 
@@ -36,13 +36,13 @@ Context ctx_smartrobot ip [host="127.0.0.1" port=8020]
 
 ExternalQActor robotsmart context ctx_smartrobot
 
-
 QActor cargoservice context ctx_cargoservice{
 	
 	[#
 		var Io_port_occupied = false
 		var System_out_of_service = false
 		var Is_engaged = false
+		var FirstStart = true
 		var Slot_id: String = ""
 		var Robot_path = mutableListOf<String>()
 		var Target = ""
@@ -57,8 +57,13 @@ QActor cargoservice context ctx_cargoservice{
 	//attesa di una nuova richiesta
 	State disengaged{
 		[# Is_engaged = false #]
-		// Stop blinking led
-		forward led_mock -m  stop_blinking:stop_blinking(0)
+		
+		// se non è il primo avvio posso inviare il messaggio al led
+		if [# !FirstStart #] {
+        	forward led_mock -m stop_blinking:stop_blinking(0)
+    	}
+	    [# FirstStart = false #]
+	    
 		println("CARGOSERVICE | Ready") color green
 	} Transition t0
 		whenRequest request_to_load -> start_engage
@@ -70,6 +75,8 @@ QActor cargoservice context ctx_cargoservice{
 		else ask_slot
 		
 	State retry_state {
+		
+		println("CARGOSERVICE | Retry later: service unavailable") color yellow
 		replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto disengaged
@@ -128,7 +135,8 @@ QActor cargoservice context ctx_cargoservice{
         whenRequest request_to_load -> retry_wait_sonar
 	
 	State retry_wait_sonar {
-
+		
+		println("CARGOSERVICE | Retry later: waiting for sonar") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto wait_sonar
@@ -177,6 +185,7 @@ QActor cargoservice context ctx_cargoservice{
 	
 	State retry_wait_point {
 
+		println("CARGOSERVICE | Retry later: waiting for point") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto wait_point
@@ -203,6 +212,7 @@ QActor cargoservice context ctx_cargoservice{
         
     State retry_wait_robot {
 
+		println("CARGOSERVICE | Retry later: robot busy") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
         
     } Goto wait_robot
@@ -238,6 +248,7 @@ QActor cargoservice context ctx_cargoservice{
 
     State retry_wait_marker {
 
+		println("CARGOSERVICE | Retry later: marking container") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto wait_marker
@@ -379,21 +390,43 @@ QActor hold context ctx_cargoservice{
 
 QActor io_port context ctx_cargoservice {
 	
+	[#
+        var RequestsSent = 0
+        var PendingRequests = 0
+
+        var AcceptedRequests = 0
+        var RejectedRequests = 0
+        var RetryRequests = 0
+    #]
 	
 	State idle initial {
+		
 		println("IOPORT_MOCK | Ready") color green
 		
-		// attende l'avvio degli altri attori
-        delay 1000
-        
-        // simula una pressione del pulsante
-        println("IOPORT_MOCK | Button pressed") color yellow
-
-        request cargoservice -m request_to_load:request_to_load(0)
 	} Transition t0
+		whenMsg press_button -> handle_press
         whenReply engaged -> accepted
         whenReply rejected -> rejected_state
         whenReply retrylater -> retry_state
+    
+    // simulazione pressione pulsante
+    State handle_press {
+
+        onMsg(press_button:press_button(ARG)) {
+
+            [#
+                RequestsSent++
+                PendingRequests++
+            #]
+
+            println("IOPORT_MOCK | Button pressed") color yellow
+
+            println("IOPORT_MOCK | Sending load request") color yellow
+        }
+
+        request cargoservice -m request_to_load:request_to_load(0)
+
+    } Goto idle
     
     // richiesta accettata  
     State accepted {
@@ -402,6 +435,8 @@ QActor io_port context ctx_cargoservice {
 
             [#
                 val AssignedSlot = payloadArg(0)
+                AcceptedRequests++
+                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
             #]
 
             println("IOPORT_MOCK | Request accepted") color green
@@ -409,29 +444,38 @@ QActor io_port context ctx_cargoservice {
             println("IOPORT_MOCK | Assigned slot: $AssignedSlot") color green
         }
 
-    } Goto finished
+    } Goto idle
     
     // richiesta rifiutata
     State rejected_state {
+    	
+    	onMsg(rejected:rejected(ARG)) {
 
-        println("IOPORT_MOCK | Request rejected") color red
+            [#
+                RejectedRequests++
+                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+            #]
 
-        println("IOPORT_MOCK | Hold is full") color red
+            println("IOPORT_MOCK | Request rejected") color red
+            println("IOPORT_MOCK | Hold is full") color red
+        }
 
-    } Goto finished
+    } Goto idle
     
     // riprovare piu tardi
     State retry_state {
+    	
+    	onMsg(retrylater:retrylater(ARG)) {
 
-        println("IOPORT_MOCK | Retry later") color yellow
+            [#
+                RetryRequests++
+                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+            #]
 
-    } Goto finished
-	
-	State finished {
+            println("IOPORT_MOCK | Retry later")color yellow
+        }
 
-        println("IOPORT_MOCK | Waiting for next test") color green
-
-    }
+    } Goto idle
 }
 
 QActor sonar_mock context ctx_cargoservice{
@@ -480,7 +524,7 @@ QActor led_mock context ctx_cargoservice {
 	
 	State off initial {
 		
-		println("LED_MOCK | OFF") color red
+		println("LED_MOCK | Off") color red
 		
 	} Transition t0
 		whenMsg start_blinking -> on
@@ -488,7 +532,7 @@ QActor led_mock context ctx_cargoservice {
 		
 	State on {
 		
-		println("LED_MOCK | BLINKING") color green
+		println("LED_MOCK | Blinking") color green
 		
 	} Transition t1 
 		whenMsg stop_blinking -> off

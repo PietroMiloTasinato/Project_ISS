@@ -33,6 +33,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				var Io_port_occupied = false
 				var System_out_of_service = false
 				var Is_engaged = false
+				var FirstStart = true
 				var Slot_id: String = ""
 				var Robot_path = mutableListOf<String>()
 				var Target = ""
@@ -52,7 +53,10 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				state("disengaged") { //this:State
 					action { //it:State
 						 Is_engaged = false  
-						forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
+						if(  !FirstStart  
+						 ){forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
+						}
+						 FirstStart = false  
 						CommUtils.outgreen("CARGOSERVICE | Ready")
 						//genTimer( actor, state )
 					}
@@ -75,6 +79,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("retry_state") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE | Retry later: service unavailable")
 						answer("request_to_load", "retrylater", "retrylater(0)"   )  
 						//genTimer( actor, state )
 					}
@@ -157,6 +162,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("retry_wait_sonar") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE | Retry later: waiting for sonar")
 						answer("request_to_load", "retrylater", "retrylater(0)"   )  
 						//genTimer( actor, state )
 					}
@@ -229,6 +235,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("retry_wait_point") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE | Retry later: waiting for point")
 						answer("request_to_load", "retrylater", "retrylater(0)"   )  
 						//genTimer( actor, state )
 					}
@@ -265,6 +272,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("retry_wait_robot") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE | Retry later: robot busy")
 						answer("request_to_load", "retrylater", "retrylater(0)"   )  
 						//genTimer( actor, state )
 					}
@@ -323,6 +331,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("retry_wait_marker") { //this:State
 					action { //it:State
+						CommUtils.outyellow("CARGOSERVICE | Retry later: marking container")
 						answer("request_to_load", "retrylater", "retrylater(0)"   )  
 						//genTimer( actor, state )
 					}
