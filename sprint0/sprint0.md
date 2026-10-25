@@ -242,32 +242,32 @@ In questa fase iniziale sono stati individuati i seguenti casi di test funzional
 ```
 abstract class HoldTestPlan {
 
-    IHold hold;
+	IHold hold;
 
-    abstract ISlot createSlot();
+	abstract IHold createHold();
+	abstract IContainer createContainer();
 
-    abstract IHold createHold();
+	@Before
+	public void setUp() {
+		hold = createHold();
+	}
 
-    @Before
-    public void setUp() {
-       hold = createHold();
-    }
+	@Test
+	public void getting_a_slot_while_all_hold_slots_are_free_should_return_a_non_null_value() {
+		ISlot freeSlot = hold.getFreeSlot();
+		Assert.assertNotNull("There are no slots available", freeSlot);
+	}
 
-    @Test
-    public void getting_a_slot_while_all_hold_slots_are_free_should_return_a_non_null_value() {
-       ISlot freeSlot = hold.getFreeSlot();
-       assertNotNull(freeSlot, "There are no slots available");
-    }
+	@Test
+	public void getting_a_slot_while_they_are_all_occupied_should_return_a_null_value() {
+		for (int i = 0; i < hold.getSlotNumber(); i++) {
+			ISlot slot = hold.getFreeSlot();
+			Assert.assertNotNull(slot);
+			hold.codeAssigned(slot.getId(), i);
+		}
 
-    @Test
-    public void getting_a_slot_while_they_are_all_occupied_should_return_a_null_value() {
-       for (Map.Entry<IPoint, ISlot> entry : hold.getHoldMap().entrySet()) {
-          ISlot newSlot = createSlot();
-          assertNotNull(newSlot.getContainer());
-          entry.setValue(newSlot);
-       }
-       assertNull(hold.getFreeSlot());
-    }
+		assertNull(hold.getFreeSlot());
+	}
 }
 ```
 
@@ -287,7 +287,6 @@ I casi individuati costituiscono un primo TestPlan funzionale, che verrà progre
 I requisiti permettono una vista logica delle macro-parti, ma non ancora una distribuzione sui nodi. Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1 e le relazioni qui sotto mostrano chi interagisce funzionalmente con chi, senza imporre un protocollo concreto o un attore per ogni dispositivo.
 
 - ctx_cargoservice: cargoservice, hold, cargorobot, marker, sonar, led, ioport;
-
 
 ![Wenv & DDR](../img/sprint0_arch.png)
 
