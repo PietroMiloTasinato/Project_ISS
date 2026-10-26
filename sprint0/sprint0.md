@@ -104,16 +104,6 @@ Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione
 Segue la formalizzazione delle entità del sistema sopra descritte tramite interfacce kotlin.
 
 ```
-interface IHold {
-    val home: IPoint
-    val ioPort: Pair<IPoint, IContainer?>
-    val slot5: IPoint
-    val holdMap: MutableMap<IPoint, ISlot>
-    fun getFreeSlot(): ISlot?
-}
-```
-
-```
 interface ISlot {
     val id: String
     val container: IContainer?

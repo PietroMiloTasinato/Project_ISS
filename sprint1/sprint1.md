@@ -57,7 +57,7 @@ Rispetto alle interfacce dello Sprint0, `IHold` guadagna `slotNumber`, `getPoint
 
 ### Il problema della concorrenza delle richieste
 
-Il pulsante può essere premuto anche durante un carico. Se il `cargoservice` lasciasse la richiesta nella coda mentre attende il robot, il `retrylater` arriverebbe solo a carico finito. Quindi **ogni stato di attesa** del `cargoservice` ha anche la transizione `whenRequest request_to_load`, verso uno stato che risponde subito `retrylater` e torna all'attesa. Poiché un attore elabora un messaggio alla volta, controllo e impostazione di `Is_engaged` sono atomici: due richieste non possono essere accettate insieme.
+Il pulsante può essere premuto anche durante un carico. Se il `cargoservice` lasciasse la richiesta nella coda mentre attende il robot, il `retrylater` arriverebbe solo al termine della richiesta attualmente in esecuzione. Per evitare questo problema possiamo impementare una transizione addizionale che risponda `retrylater` in caso arrivi una `request_to_load`. Quindi **ogni stato di attesa** del `cargoservice` ha anche la transizione `whenRequest request_to_load`, verso uno stato che risponde subito `retrylater` e torna all'attesa. Poiché un attore elabora un messaggio alla volta, controllo e impostazione di `Is_engaged` sono atomici: due richieste non possono essere accettate insieme.
 
 ### Tempo e mock
 
