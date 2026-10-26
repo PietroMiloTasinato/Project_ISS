@@ -185,7 +185,7 @@ sequenceDiagram
 
 ### Diagramma dell'architettura
 
-TODO (lascia vuoto per diagramma autogenerato in png dal codice py).
+![Wenv & DDR](../img/sprint_1arch.png)
 
 ## Testing
 

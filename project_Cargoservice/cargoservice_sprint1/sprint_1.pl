@@ -2,16 +2,14 @@
 % sprint_1 description   
 %====================================================================================
 request( request_to_load, request_to_load(ARG) ).
-reply( retrylater, retrylater(ARG) ).  %%for request_to_load
+reply( retry_later, retry_later(ARG) ).  %%for request_to_load
 reply( rejected, rejected(ARG) ).  %%for request_to_load
 reply( engaged, engaged(SLOT) ).  %%for request_to_load
 request( ask_for_slot, ask_for_slot(ARG) ).
 reply( slot_assigned, slot_assigned(ID) ).  %%for ask_for_slot
 reply( hold_full, hold_full(ARG) ).  %%for ask_for_slot
 request( ask_for_point, ask_for_point(ID) ).
-reply( point_found, point_found(X,Y) ).  %%for ask_for_point
-reply( point_not_found, point_not_found(ARG) ).  %%for ask_for_point
-dispatch( container_deployed, container_deployed(SlotId,Code) ).
+dispatch( container_deployed, container_deplyed(SlotId,Code) ).
 dispatch( start_blinking, start_blinking(ARG) ).
 dispatch( stop_blinking, stop_blinking(ARG) ).
 request( detect_container, detect_container(ARG) ).
