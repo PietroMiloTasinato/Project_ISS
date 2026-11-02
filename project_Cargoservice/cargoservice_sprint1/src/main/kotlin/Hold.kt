@@ -9,8 +9,8 @@ import java.io.File
 class Hold(
     private val slotMap: Map<String, ISlot>,
     override val ioPort: Pair<IPoint, IContainer?>,
+    override val slot5: Pair<IPoint, IContainer?>,
     home: IPoint,
-    slot5: IPoint,
 ): IHold{
 
     override val slotNumber: Int = slotMap.size
@@ -19,7 +19,7 @@ class Hold(
         value.point
     } + mapOf(
         "home" to home,
-        "slot5" to slot5,
+        "slot5" to slot5.first,
         "ioport" to ioPort.first
     )
 
