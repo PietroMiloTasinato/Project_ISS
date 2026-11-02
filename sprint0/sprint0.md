@@ -11,8 +11,7 @@
   - [Motivazione sull'utilizzo del metamodello Qak](#motivazione-sullutilizzo-del-metamodello-qak)
   - [Architettura di riferimento](#architettura-di-riferimento)
 - [Piano di Test](#piano-di-test)
-- [Project](#project)
-  - [Diagramma dell'architettura iniziale](#diagramma-dellarchitettura-iniziale)
+- [Diagramma dell'architettura iniziale](#diagramma-dellarchitettura-iniziale)
 - [Testing](#testing)
 - [Deployment](#deployment)
 - [Piano di lavoro](#piano-di-lavoro)
@@ -61,15 +60,37 @@ Il servizio deve inoltre mostrare sul _display_ dell’_IOPort_:
 
 ## Analisi dei Requisiti
 
+### Infrastruttura fornita
+
+Si riportano i macrocomponenti software del sistema che sono già forniti dal committente come `WEnv` che rappresenta un'ambiente virtuale che simula la hold e diversi componenti per il controllo robotico: `RobotObj26` (POJO), `VirtualRobot26`, `VirtuRobotService26` e `RobotSmart26`. L'analisi successiva dovrà confrontare capacità, interfacce e costi d'integrazione di questi strumenti per stabilire quale supporto utilizzare nel `cargorobot`. Non è richiesto di riscrivere da zero tutte le funzionalità robotiche.
+
+### Motivazione sull'utilizzo del metamodello Qak
+
+La scelta del linguaggio di modellazione **Quasi Actor Kotlin** (Qak) è motivata da due vantaggi principali offerti da questo metamodello rispetto agli altri linguaggi "general purpose":
+
+- Il concetto di **Interconnessione** è supportato nativamente in Qak: nel dominio descritto del problema possiamo notare che la comunicazione tra i vari attori presenti è essenziale per il corretto funzionamento del sistema, e un solo GPL non permette di esprimere questa necessità nativamente.
+
+- Progettazione orientata ad attori e microservizi: in un GPL saremmo limitati vedere gli elementi del sistema come dei semplici POJO. Qak invece permette di esprimere gli elementi del sistema come attori, supportando l'**Actor Model** (il paradigma di progettazione ad attori), questo ci permette di sviluppare il nostro progetto attorno alle interaizoni tra attori, e non sulla semplice regolazione di uno o più flussi di dati.
+
+Queste due caratteristiche permettono di ridurre significativamente l'**Abstraction Gap** tra Qak e il dominio del problema. Utilizzare solamente un GPL presenterebbe un Abstraction gap maggiore che comporterebbe a maggiore complessità nelle fasi di implementazione del progetto.
+
+Infine, l'adozione del metamodello QAK è anche motivata dalla presenza di una **Software Factory** che è in grado di generare automaticamente codice Kotlin a partire dai modelli scritti in linguaggio QAK. Questo permette non solo di ottenere dei modelli eseguibili "off-the-bat", ma supporta anche un processo di **Rapida Prototipazione** in cui si permette agli sviluppatori di valutare la fattibilità di particolari soluzioni implementative già nelle fasi di progettazione.
+
+In un modello qak, ogni attore possiede uno stato privato e un proprio comportamento. Gli attori non accedono direttamente allo stato interno degli altri attori, ma coordinano le proprie attività mediante lo scambio di messaggi.
+
+L'assenza di memoria condivisa è considerata un vincolo del modello logico: anche quando più attori vengono eseguiti nella stessa JVM, il loro coordinamento deve avvenire tramite messaggi e non mediante accesso diretto a variabili mutabili condivise.
+
+La motivazione di Qak non determina automaticamente il numero degli attori o dei Context e non obbliga a rappresentare ogni dispositivo fisico come QActor.
+
 Seguendo i requisiti del committente, abbiamo individuato i seguenti **macrocomponenti**:
 
 - **cargoservice**
 - **cargorobot**
 - **sonar**
-- **IOPort**
+- **WebGUI**
 - **hold**
 - **led**
-- **slot 5**, d'ora in poi identificato con **marker**
+- **slot 5**
 - **slot** numerati dall' 1 al 4
 - **container**
 
@@ -80,13 +101,20 @@ Il sistema richiesto dal committente ha l’obiettivo di automatizzare le operaz
 Il `cargoservice` rappresenta il servizio applicativo responsabile della ricezione e della valutazione delle richieste di caricamento, nonché del coordinamento delle operazioni necessarie al loro completamento. In particolare, il servizio restituisce la risposta _out_of_service_ in caso di fallimento del `sonar` oppure restituisce _retry_later_ qualora l'`IOPort` risulti occupata; rifiuta invece la richiesta quando tutti gli slot di deposito permanente risultano occupati. In presenza di almeno uno slot disponibile e in assenza delle precedenti condizioni, il servizio accetta la richiesta, individua e riserva uno slot libero, ne comunica il nome al cliente e pone il sistema nello stato _engaged_.
 
 ##### Cargorobot
+Un Differential Drive Robot usato per automatizzare le operazioni di carico dei container nella stiva. Dopo un confronto con il committente, è stato stabilito che il DDR dovrà:
+- moversi da una zona definita `Home` ad un'altra zona definita `IOPort`
+- moversi da `IOPort` allo **Slot 5**
+- moversi dallo **Slot 5** a un'altro **Slot**
+- Tornare alla `Home`
 
+<!-- I componenti software forniti dal commitente, sono capaci di comunicare con il DDR, e di conseguenza possono guidarlo nelle operazioni di spostamento all'interno della stiva. 
+parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
 
 ##### Sonar
 Un sensore `sonar` è incaricato di rilevare la presenza di un container nell’area di ingresso e di segnalare eventuali condizioni anomale della distanza misurata. Il cliente è tenuto a collocare il container nell’area di rilevamento del sonar entro un intervallo di tempo prefissato, trascorso il quale, in assenza del container, `cargoservice` torna nello stato _disengaged_.
 
-##### IOPort
-L’interazione dell'utente con il sistema avviene attraverso la `IOPort`, interfaccia verso il cliente, dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sul funzionamento del servizio.
+##### WebGUI
+Dopo un confronto con il committente, si è stabilito che l’interazione dell'utente con il sistema avviene attraverso una `WebGUI`, interfaccia web verso il cliente. la suddetta è dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sullo stato di `cargoservice`.
 
 ##### Hold
 L'`hold` (stiva) costituisce l’ambiente fisico operativo ed è organizzata in quattro aree di deposito permanente, denominate `slot1–slot4`, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, `slot5`, dedicata alle operazioni di marcatura.
@@ -104,54 +132,45 @@ interface IHold {
 ##### Led
 Dispositivo che lampeggia mentre il `cargoservice` è in stato _engaged_.
 
-##### Marker
-Una volta rilevata la presenza del container, il cargoservice si avvale del cargorobot per trasferirlo dalla IOPort allo slot5, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura.
+##### Slot 5
+Una volta rilevata la presenza del container, il cargoservice si avvale del cargorobot per trasferirlo dalla IOPort allo slot5, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura. Dal confronto con il committente, sappiamo che l'implementazione e la definizione delle funzioni del `marker` non sono di nostra competenza.
+
 ##### Slot
-**TODO: spiegare interfaccia slot**
+Al temine dell'operazione di marcatura, il robot provvede al trasferimento del container nello slot precedentemente riservato. 
+
+<!--
 ```
 interface ISlot {
     val id: String
     var container: IContainer?
     val point: IPoint
 }
-```
+```-->
+
 **TODO: spiegare interfaccia point**
 
+<!--
 ```
 interface IPoint {
     val x: Int
     val y: Int
 }
 ```
-
+-->
 ##### Container
 **TODO: spiegare interfaccia Container**
 
+<!--
 ```
 interface IContainer {
     val code: Int?
 }
 ```
+-->
+
 ```
-Successivamente, il robot provvede al trasferimento del container nello slot precedentemente riservato. Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
+ Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
 ```
-
-### Infrastruttura fornita
-
-Si riportano i macrocomponenti software del sistema che sono già forniti dal committente come `WEnv` che rappresenta un'ambiente virtuale che simula la hold e diversi componenti per il controllo robotico: `RobotObj26` (POJO), `VirtualRobot26`, `VirtuRobotService26` e `RobotSmart26`. L'analisi successiva dovrà confrontare capacità, interfacce e costi d'integrazione di questi strumenti per stabilire quale supporto utilizzare nel `cargorobot`. Non è richiesto di riscrivere da zero tutte le funzionalità robotiche.
-
-### Motivazione sull'utilizzo del metamodello Qak
-
-La scelta del DSL **Quasi Actor Kotlin** (Qak) è motivata da due vantaggi principali offerti da questo metamodello rispetto agli altri linguaggi "general purpose":
-
-- Il concetto di **Interconnessione** è supportato nativamente in Qak: nel dominio descritto del problema possiamo notare che la comunicazione tra i vari attori presenti è essenziale per il corretto funzionamento del sistema, e un solo GPL non permette di esprimere questa necessità nativamente.
-
-- Progettazione orientata ad attori e microservizi: in un GPL saremmo limitati vedere gli elementi del sistema come dei semplici POJO. Qak invece permette di esprimere gli elementi del sistema come attori, supportando l'**Actor Model** (il paradigma di progettazione ad attori), questo ci permette di sviluppare il nostro progetto attorno alle interaizoni tra attori, e non sulla semplice regolazione di uno o più flussi di dati.
-
-Queste due caratteristiche permettono di ridurre significativamente l'**Abstraction Gap** tra Qak e il dominio del problema. Utilizzare solamente un GPL presenterebbe un Abstraction gap maggiore che comporterebbe a maggiore complessità nelle fasi di implementazione del progetto.
-
-Infine, l'adozione del metamodello QAK è anche motivata dalla presenza di una **Software Factory** che è in grado di generare automaticamente codice Kotlin a partire dai modelli scritti in linguaggio QAK. Questo permette non solo di ottenere dei modelli eseguibili "off-the-bat", ma supporta anche un processo di **Rapida Prototipazione** in cui si permette agli sviluppatori di valutare la fattibilità di particolari soluzioni implementative già nelle fasi di progettazione.
-
 
 Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici. Il numero di nodi computazionali ricavato dai requisiti è almeno 4: 
  - un dispositivo per il sonar
@@ -159,15 +178,8 @@ Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione
  - un computer per eseguire `cargoservice`
  - un dispositivo per interagire con l'`IOPort`
 
-In caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il `cargoservice` è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia e un sottosistema robotico.
+In caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il `cargoservice` è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia web e un sottosistema robotico.
 
-
-Dopo un primo confronto con il commitente, sono sorti altri requisiti, in particolare:
-
-- la presenza di una Web GUI per la IOPort
-- un dispositivo PicoW per il sonar e il led
-
-Questi ulteriori requisiti introducono dei vincoli tecnologici che potrebbero richiedere l’impiego di tecnologie e linguaggi differenti.
 
 L'interazione principale è una richiesta dalla IOPort al cargoservice, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente, è:
 
@@ -178,19 +190,18 @@ Reply load_refused : load_refused(CAUSE) for load_container
 Reply retrylater : retrylater(CAUSE) for load_container
 ```
 
-Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/IOPort per la richiesta, cargoservice/cargorobot per movimentazione, sonar per rilevamento, marker per la segnalazione di marcatura, display per la visualizzazione e LED per il lampeggio.
+Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/WebGUI per la richiesta, cargoservice/cargorobot per muovere il DDR, sonar per rilevamento, display per la visualizzazione e LED per il lampeggio.
 
+<!--
 Infine, non è definito nei requisiti dove collocare i macro-componenti individuati, quindi si evita di fissare fin d'ora Context Qak o indirizzi di rete definitivi. Mentre, le responsabilità funzionali sono distribuite nel modo seguente:
 
 - il servizio (`cargoservice`) gestisce il caricamento;
 - la `IOPort` gestisce il contatto con il cliente;
 - il `sonar` misura;
-- il `marker` marca;
 - il `cargorobot` trasporta.
 
 Nessuna ulteriore scomposizione interna del servizio è imposta dal committente.
-
-## Analisi del problema
+-->
 
 ### Core business
 
@@ -218,14 +229,6 @@ Cliente → IOPort → cargoservice → esito della richiesta
 
 Questo è un flusso funzionale, non un diagramma di attori Qak o di deployment. Le transizioni del led e il rilascio della prenotazione dopo il timeout non vengono completati arbitrariamente laddove il testo non li specifica.
 
-
-### Architettura di riferimento
-
-Nel modello qak, ogni attore possiede uno stato privato e un proprio comportamento. Gli attori non accedono direttamente allo stato interno degli altri attori, ma coordinano le proprie attività mediante lo scambio di messaggi.
-
-L'assenza di memoria condivisa è considerata un vincolo del modello logico: anche quando più attori vengono eseguiti nella stessa JVM, il loro coordinamento deve avvenire tramite messaggi e non mediante accesso diretto a variabili mutabili condivise.
-
-La motivazione di Qak non determina automaticamente il numero degli attori o dei Context e non obbliga a rappresentare ogni dispositivo fisico come QActor.
 
 ## Piano di Test
 
@@ -272,13 +275,10 @@ abstract class HoldTestPlan {
 
 I casi individuati costituiscono un primo TestPlan funzionale, che verrà progressivamente formalizzato in test automatizzati durante gli sprint successivi, parallelamente allo sviluppo dei componenti software necessari. Ulteriori TestPlan, relativi alle altre funzionalità del sistema, saranno definiti e approfonditi negli sprint che le affronteranno.
 
-## Project
+## Diagramma dell'architettura iniziale
 
-### Diagramma dell'architettura iniziale
-
-I requisiti permettono una vista logica delle macro-parti, ma non ancora una distribuzione sui nodi. Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1 e le relazioni qui sotto mostrano chi interagisce funzionalmente con chi, senza imporre un protocollo concreto o un attore per ogni dispositivo.
-
-- ctx_cargoservice: cargoservice, hold, cargorobot, marker, sonar, led, ioport;
+I requisiti permettono una vista logica delle macro-parti, ma non ancora una distribuzione sui nodi. Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1 e le relazioni qui sotto mostrano chi interagisce con chi, senza imporre un protocollo concreto o un attore per ogni dispositivo.
+Per rappresentare al meglio il sistema richiesto dai requisititi, abbiamo associato ad ogni dispositivo richiesto esplicitamente nei requisiti, questi dispositivi sono stati individuati nell'analisi dei requisiti.
 
 ![Wenv & DDR](../img/sprint0_arch.png)
 
