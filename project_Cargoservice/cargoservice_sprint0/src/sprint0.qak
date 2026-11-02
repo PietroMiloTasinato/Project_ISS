@@ -59,7 +59,9 @@ QActor io_port_mock context ctx_cargoservice {
 		whenReply rejected -> failure
 		
 	State success{
-		println("IO_PORT_MOCK | Request number ${NumTest++} successful") color green
+		onMsg(engaged:engaged(Slot)){
+			println("IO_PORT_MOCK | Request number ${NumTest++} successful with id: ${payloadArg(0)}") color green
+		}
 	} Goto test
 	
 	State failure{

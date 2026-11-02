@@ -54,7 +54,10 @@ class Io_port_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("success") { //this:State
 					action { //it:State
-						CommUtils.outgreen("IO_PORT_MOCK | Request number ${NumTest++} successful")
+						if( checkMsgContent( Term.createTerm("engaged(SLOT)"), Term.createTerm("engaged(Slot)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outgreen("IO_PORT_MOCK | Request number ${NumTest++} successful with id: ${payloadArg(0)}")
+						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
