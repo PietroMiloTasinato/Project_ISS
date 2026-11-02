@@ -82,42 +82,31 @@ L'assenza di memoria condivisa è considerata un vincolo del modello logico: anc
 
 La motivazione di Qak non determina automaticamente il numero degli attori o dei Context e non obbliga a rappresentare ogni dispositivo fisico come QActor.
 
+### Macrocomponenti
+
 Seguendo i requisiti del committente, abbiamo individuato i seguenti **macrocomponenti**:
 
-- **cargoservice**
+- **cargoservice**, composta da:
+  - **hold**
+  - **slot 5**
+  - **slot** numerati dall'1 al 4
+  - **point**
+  - **container**
 - **cargorobot**
 - **sonar**
-- **WebGUI**
-- **hold**
+- **IOPort**
+- **display**
 - **led**
-- **slot 5**
-- **slot** numerati dall' 1 al 4
-- **container**
 
 Il sistema richiesto dal committente ha l’obiettivo di automatizzare le operazioni di caricamento e deposito dei container all’interno della stiva di una nave, mediante l’impiego di un robot a guida differenziale denominato `cargorobot`, coordinato dal servizio software `cargoservice`.
 
+#### Cargoservice
 
-##### Cargoservice
-Il `cargoservice` rappresenta il servizio applicativo responsabile della ricezione e della valutazione delle richieste di caricamento, nonché del coordinamento delle operazioni necessarie al loro completamento. In particolare, il servizio restituisce la risposta _out_of_service_ in caso di fallimento del `sonar` oppure restituisce _retry_later_ qualora l'`IOPort` risulti occupata; rifiuta invece la richiesta quando tutti gli slot di deposito permanente risultano occupati. In presenza di almeno uno slot disponibile e in assenza delle precedenti condizioni, il servizio accetta la richiesta, individua e riserva uno slot libero, ne comunica il nome al cliente e pone il sistema nello stato _engaged_.
-
-##### Cargorobot
-Un Differential Drive Robot usato per automatizzare le operazioni di carico dei container nella stiva. Dopo un confronto con il committente, è stato stabilito che il DDR dovrà:
-- moversi da una zona definita `Home` ad un'altra zona definita `IOPort`
-- moversi da `IOPort` allo **Slot 5**
-- moversi dallo **Slot 5** a un'altro **Slot**
-- Tornare alla `Home`
-
-<!-- I componenti software forniti dal commitente, sono capaci di comunicare con il DDR, e di conseguenza possono guidarlo nelle operazioni di spostamento all'interno della stiva. 
-parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
-
-##### Sonar
-Un sensore `sonar` è incaricato di rilevare la presenza di un container nell’area di ingresso e di segnalare eventuali condizioni anomale della distanza misurata. Il cliente è tenuto a collocare il container nell’area di rilevamento del sonar entro un intervallo di tempo prefissato, trascorso il quale, in assenza del container, `cargoservice` torna nello stato _disengaged_.
-
-##### WebGUI
-Dopo un confronto con il committente, si è stabilito che l’interazione dell'utente con il sistema avviene attraverso una `WebGUI`, interfaccia web verso il cliente. la suddetta è dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sullo stato di `cargoservice`.
+Il `cargoservice` rappresenta il servizio applicativo responsabile della ricezione e della valutazione delle richieste di caricamento, nonché del coordinamento delle operazioni necessarie al loro completamento. In particolare, il servizio restituisce la risposta _out_of_service_ in caso di fallimento del `sonar` oppure restituisce _retry_later_ qualora l'`IOPort` risulti occupata; rifiuta invece la richiesta quando tutti gli slot di deposito permanente risultano occupati. In presenza di almeno uno slot disponibile e in assenza delle precedenti condizioni, il servizio accetta la richiesta, individua e riserva uno slot libero, ne comunica il nome al cliente e pone il sistema nello stato _engaged_. Questo servizio gestisce i seguenti componenti:
 
 ##### Hold
-L'`hold` (stiva) costituisce l’ambiente fisico operativo ed è organizzata in quattro aree di deposito permanente, denominate `slot1–slot4`, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, `slot5`, dedicata alle operazioni di marcatura.
+
+L'`hold` (stiva) costituisce l’ambiente fisico operativo del DDR ed è organizzata in quattro aree di deposito permanente, denominate `slot1–slot4`, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, `slot5`, dedicata alle operazioni di marcatura.
 
 ```
 interface IHold {
@@ -129,59 +118,81 @@ interface IHold {
 }
 ```
 
-##### Led
-Dispositivo che lampeggia mentre il `cargoservice` è in stato _engaged_.
-
 ##### Slot 5
-Una volta rilevata la presenza del container, il cargoservice si avvale del cargorobot per trasferirlo dalla IOPort allo slot5, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura. Dal confronto con il committente, sappiamo che l'implementazione e la definizione delle funzioni del `marker` non sono di nostra competenza.
+
+Una volta rilevata la presenza del container, il `cargoservice` si avvale del `cargorobot` per trasferirlo dalla **IOPort** allo **slot5**, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura.
 
 ##### Slot
-Al temine dell'operazione di marcatura, il robot provvede al trasferimento del container nello slot precedentemente riservato. 
 
-<!--
+Al temine dell'operazione di marcatura, il robot provvede al trasferimento del container nello slot precedentemente riservato.
+
 ```
 interface ISlot {
     val id: String
     var container: IContainer?
     val point: IPoint
 }
-```-->
+```
 
-**TODO: spiegare interfaccia point**
+##### Point
 
-<!--
+L'interfaccia point serve ad implementare un sistema di riferimento cartesiano all'interno dell'Hold. Siccome dobbiamo rappresentare un piano, ci serviranno due valori per individuare univocamente un punto in questo piano.
+
 ```
 interface IPoint {
     val x: Int
     val y: Int
 }
 ```
--->
-##### Container
-**TODO: spiegare interfaccia Container**
 
-<!--
+##### Container
+
+Siccome lo scopo del sistema richiesto dal committente è quello di automatizzare il processo di carico dei container nell'Hold, formalizziamo il Container utilizzando un'interfaccia Kotlin.
+
 ```
 interface IContainer {
     val code: Int?
 }
 ```
--->
 
-```
- Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
-```
+#### Cargorobot
 
-Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici. Il numero di nodi computazionali ricavato dai requisiti è almeno 4: 
- - un dispositivo per il sonar
- - un dispositivo dotato di un LED
- - un computer per eseguire `cargoservice`
- - un dispositivo per interagire con l'`IOPort`
+Il `cargorobot` è un Differential Drive Robot (DDR) usato per automatizzare le operazioni di carico dei container nella stiva. Dopo un confronto con il committente, è stato stabilito che il DDR dovrà:
+
+- moversi da una zona definita `Home` ad un'altra zona definita `IOPort`
+- moversi da `IOPort` allo **Slot 5**
+- moversi dallo **Slot 5** a un'altro **Slot (1-4)**
+- Tornare alla `Home`
+
+<!-- I componenti software forniti dal commitente, sono capaci di comunicare con il DDR, e di conseguenza possono guidarlo nelle operazioni di spostamento all'interno della stiva.
+parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
+
+#### Sonar
+
+Il `sonar` è un sensore incaricato di rilevare la presenza di un container nell’area di ingresso e di segnalare eventuali condizioni anomale della distanza misurata. Il cliente è tenuto a collocare il container nell’area di rilevamento del sonar entro un intervallo di tempo prefissato, trascorso il quale, in assenza del container, `cargoservice` torna nello stato _disengaged_.
+
+#### IOPort e display
+
+Dopo un confronto con il committente, si è stabilito che l’interazione tra l'IOPort e l'utente avviene attraverso una `WebGUI`, interfaccia web lato cliente. Quest'ultima è dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sullo stato di `cargoservice`.
+
+#### Led
+
+Dispositivo che lampeggia mentre il `cargoservice` è in stato _engaged_.
+
+---
+
+Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
+
+Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici. Il numero di nodi computazionali ricavato dai requisiti è almeno 4:
+
+- un dispositivo per il sonar
+- un dispositivo dotato di un LED
+- un computer per eseguire `cargoservice`
+- un dispositivo per interagire con l'`IOPort`
 
 In caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il `cargoservice` è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia web e un sottosistema robotico.
 
-
-L'interazione principale è una richiesta dalla IOPort al cargoservice, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente, è:
+L'interazione principale è rappresentata da una richiesta dalla `IOPort` al `cargoservice`, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente, è:
 
 ```
 Request load_container : load_container(ARG)
@@ -190,20 +201,9 @@ Reply load_refused : load_refused(CAUSE) for load_container
 Reply retrylater : retrylater(CAUSE) for load_container
 ```
 
-Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/WebGUI per la richiesta, cargoservice/cargorobot per muovere il DDR, sonar per rilevamento, display per la visualizzazione e LED per il lampeggio.
+Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/WebGUI per la richiesta, cargoservice/cargorobot per muovere il DDR, sonar per rilevamento, display per la visualizzazione e led per il lampeggio.
 
-<!--
-Infine, non è definito nei requisiti dove collocare i macro-componenti individuati, quindi si evita di fissare fin d'ora Context Qak o indirizzi di rete definitivi. Mentre, le responsabilità funzionali sono distribuite nel modo seguente:
-
-- il servizio (`cargoservice`) gestisce il caricamento;
-- la `IOPort` gestisce il contatto con il cliente;
-- il `sonar` misura;
-- il `cargorobot` trasporta.
-
-Nessuna ulteriore scomposizione interna del servizio è imposta dal committente.
--->
-
-### Core business
+<!-- ### Core business
 
 Il core business consiste nel coordinamento del processo di caricamento, dalla richiesta all'eventuale deposito nello slot riservato. Il servizio deve consentire l'accettazione solo nelle condizioni indicate, riservare lo slot e organizzare le operazioni: posizionamento del container, trasporto allo `slot5`, marcatura e trasporto finale. Le operazioni sensoriali, l'attuazione dei movimenti e la visualizzazione sono funzionalità di supporto al processo.
 
@@ -227,8 +227,7 @@ Cliente → IOPort → cargoservice → esito della richiesta
                                  slot riservato
 ```
 
-Questo è un flusso funzionale, non un diagramma di attori Qak o di deployment. Le transizioni del led e il rilascio della prenotazione dopo il timeout non vengono completati arbitrariamente laddove il testo non li specifica.
-
+Questo è un flusso funzionale, non un diagramma di attori Qak o di deployment. Le transizioni del led e il rilascio della prenotazione dopo il timeout non vengono completati arbitrariamente laddove il testo non li specifica. -->
 
 ## Piano di Test
 
