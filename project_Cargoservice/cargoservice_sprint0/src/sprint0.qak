@@ -5,11 +5,6 @@ Reply retry_later: retry_later(ARG) for request_to_load
 Reply rejected: rejected(ARG) for request_to_load
 Reply engaged: engaged(SLOT) for request_to_load
 
-
-Request ask_for_slot:ask_for_slot(ARG)
-Reply slot_assigned:slot_assigned(SLOT) for ask_for_slot
-Reply hold_full:hold_full(ARG) for ask_for_slot
-
 Context ctx_cargoservice ip [host="localhost" port=8000]
 
 QActor cargoservice context ctx_cargoservice{
@@ -19,108 +14,58 @@ QActor cargoservice context ctx_cargoservice{
 		var Io_port_occupied = false
 		var System_out_of_service = false
 		var Is_engaged = false
-		var Slot = "" 
+		val NumSlot = 4
+		var FreeSlot = 0
 	#]
+	State start initial{
+		println("CARGOSERVICE | Hold size: $NumSlot") color green
+	}Goto disengaged
 	
-	State idle initial{
+	State disengaged {
 		// Stop blinking led
-		println("CARGOSERVICE_HANDLER | Ready") color green
 	} Transition t0
-		whenRequest request_to_load -> start_engage
+		whenRequest request_to_load -> engaged
 		// whenMsg out_of_serive -> ...
 		
-	State start_engage{
+	State engaged{
 		if [# Io_port_occupied || System_out_of_service #]{
 			replyTo request_to_load with retry_later: retry_later(0)
 		}
-			
-		request hold -m ask_for_slot:ask_for_slot(ARG)
-		
-	} Transition t0
-		whenReply slot_assigned -> engaged
-		whenReply hold_full -> hold_full
-		
-	
-	State engaged{
-		onMsg(ask_for_slot:ask_for_slot(ARG)){
-			
-			// Start blinking the led
-			// Wait for sonar reply
-		}
-	} Transition t1
-		whenTimeVar Timeout -> idle
-		// when Sonar reply move_robot
-		
-	State move_robot{
-		// move robot
-	}
-		
-		
-	State hold_full{
-		replyTo request_to_load with rejected: rejected(ARG)
-	} Goto idle
+		else {
+			if [# FreeSlot < NumSlot #]{
+				[# val SlotName = "slot${FreeSlot++}" #]
+				replyTo request_to_load with engaged:engaged($SlotName)
+			} else {
+				replyTo request_to_load with rejected:rejected(0)
+			}
+		}	
+	} Goto disengaged
 
 	
 }
 
-QActor cargorobot context ctx_cargoservice{
+QActor io_port_mock context ctx_cargoservice {
 	
-	State idle initial{
-		println("CARGOOROBOT_MOCK | Ready") color green
+	[# var NumTest = 0 #]
+	
+	State start initial{
+		println("IO_PORT_MOCK | Testing cargoservice") color green
+	} Goto test
+	
+	State test {
+		request cargoservice -m request_to_load:request_to_load(0)
 	}Transition t0
+		whenReply engaged -> success
+		whenReply rejected -> failure
+		
+	State success{
+		println("IO_PORT_MOCK | Request number ${NumTest++} successful") color green
+	} Goto test
 	
-}
-
-
-QActor marker context ctx_cargoservice {
-	
-	
-	State idle initial {
-		println("MARKER_MOCK | Ready") color green
+	State failure{
+		println("IO_PORT_MOCK | Hold full after ${NumTest} successful") color green
 	}
-	
-	
 }
-
-QActor sonar context ctx_cargoservice{
-	
-	State idle initial{
-		println("SONAR_MOCK | Ready") color green
-	}Transition t0
-	
-}
-
-
-QActor led context ctx_cargoservice {
-	
-	
-	State idle initial {
-		println("LED_MOCK | Ready") color green
-	}
-	
-	
-}
-
-
-QActor hold context ctx_cargoservice{
-	
-	State idle initial{
-		println("HOLD_MOCK | Ready") color green
-	}Transition t0
-	
-}
-
-
-QActor io_port context ctx_cargoservice {
-	
-	
-	State idle initial {
-		println("IOPORT_MOCK | Ready") color green
-	}
-	
-	
-}
-
 
 
 
