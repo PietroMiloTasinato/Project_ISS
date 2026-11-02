@@ -27,11 +27,6 @@ with Diagram('sprint_0Arch', show=False, outformat='png', graph_attr=graphattr) 
 ### see https://renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
      with Cluster('ctx_cargoservice', graph_attr=nodeattr):
           cargoservice=Custom('cargoservice','./qakicons/symActorWithobjSmall.png')
-          cargorobot=Custom('cargorobot','./qakicons/symActorWithobjSmall.png')
-          marker=Custom('marker','./qakicons/symActorWithobjSmall.png')
-          sonar=Custom('sonar','./qakicons/symActorWithobjSmall.png')
-          led=Custom('led','./qakicons/symActorWithobjSmall.png')
-          hold=Custom('hold','./qakicons/symActorWithobjSmall.png')
-          io_port=Custom('io_port','./qakicons/symActorWithobjSmall.png')
-     cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_assigned hold_full</font> &nbsp; >',  fontcolor='magenta') >> hold
+          io_port_mock=Custom('io_port_mock','./qakicons/symActorWithobjSmall.png')
+     io_port_mock >> Edge(color='magenta', style='solid', decorate='true', label='<request_to_load<font color="darkgreen"> retry_later rejected engaged</font> &nbsp; >',  fontcolor='magenta') >> cargoservice
 diag

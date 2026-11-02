@@ -2,6 +2,7 @@ package main.kotlin
 
 interface IHold {
     val ioPort: Pair<IPoint, IContainer?>
+    val slot5: Pair<IPoint, IContainer?>
     val slotNumber: Int
     fun getFreeSlot(): ISlot?
     fun getPoint(id: String): IPoint?

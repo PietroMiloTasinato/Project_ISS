@@ -24,7 +24,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
           ActorBasicFsm( name, scope, confined=isconfined, dynamically=isdynamic ){
 
 	override fun getInitialState() : String{
-		return "idle"
+		return "start"
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
@@ -34,63 +34,48 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				var Io_port_occupied = false
 				var System_out_of_service = false
 				var Is_engaged = false
-				var Slot = "" 
+				val NumSlot = 4
+				var FreeSlot = 0
 		return { //this:ActionBasciFsm
-				state("idle") { //this:State
+				state("start") { //this:State
 					action { //it:State
-						CommUtils.outgreen("CARGOSERVICE_HANDLER | Ready")
+						CommUtils.outgreen("CARGOSERVICE | Hold size: $NumSlot")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t00",targetState="start_engage",cond=whenRequest("request_to_load"))
+					 transition( edgeName="goto",targetState="disengaged", cond=doswitch() )
 				}	 
-				state("start_engage") { //this:State
+				state("disengaged") { //this:State
+					action { //it:State
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t00",targetState="engaged",cond=whenRequest("request_to_load"))
+				}	 
+				state("engaged") { //this:State
 					action { //it:State
 						if(  Io_port_occupied || System_out_of_service  
 						 ){answer("request_to_load", "retry_later", "retry_later(0)"   )  
 						}
-						request("ask_for_slot", "ask_for_slot(ARG)" ,"hold" )  
+						else
+						 {if(  FreeSlot < NumSlot  
+						  ){ val SlotName = "slot${FreeSlot++}"  
+						 answer("request_to_load", "engaged", "engaged($SlotName)"   )  
+						 }
+						 else
+						  {answer("request_to_load", "rejected", "rejected(0)"   )  
+						  }
+						 }
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t01",targetState="engaged",cond=whenReply("slot_assigned"))
-					transition(edgeName="t02",targetState="hold_full",cond=whenReply("hold_full"))
-				}	 
-				state("engaged") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("ask_for_slot(ARG)"), Term.createTerm("ask_for_slot(ARG)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-						}
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-				 	 		stateTimer = TimerActor("timer_engaged", 
-				 	 					  scope, context!!, "local_tout_"+name+"_engaged", Timeout )  //OCT2023
-					}	 	 
-					 transition(edgeName="t13",targetState="idle",cond=whenTimeout("local_tout_"+name+"_engaged"))   
-				}	 
-				state("move_robot") { //this:State
-					action { //it:State
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-				}	 
-				state("hold_full") { //this:State
-					action { //it:State
-						answer("request_to_load", "rejected", "rejected(ARG)"   )  
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="idle", cond=doswitch() )
+					 transition( edgeName="goto",targetState="disengaged", cond=doswitch() )
 				}	 
 			}
 		}
