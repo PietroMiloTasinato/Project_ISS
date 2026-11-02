@@ -50,7 +50,7 @@ class Io_port_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					sysaction { //it:State
 					}	 	 
 					 transition(edgeName="t01",targetState="success",cond=whenReply("engaged"))
-					transition(edgeName="t02",targetState="failure",cond=whenReply("rejected"))
+					transition(edgeName="t02",targetState="finished",cond=whenReply("rejected"))
 				}	 
 				state("success") { //this:State
 					action { //it:State
@@ -65,7 +65,7 @@ class Io_port_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					}	 	 
 					 transition( edgeName="goto",targetState="test", cond=doswitch() )
 				}	 
-				state("failure") { //this:State
+				state("finished") { //this:State
 					action { //it:State
 						CommUtils.outgreen("IO_PORT_MOCK | Hold full after ${NumTest} successful")
 						//genTimer( actor, state )

@@ -56,7 +56,7 @@ QActor io_port_mock context ctx_cargoservice {
 		request cargoservice -m request_to_load:request_to_load(0)
 	}Transition t0
 		whenReply engaged -> success
-		whenReply rejected -> failure
+		whenReply rejected -> finished
 		
 	State success{
 		onMsg(engaged:engaged(Slot)){
@@ -64,7 +64,7 @@ QActor io_port_mock context ctx_cargoservice {
 		}
 	} Goto test
 	
-	State failure{
+	State finished{
 		println("IO_PORT_MOCK | Hold full after ${NumTest} successful") color green
 	}
 }
