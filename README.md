@@ -26,10 +26,11 @@ Il sistema è modellato con il metamodello **Qak** (Quasi Actor Kotlin) e svilup
 Project_ISS/
 ├── README.md                 questo file
 ├── LICENSE
-├── sprint0/
-│   └── sprint0.md            documentazione Sprint0
-├── sprint1/
-│   └── sprint1.md            documentazione Sprint1
+├── UserDocs/
+│   └── sprint0.md            documentazione Sprint0 in formato markdown
+│   └── sprint0.pdf           documentazione Sprint0 in formato pdf
+│   └── sprint1.md            documentazione Sprint1 in formato markdown
+│   └── sprint1.pdf           documentazione Sprint1 in formato pdf
 ├── img/                      immagini e diagrammi usati nella documentazione
 └── project_Cargoservice/
     ├── cargoservice_sprint0/ progetto Gradle Sprint0
