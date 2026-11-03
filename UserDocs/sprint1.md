@@ -14,7 +14,7 @@
 
 ## Goal dello Sprint
 
-Requisiti, macro-componenti, core business, scelta di QAK e interfacce di dominio sono nello [Sprint0](../sprint0/sprint0.md). Lo Sprint1 realizza ciò che lo Sprint0 ha assegnato a questo incremento (`cargoservice`, `cargorobot`, `marker`, `hold`):
+Requisiti, macro-componenti, core business, scelta di QAK e interfacce di dominio sono nello [Sprint0](../UserDocs/sprint0.md). Lo Sprint1 realizza ciò che lo Sprint0 ha assegnato a questo incremento (`cargoservice`, `cargorobot`, `marker`, `hold`):
 
 > **Prototipo eseguibile del core business del `cargoservice`**: gestione di una richiesta di carico proveniente dall'IOPort (esiti `retrylater`, rifiuto per hold piena, accettazione con slot riservato) e coordinamento dell'intero ciclo di carico — attesa del container, trasporto `IOPort → slot5 → slot riservato → home`, marcatura, aggiornamento della hold — superando i TestPlan definiti prima dello sviluppo.
 
@@ -27,6 +27,32 @@ Dei requisiti formalizzati nello Sprint0 (numerati qui R1–R9 per comodità) lo
 I dispositivi che lo Sprint2 realizzerà davvero sono **simulati con attori mock** che ne rispettano il vocabolario di messaggi: la richiesta di carico (R1) nasce dalla simulazione della pressione del pulsante, il led lampeggiante durante lo stato _engaged_ (R5) è un attore che si limita a segnalare "acceso/spento", e l'attesa del container entro il tempo prefissato (R6) è affidata a un sonar mock che risponde "container rilevato" oppure "tempo scaduto". La risposta `retrylater` (R2) è gestita quando l'IOPort è occupata, ma solo **parzialmente**: lo stato _Out of service_ non può ancora essere raggiunto, perché richiede la misura reale del sonar. Restano **rinviati allo Sprint2** il display con lo stato della hold e i messaggi `Service working` / `Out of service` (R8) e il rilevamento di `D > DFREE` per almeno 3 secondi (R9).
 
 ## Analisi del Problema
+
+<!-- ### Core business
+
+Il core business consiste nel coordinamento del processo di caricamento, dalla richiesta all'eventuale deposito nello slot riservato. Il servizio deve consentire l'accettazione solo nelle condizioni indicate, riservare lo slot e organizzare le operazioni: posizionamento del container, trasporto allo `slot5`, marcatura e trasporto finale. Le operazioni sensoriali, l'attuazione dei movimenti e la visualizzazione sono funzionalità di supporto al processo.
+
+```
+Cliente → IOPort → cargoservice → esito della richiesta
+                                      │
+                        [richiesta accettata]
+                                      ↓
+                      slot riservato; sistema engaged
+                                      ↓
+                         attesa del container
+                           │           │
+                         timeout    rilevamento
+                           ↓           ↓
+                      disengaged    cargorobot
+                                       ↓
+                                     slot5
+                                       ↓
+                                   marcatura
+                                       ↓
+                                 slot riservato
+```
+
+Questo è un flusso funzionale, non un diagramma di attori Qak o di deployment. Le transizioni del led e il rilascio della prenotazione dopo il timeout non vengono completati arbitrariamente laddove il testo non li specifica. -->
 
 Il testo dei requisiti lascia alcuni punti non specificati. Per ciascuno è stata adottata un'**assunzione**, da confermare con il committente. Se arriva una nuova richiesta mentre il sistema è già _engaged_ (Q1) si risponde `retrylater`, perché c'è un solo robot e un solo IOPort e quindi non è possibile gestire due carichi concorrenti. Gli slot sono assegnati nell'ordine `slot1 … slot4`, scegliendo il primo libero (Q2). "Riservare" uno slot (Q3) è inteso come una riserva implicita, che non richiede alcun rilascio in caso di timeout. I 30 secondi di attesa del container (Q4) sono misurati, per ora, dal sonar mock, che risponde `sonar_timeout`. Se l'IOPort è occupata e la hold è piena contemporaneamente (Q5) prevale `retrylater`, perché le condizioni temporanee sono valutate per prime, nell'ordine in cui compaiono nel testo. Infine, il comportamento da adottare quando il robot non riesce a completare un movimento (Q6) non è specificato dal committente e non è gestito nel prototipo.
 
@@ -90,7 +116,7 @@ I test non coperti dal piano in questo sprint sono: il timeout dell'attesa del c
 
 I nomi sono allineati ai termini dei requisiti (rispetto al vocabolario provvisorio dello Sprint0: `request_to_load`, `engaged`, `rejected`, `retrylater`).
 
-```
+```text
 Request request_to_load : request_to_load(ARG)
 Reply   retrylater      : retrylater(ARG)  for request_to_load
 Reply   rejected        : rejected(ARG)    for request_to_load
