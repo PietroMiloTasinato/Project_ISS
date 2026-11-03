@@ -98,15 +98,15 @@ Seguendo i requisiti del committente, abbiamo individuato i seguenti **macrocomp
 - **display**
 - **led**
 
-Il sistema richiesto dal committente ha l’obiettivo di automatizzare le operazioni di caricamento e deposito dei container all’interno della stiva di una nave, mediante l’impiego di un robot a guida differenziale denominato `cargorobot`, coordinato dal servizio software `cargoservice`.
+Il sistema richiesto dal committente ha l’obiettivo di automatizzare le operazioni di caricamento e deposito dei container all’interno della stiva di una nave, mediante l’impiego di un robot a guida differenziale denominato **cargorobot**, coordinato dal servizio software **cargoservice**.
 
 #### Cargoservice
 
-Il `cargoservice` rappresenta il servizio applicativo responsabile della ricezione e della valutazione delle richieste di caricamento, nonché del coordinamento delle operazioni necessarie al loro completamento. In particolare, il servizio restituisce la risposta _out_of_service_ in caso di fallimento del `sonar` oppure restituisce _retry_later_ qualora l'`IOPort` risulti occupata; rifiuta invece la richiesta quando tutti gli slot di deposito permanente risultano occupati. In presenza di almeno uno slot disponibile e in assenza delle precedenti condizioni, il servizio accetta la richiesta, individua e riserva uno slot libero, ne comunica il nome al cliente e pone il sistema nello stato _engaged_. Questo servizio gestisce i seguenti componenti:
+Il **cargoservice** rappresenta il servizio applicativo responsabile della ricezione e della valutazione delle richieste di caricamento, nonché del coordinamento delle operazioni necessarie al loro completamento. In particolare, il servizio restituisce la risposta _out_of_service_ in caso di fallimento del **sonar** oppure restituisce _retry_later_ qualora l'`IOPort` risulti occupata; rifiuta invece la richiesta quando tutti gli **slot** di deposito permanente risultano occupati. In presenza di almeno uno **slot** disponibile e in assenza delle precedenti condizioni, il servizio accetta la richiesta, individua e riserva uno **slot** libero, ne comunica il nome al cliente e pone il sistema nello stato _engaged_. Questo servizio gestisce i seguenti componenti:
 
 ##### Hold
 
-L'`hold` (stiva) costituisce l’ambiente fisico operativo del DDR ed è organizzata in quattro aree di deposito permanente, denominate `slot1–slot4`, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, `slot5`, dedicata alle operazioni di marcatura.
+L'**hold** (stiva) costituisce l’ambiente fisico operativo del DDR ed è organizzata in quattro aree di deposito permanente, denominate **slot1–slot4**, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, **slot5**, dedicata alle operazioni di marcatura.
 
 ```
 interface IHold {
@@ -120,7 +120,7 @@ interface IHold {
 
 ##### Slot 5
 
-Una volta rilevata la presenza del container, il `cargoservice` si avvale del `cargorobot` per trasferirlo dalla **IOPort** allo **slot5**, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura.
+Una volta rilevata la presenza del container, il **cargoservice** si avvale del **cargorobot** per trasferirlo dalla `IOPort` allo **slot5**, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura.
 
 ##### Slot
 
@@ -136,7 +136,7 @@ interface ISlot {
 
 ##### Point
 
-L'interfaccia point serve ad implementare un sistema di riferimento cartesiano all'interno dell'Hold. Siccome dobbiamo rappresentare un piano, ci serviranno due valori per individuare univocamente un punto in questo piano.
+L'interfaccia point serve ad implementare un sistema di riferimento cartesiano all'interno dell'**hold**. Siccome dobbiamo rappresentare un piano, ci serviranno due valori per individuare univocamente un punto in questo piano.
 
 ```
 interface IPoint {
@@ -147,7 +147,7 @@ interface IPoint {
 
 ##### Container
 
-Siccome lo scopo del sistema richiesto dal committente è quello di automatizzare il processo di carico dei container nell'Hold, formalizziamo il Container utilizzando un'interfaccia Kotlin.
+Siccome lo scopo del sistema richiesto dal committente è quello di automatizzare il processo di carico dei container nell'**hold**, formalizziamo il container utilizzando un'interfaccia Kotlin.
 
 ```
 interface IContainer {
@@ -169,30 +169,43 @@ parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del prob
 
 #### Sonar
 
-Il `sonar` è un sensore incaricato di rilevare la presenza di un container nell’area di ingresso e di segnalare eventuali condizioni anomale della distanza misurata. Il cliente è tenuto a collocare il container nell’area di rilevamento del sonar entro un intervallo di tempo prefissato, trascorso il quale, in assenza del container, `cargoservice` torna nello stato _disengaged_.
+Il **sonar** è un sensore incaricato di rilevare la presenza di un container nell’area di ingresso e di segnalare eventuali condizioni anomale della distanza misurata. Il cliente è tenuto a collocare il container nell’area di rilevamento del **sonar** entro un intervallo di tempo prefissato, trascorso il quale, in assenza del container, `cargoservice` torna nello stato _disengaged_.
 
 #### IOPort e display
 
-Dopo un confronto con il committente, si è stabilito che l’interazione tra l'IOPort e l'utente avviene attraverso una `WebGUI`, interfaccia web lato cliente. Quest'ultima è dotata di un pulsante (_pushbutton_) per inoltrare le richieste di caricamento e di un _display_ per visualizzare le risposte, lo stato corrente della stiva e le informazioni sullo stato di `cargoservice`.
-
+Dopo un confronto con il committente, si è stabilito che l’interazione tra l'**IOPort** e l'utente avviene attraverso una `WebGUI`, interfaccia web lato cliente. Quest'ultima è dotata di un pulsante (`pushbutton`) per inoltrare le richieste di caricamento e di un `display` per visualizzare le risposte, lo stato corrente della stiva e le informazioni sullo stato di **cargoservice**.
+Si riporta in seguito un'implementazione iniziale dell'**IOPort**.
+```
+<!DOCTYPE html>
+<head>
+    <title>Cargoservice Web GUI</title>
+</head>
+<body>
+    <button>Request to load</button><br>
+    Response: <span id="request-result">accepted at hold n</span><br>
+    Current status: <span id="current-status">service working</span>
+</body>
+</html>
+```
 #### Led
 
-Dispositivo che lampeggia mentre il `cargoservice` è in stato _engaged_.
+Dispositivo che lampeggia mentre il **cargoservice** è in stato _engaged_.
 
 ---
 
-Durante il funzionamento, la IOPort deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a `DFREE`, condizione indicativa di una possibile anomalia del sensore.
+Durante il funzionamento, la **IOPort** deve inoltre visualizzare lo stato corrente della stiva e il messaggio _Service working_ quando il sistema opera regolarmente, oppure _Out of service_ qualora il sonar rilevi, per almeno tre secondi, una distanza superiore a _DFREE_, condizione indicativa di una possibile anomalia del sensore.
 
-Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici. Il numero di nodi computazionali ricavato dai requisiti è almeno 4:
+Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici. Il numero di nodi computazionali ricavato dai requisiti è almeno 5:
 
 - un dispositivo per il sonar
 - un dispositivo dotato di un LED
 - un computer per eseguire `cargoservice`
 - un dispositivo per interagire con l'`IOPort`
+- un Differential Drive Robot
 
-In caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il `cargoservice` è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia web e un sottosistema robotico.
+In caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovrano essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il **cargoservice** è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia web e un sottosistema robotico.
 
-L'interazione principale è rappresentata da una richiesta dalla `IOPort` al `cargoservice`, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente, è:
+L'interazione principale è rappresentata da una richiesta dalla **IOPort** al **cargoservice**, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente, è:
 
 ```
 Request load_container : load_container(ARG)
@@ -201,7 +214,7 @@ Reply load_refused : load_refused(CAUSE) for load_container
 Reply retrylater : retrylater(CAUSE) for load_container
 ```
 
-Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/WebGUI per la richiesta, cargoservice/cargorobot per muovere il DDR, sonar per rilevamento, display per la visualizzazione e led per il lampeggio.
+Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/`WebGUI` per la richiesta, **cargoservice**/**cargorobot** per muovere il DDR, **sonar** per rilevamento, `display` per la visualizzazione e **led** per il lampeggio.
 
 <!-- ### Core business
 
@@ -276,12 +289,12 @@ I casi individuati costituiscono un primo TestPlan funzionale, che verrà progre
 
 ## Diagramma dell'architettura iniziale
 
-I requisiti permettono una vista logica delle macro-parti, ma non ancora una distribuzione sui nodi. Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1 e le relazioni qui sotto mostrano chi interagisce con chi, senza imporre un protocollo concreto o un attore per ogni dispositivo.
+<!--I requisiti permettono una vista logica delle macro-componenti, ma non ancora una distribuzione sui nodi.--> Il seguente diagramma rappresenta l'architettura iniziale di riferimento per lo sprint 1 e le relazioni qui sotto mostrano chi interagisce con chi, senza imporre un protocollo concreto o un attore per ogni dispositivo.
 Per rappresentare al meglio il sistema richiesto dai requisititi, abbiamo associato ad ogni dispositivo richiesto esplicitamente nei requisiti, questi dispositivi sono stati individuati nell'analisi dei requisiti.
 
-![Wenv & DDR](../img/sprint0_arch.png)
+![Wenv & DDR](../img/sprint_0_requirements_architecture.png)
 
-**Goal dello Sprint1**: realizzare un primo prototipo dell'interazione IOPort–cargoservice che gestisca accettazione, rifiuto e retrylater, utilizzando mock se necessari. Il trasporto effettivo e l'integrazione dei dispositivi sono rinviati ai successivi incrementi.
+**Goal dello Sprint1**: realizzare un primo prototipo dell'interazione **IOPort**–**cargoservice** che gestisca _accettazione_, _rifiuto_ e _retrylater_, utilizzando mock se necessari. Il trasporto effettivo e l'integrazione dei dispositivi sono rinviati ai successivi incrementi.
 
 ## Testing
 
