@@ -28,6 +28,20 @@ I dispositivi che lo Sprint2 realizzerà davvero sono **simulati con attori mock
 
 ## Analisi del Problema
 
+<!-- parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
+
+
+<!-- ##### Point
+
+L'interfaccia point serve ad implementare un sistema di riferimento cartesiano all'interno dell'**hold**. Siccome dobbiamo rappresentare un piano, ci serviranno due valori per individuare univocamente un punto in questo piano.
+
+```kotlin
+interface IPoint {
+    val x: Int
+    val y: Int
+}
+``` -->
+
 <!-- ### Core business
 
 Il core business consiste nel coordinamento del processo di caricamento, dalla richiesta all'eventuale deposito nello slot riservato. Il servizio deve consentire l'accettazione solo nelle condizioni indicate, riservare lo slot e organizzare le operazioni: posizionamento del container, trasporto allo `slot5`, marcatura e trasporto finale. Le operazioni sensoriali, l'attuazione dei movimenti e la visualizzazione sono funzionalità di supporto al processo.
