@@ -67,7 +67,7 @@ class Io_port_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("finished") { //this:State
 					action { //it:State
-						CommUtils.outgreen("IO_PORT_MOCK | Hold full after ${NumTest} successful")
+						CommUtils.outgreen("IO_PORT_MOCK | Request rejected: Hold full after ${NumTest} successful")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

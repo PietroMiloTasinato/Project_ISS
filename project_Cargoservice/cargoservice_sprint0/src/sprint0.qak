@@ -65,7 +65,7 @@ QActor io_port_mock context ctx_cargoservice {
 	} Goto test
 	
 	State finished{
-		println("IO_PORT_MOCK | Hold full after ${NumTest} successful") color green
+		println("IO_PORT_MOCK | Request rejected: Hold full after ${NumTest} successful") color green
 	}
 }
 
