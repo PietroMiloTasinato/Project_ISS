@@ -251,6 +251,35 @@ In questa fase iniziale sono stati individuati i seguenti casi di test funzional
 | Servizio Out of service                             | `retrylater`        |
 | Hold piena, IOPort libera e servizio operativo      | Richiesta rifiutata |
 
+```
+QActor io_port_mock context ctx_cargoservice {
+	
+	[# var NumTest = 0 #]
+	
+	State start initial{
+		println("IO_PORT_MOCK | Testing cargoservice") color green
+	} Goto test
+	
+	State test {
+		request cargoservice -m request_to_load:request_to_load(0)
+	}Transition t0
+		whenReply engaged -> success
+		whenReply rejected -> finished
+		
+	State success{
+		onMsg(engaged:engaged(Slot)){
+			println("IO_PORT_MOCK | Request number ${NumTest++} successful with id: ${payloadArg(0)}") color green
+		}
+	} Goto test
+	
+	State finished{
+		println("IO_PORT_MOCK | Request rejected: Hold full after ${NumTest} successful") color green
+	}
+}
+```
+
+Segue il test plan dell'Hold, per verificare il corretto funzionamento dell'interfacce finora implementate
+
 ```java
 abstract class HoldTestPlan {
 
