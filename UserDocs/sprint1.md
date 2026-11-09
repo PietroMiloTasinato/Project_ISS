@@ -30,7 +30,23 @@ I dispositivi che lo Sprint2 realizzerà davvero sono **simulati con attori mock
 
 ## Analisi del Problema
 
+<<<<<<< HEAD
 L'analisi parte dai requisiti del sottoinsieme (R1–R7) e dal modello dei macro-componenti dello Sprint0. Per ogni componente e per ogni interazione che compare nel prototipo motiviamo perché esiste e quale responsabilità ha; il risultato è formalizzato nel modello dell'analisi, da cui parte il Project.
+=======
+<!-- parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
+
+
+<!-- ##### Point
+
+L'interfaccia point serve ad implementare un sistema di riferimento cartesiano all'interno dell'**hold**. Siccome dobbiamo rappresentare un piano, ci serviranno due valori per individuare univocamente un punto in questo piano.
+
+```kotlin
+interface IPoint {
+    val x: Int
+    val y: Int
+}
+``` -->
+>>>>>>> 5545bfbf751e0ecb20e9010f09c1d0aa438f84f0
 
 <!-- ### Core business
 

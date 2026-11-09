@@ -56,12 +56,7 @@ Il servizio deve inoltre mostrare sul _display_ dell’_IOPort_:
 
 ### Infrastruttura fornita
 
-Si riportano i macrocomponenti software del sistema che sono già forniti dal committente come `WEnv` che rappresenta un ambiente virtuale che simula la hold e diversi componenti per il controllo robotico: `RobotObj26` (POJO), `VirtualRobot26`, `VirtuRobotService26` e `RobotSmart26`. Un'analisi successiva dovrà confrontare capacità, interfacce e costi d'integrazione di questi strumenti per stabilire quale supporto utilizzare nel `cargorobot`. Non è richiesto di riscrivere da zero tutte le funzionalità robotiche.
-
-<!-- Oltre ai requisiti scritti, il committente ha fornito due indicazioni vincolanti:
-
-- l'`IOPort` deve essere realizzata come **web-gui**;
-- il `led` deve essere quello presente sul **PicoW**. -->
+Si riportano i macrocomponenti software del sistema che sono già forniti dal committente come `WEnv` che rappresenta un ambiente virtuale che simula la hold dividendola in un'area di 5x7 punti, e diversi componenti per il controllo robotico: `RobotObj26` (POJO), `VirtualRobot26`, `VirtuRobotService26` e `RobotSmart26`. Un'analisi successiva dovrà confrontare capacità, interfacce e costi d'integrazione di questi strumenti per stabilire quale supporto utilizzare nel `cargorobot`. Non è richiesto di riscrivere da zero tutte le funzionalità robotiche.
 
 ### Motivazione sull'utilizzo del metamodello Qak
 
@@ -71,7 +66,8 @@ I requisiti descrivono un insieme di entità autonome (`cargoservice`, `sonar`, 
 
 - **Interconnessione nativa**: nel dominio descritto la comunicazione tra i componenti è essenziale per il corretto funzionamento del sistema. Un GPL non offre costrutti nativi per esprimere concorrenza, distribuzione e interazione tra componenti, che in Qak sono invece concetti primitivi.
 - **Progettazione orientata ad attori e microservizi**: in un GPL saremmo portati a vedere gli elementi del sistema come semplici POJO. Qak permette invece di esprimerli come attori, e di sviluppare il progetto attorno alle interazioni tra attori e non alla semplice regolazione di flussi di dati.
-  Queste due caratteristiche riducono significativamente l'**abstraction gap** tra il linguaggio di modellazione e il dominio del problema. L'uso di un solo GPL comporterebbe un abstraction gap maggiore e la necessità di scrivere più codice di contorno (boilerplate code) per costruire ciò che Qak permette di esprimere direttamente, con maggiori costi e tempi di sviluppo, modifica e manutenzione.
+
+Queste due caratteristiche riducono significativamente l'**abstraction gap** tra il linguaggio di modellazione e il dominio del problema. L'uso di un solo GPL comporterebbe un abstraction gap maggiore e la necessità di scrivere più codice di contorno (boilerplate code) per costruire ciò che Qak permette di esprimere direttamente, con maggiori costi e tempi di sviluppo, modifica e manutenzione.
 
 L'adozione di Qak è motivata anche dalla presenza di una **Software Factory**, in grado di generare automaticamente codice Kotlin a partire dai modelli scritti in Qak. Questo consente di ottenere modelli eseguibili (anche solo parzialmente) già nelle fasi di analisi dei requisiti e supporta un processo di **rapida prototipazione**, che permette di valutare la fattibilità di particolari soluzioni e di avere un primo confronto operativo con il committente. Nelle fasi iniziali i componenti potranno essere organizzati in un unico Context contenente QActor che fungono da mock service, da estrarre e allocare su nodi diversi una volta definita e testata la logica di interazione.
 
@@ -122,18 +118,26 @@ interface IContainer {
 }
 
 interface ISlot {
-    val id: String              // nome dello slot (slot1-slot4)
+    val id: String              // nome dello slot, ad esempio slot1 o slot4 
     var container: IContainer?  // null se lo slot è libero
 }
 
-interface IHold {
-    val slotNumber: Int                                 // numero di slot di deposito permanente (4)
-    fun getFreeSlot(): ISlot?                           // null se la hold è piena
-    fun occupy(slotId: String, container: IContainer)   // registra un container in uno slot
+interface IPoint {
+    val x: Int
+    val y: Int
+}
+
+abstract class IHold {
+    val slotNumber: Int = 4                           // numero di slot nell'hold
+    abstract val ioPort: ISlot                        // rappresenta l'IOPort
+    abstract val slot5: ISlot                         // rappresenta lo slot 5
+    abstract fun getFreeSlot(): ISlot?                // getter per ottenere uno slot libero, null se non ci sono slot liberi
+    abstract fun getPoint(id: String): IPoint?        // getter per ottenere la posizione di un dato il suo id, ritorna null se l'id non è valido
+    abstract fun codeAssigned(id: String, code: Int?) // funzione per assegnare un codice ad un container, se il codice fornito è null, il codice del container diventa null
 }
 ```
 
-La rappresentazione delle posizioni (coordinate, punti di riferimento, mappa del robot) non emerge dai requisiti: sarà affrontata nello Sprint in cui si analizza il `cargorobot`, a partire dall'infrastruttura fornita.
+La rappresentazione delle posizioni come coordinate su un piano emerge dall'immagine all'interno del documento di requisiti. In essa il committente evidenzia il fatto che ogni **slot** si trova in una posizione diversa, da qui la necessità di introdurre l'interfaccia `IPoint`.
 
 ##### Slot 5
 
@@ -143,20 +147,6 @@ Dopo che è stata rilevata la presenza del container, il **cargoservice** si avv
 
 Al termine dell'operazione di marcatura, il `cargorobot` trasferisce il container nello slot precedentemente riservato.
 
-<!-- ##### Point
-
-L'interfaccia point serve ad implementare un sistema di riferimento cartesiano all'interno dell'**hold**. Siccome dobbiamo rappresentare un piano, ci serviranno due valori per individuare univocamente un punto in questo piano.
-
-```kotlin
-interface IPoint {
-    val x: Int
-    val y: Int
-}
-``` -->
-
-<!-- ##### Container
-
-Siccome lo scopo del sistema richiesto dal committente è quello di automatizzare il processo di carico dei container nell'**hold**, formalizziamo il container utilizzando un'interfaccia Kotlin. -->
 
 #### Cargorobot
 
@@ -168,9 +158,6 @@ Dai requisiti, si ricava che il DDR dovrà:
 - muoversi da `IOPort` allo **Slot 5**;
 - muoversi dallo **Slot 5** a un altro **Slot (1-4)**;
 - tornare alla `Home`.
-
-<!-- I componenti software forniti dal commitente, sono capaci di comunicare con il DDR, e di conseguenza possono guidarlo nelle operazioni di spostamento all'interno della stiva.
-parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
 
 #### Sonar
 
@@ -233,8 +220,6 @@ In caso durante la fase di progettazione dovesse sorgere la necessità di usare 
 ### Diagramma dell'architettura iniziale
 
 Il seguente diagramma rappresenta l'architettura logica iniziale di riferimento per lo Sprint1. Mostra quali macrocomponenti interagiscono tra loro, senza imporre un protocollo concreto, un attore per ciascun dispositivo o una distribuzione sui nodi, che i requisiti non permettono ancora di stabilire.
-
-<!-- Per rappresentare al meglio il sistema richiesto, abbiamo associato ad ogni dispositivo richiesto esplicitamente nei requisiti, questi dispositivi sono stati individuati nella precedente analisi dei requisiti. -->
 
 ![diagram0](../img/sprint_0_requirements_architecture.png)
 
