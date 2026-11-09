@@ -28,7 +28,7 @@ class Led_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=false,
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
 		return { //this:ActionBasciFsm
 				state("off") { //this:State
 					action { //it:State
@@ -38,8 +38,8 @@ class Led_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=false,
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t022",targetState="on",cond=whenDispatch("start_blinking"))
-					transition(edgeName="t023",targetState="off",cond=whenDispatch("stop_blinking"))
+					 transition(edgeName="t019",targetState="on",cond=whenDispatch("start_blinking"))
+					transition(edgeName="t020",targetState="off",cond=whenDispatch("stop_blinking"))
 				}	 
 				state("on") { //this:State
 					action { //it:State
@@ -49,8 +49,8 @@ class Led_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=false,
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t124",targetState="off",cond=whenDispatch("stop_blinking"))
-					transition(edgeName="t125",targetState="on",cond=whenDispatch("start_blinking"))
+					 transition(edgeName="t121",targetState="off",cond=whenDispatch("stop_blinking"))
+					transition(edgeName="t122",targetState="on",cond=whenDispatch("start_blinking"))
 				}	 
 			}
 		}

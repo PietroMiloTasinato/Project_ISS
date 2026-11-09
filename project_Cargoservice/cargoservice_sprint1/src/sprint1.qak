@@ -28,8 +28,6 @@ Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
 
 Event ioport_occupied:io_port_occupied(ARG)
 Dispatch press_button:press_button(ARG) //simulazione della pressione del pulsante IOPort
-Request start_marking: start_marking(ARG)
-Reply container_marked : container_marked(BARCODE) for start_marking
 
 Context ctx_cargoservice ip [host="localhost" port=8000]
 Context ctx_smartrobot ip [host="127.0.0.1" port=8020]
@@ -47,6 +45,7 @@ QActor cargoservice context ctx_cargoservice{
 		var Robot_path = mutableListOf<String>()
 		var Target = ""
 		var Code: Int? = null
+		var CodeNumber = 1
 	#]
 	
 	State setup initial{
@@ -223,7 +222,7 @@ QActor cargoservice context ctx_cargoservice{
 			[# Io_port_occupied = false #]
 			emit ioport_occupied:ioport_occupied(false)
 		}
-	} Goto request_marker
+	} Goto marking_container
         if [# Target == "slot5" #]
         else check_reserved_slot
 
@@ -234,29 +233,17 @@ QActor cargoservice context ctx_cargoservice{
         if [# Target == Slot_id #]
         else check_target
 	
-	// marcatura nello slot5
-	State request_marker{
-		request marker -m start_marking:start_marking(0)
-	} Goto wait_marker
-
-    State wait_marker {
-
-    } Transition t5
-        whenReply container_marked -> container_marked
-        whenRequest request_to_load -> retry_wait_marker
-
-
-    State retry_wait_marker {
-
-		println("CARGOSERVICE | Retry later: marking container") color yellow
-        replyTo request_to_load with retrylater:retrylater(0)
-
-    } Goto wait_marker
-	
-	State container_marked{
-		onMsg(container_marked:container_marked(BARCODE)){
-			[# Code = payloadArg(0).removePrefix("code").toIntOrNull() #] //code3 viene convertito nel numero 3, compatibile con il tipo Int?
-		}
+	// marcatura nello slot5: dal punto di vista del sistema e' solo un'attesa del robot (ddr)
+	// Le request_to_load che arrivano durante l'attesa restano in coda e ricevono
+	// retrylater nel primo stato di attesa successivo (wait_point).
+	State marking_container{
+		println("CARGOSERVICE | Marking container...") color magenta
+		delay 3000 //attesa di 3 sec
+		[#
+			Code = CodeNumber
+			CodeNumber = CodeNumber + 1
+		#]
+		println("CARGOSERVICE | Container marked with code $Code") color magenta
 	} Goto check_target
 	
 	// aggiornamento stiva
@@ -289,38 +276,6 @@ QActor cargoservice context ctx_cargoservice{
     } Goto disengaged
 	
 }
-
-QActor marker context ctx_cargoservice {
-	
-	[# var CodeNumber = 1 #]
-
-    State idle initial {
-    	println("MARKER | Ready...") color magenta
-    } Transition t0
-    	whenRequest start_marking -> marking
-
-    State marking {
-
-        updateResource [# "marker(marking)" #]
-        println("MARKER | Marking container...") color magenta
-
-        delay 2000
-
-		println("MARKER | Container marked") color magenta
-		[# 
-			val Code = "code$CodeNumber" 
-			CodeNumber = CodeNumber + 1
-		#]
-        replyTo start_marking with container_marked:container_marked($Code)
-
-        updateResource [#
-            "marker($CodeNumber)"
-        #]
-    }
-
-    Goto idle
-}
-
 
 QActor hold context ctx_cargoservice{
 	
@@ -371,7 +326,7 @@ QActor hold context ctx_cargoservice{
 	        if [# ReceivedCode != null #] {
 	
 	            [#
-	                Hold.markSlot(ReceivedSlot, ReceivedCode)
+	                Hold.codeAssigned(ReceivedSlot, ReceivedCode)
 	            #]
 	
 	            println("HOLD | Container registration requested")

@@ -28,7 +28,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
 		
 				var Io_port_occupied = false
 				var System_out_of_service = false
@@ -38,6 +38,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				var Robot_path = mutableListOf<String>()
 				var Target = ""
 				var Code: Int? = null
+				var CodeNumber = 1
 		return { //this:ActionBasciFsm
 				state("setup") { //this:State
 					action { //it:State
@@ -292,7 +293,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="request_marker", cond=doswitchGuarded({ Target == "slot5"  
+					 transition( edgeName="goto",targetState="marking_container", cond=doswitchGuarded({ Target == "slot5"  
 					}) )
 					transition( edgeName="goto",targetState="check_reserved_slot", cond=doswitchGuarded({! ( Target == "slot5"  
 					) }) )
@@ -309,43 +310,14 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					transition( edgeName="goto",targetState="check_target", cond=doswitchGuarded({! ( Target == Slot_id  
 					) }) )
 				}	 
-				state("request_marker") { //this:State
+				state("marking_container") { //this:State
 					action { //it:State
-						request("start_marking", "start_marking(0)" ,"marker" )  
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="wait_marker", cond=doswitch() )
-				}	 
-				state("wait_marker") { //this:State
-					action { //it:State
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition(edgeName="t510",targetState="container_marked",cond=whenReply("container_marked"))
-					transition(edgeName="t511",targetState="retry_wait_marker",cond=whenRequest("request_to_load"))
-				}	 
-				state("retry_wait_marker") { //this:State
-					action { //it:State
-						CommUtils.outyellow("CARGOSERVICE | Retry later: marking container")
-						answer("request_to_load", "retrylater", "retrylater(0)"   )  
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="wait_marker", cond=doswitch() )
-				}	 
-				state("container_marked") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("container_marked(BARCODE)"), Term.createTerm("container_marked(BARCODE)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								 Code = payloadArg(0).removePrefix("code").toIntOrNull()  
-						}
+						CommUtils.outmagenta("CARGOSERVICE | Marking container...")
+						delay(3000) 
+						
+									Code = CodeNumber
+									CodeNumber = CodeNumber + 1
+						CommUtils.outmagenta("CARGOSERVICE | Container marked with code $Code")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

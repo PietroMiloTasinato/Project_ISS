@@ -93,7 +93,7 @@ public class Sprint1Test {
     }
 
     @Test(timeout = 30000)
-    public void test01_holdCoordinate() throws Exception {
+    public void test_holdCoordinate() throws Exception {
         for (String point : Arrays.asList("ioport", "slot5", "home",
                 "slot1", "slot2", "slot3", "slot4")) {
             IApplMessage reply = request("hold", "ask_for_point", "ask_for_point(" + point + ")");
@@ -109,34 +109,20 @@ public class Sprint1Test {
     }
 
     @Test(timeout = 20000)
-    public void test02_holdRispostaValidaIndipendentementeDalloStato() throws Exception {
+    public void test_holdRispostaValidaIndipendentementeDalloStato() throws Exception {
         // NON presuppone che l'hold sia vuoto: un altro test puo' averlo riempito.
         validSlotOrFull(slot());
     }
 
     @Test(timeout = 20000)
-    public void test03_sonarMock() throws Exception {
+    public void test_sonarMock() throws Exception {
         IApplMessage reply = request("sonar_mock", "detect_container", "detect_container(0)");
         isReply(reply, "container_detected");
         assertEquals("0", oneArg(reply));
     }
 
-    @Test(timeout = 45000)
-    public void test04_markerProgressivo() throws Exception {
-        IApplMessage first = request("marker", "start_marking", "start_marking(0)");
-        IApplMessage second = request("marker", "start_marking", "start_marking(0)");
-        isReply(first, "container_marked");
-        isReply(second, "container_marked");
-        String b1 = oneArg(first);
-        String b2 = oneArg(second);
-        assertTrue("Barcode errato: " + b1, b1.matches("code\\d+"));
-        assertTrue("Barcode errato: " + b2, b2.matches("code\\d+"));
-        assertTrue("Barcode non progressivi: " + b1 + ", " + b2,
-                Integer.parseInt(b2.substring(4)) > Integer.parseInt(b1.substring(4)));
-    }
-
     @Test(timeout = 30000)
-    public void test05_cargoserviceContratto() throws Exception {
+    public void test_cargoserviceContratto() throws Exception {
         // Da eseguire isolatamente: se engaged, questa richiesta avvia davvero la movimentazione.
         IApplMessage reply = request("cargoservice", "request_to_load", "request_to_load(0)");
         String id = reply.msgId();
@@ -148,7 +134,7 @@ public class Sprint1Test {
     }
 
     @Test(timeout = 60000)
-    public void test06_holdDaVuotoAPieno() throws Exception {
+    public void test_holdDaVuotoAPieno() throws Exception {
         // Test DESTRUTTIVO: usare solo un'istanza appena avviata e senza altri carichi.
         Set<String> used = new HashSet<>();
         IApplMessage initial = slot();
@@ -185,7 +171,7 @@ public class Sprint1Test {
     }
 
     @Test(timeout = 150000)
-    public void test07_caricamentoIntegratoConRobot() throws Exception {
+    public void test_caricamentoIntegratoConRobot() throws Exception {
     	
     	System.out.println("[SPRINT1 E2E] Avvio test caricamento con robot");
 
@@ -262,7 +248,7 @@ public class Sprint1Test {
     }
     
     @Test(timeout = 20000)
-    public void test08_richiestaRifiutataConHoldPieno() throws Exception {
+    public void test_richiestaRifiutataConHoldPieno() throws Exception {
 
         System.out.println("[SPRINT1 E2E] Verifica hold pieno");
 
@@ -298,7 +284,7 @@ public class Sprint1Test {
     }
     
     @Test(timeout = 60000)
-    public void test09_richiestaDuranteCaricamento_RetryLater() throws Exception {
+    public void test_richiestaDuranteCaricamento_RetryLater() throws Exception {
         System.out.println(
             "[SPRINT1 E2E] Avvio test richiesta durante caricamento"
         );

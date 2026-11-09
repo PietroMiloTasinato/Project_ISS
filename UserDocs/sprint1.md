@@ -30,11 +30,9 @@ I dispositivi che lo Sprint2 realizzerà davvero sono **simulati con attori mock
 
 ## Analisi del Problema
 
-<<<<<<< HEAD
 L'analisi parte dai requisiti del sottoinsieme (R1–R7) e dal modello dei macro-componenti dello Sprint0. Per ogni componente e per ogni interazione che compare nel prototipo motiviamo perché esiste e quale responsabilità ha; il risultato è formalizzato nel modello dell'analisi, da cui parte il Project.
-=======
-<!-- parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
 
+<!-- parlare nello sprint 1 della mappa interna allo smartrobot26 in analisi del problema -->
 
 <!-- ##### Point
 
@@ -46,7 +44,6 @@ interface IPoint {
     val y: Int
 }
 ``` -->
->>>>>>> 5545bfbf751e0ecb20e9010f09c1d0aa438f84f0
 
 <!-- ### Core business
 
@@ -273,13 +270,13 @@ private static void validSlotOrFull(IApplMessage reply) {
 
 `request` invia una Request e attende la Reply (fino a 12 s), `dispatch` invia un messaggio senza risposta, `slot()` chiede uno slot alla hold, `isReply` controlla l'identificatore della reply, `validSlot` e `validSlotOrFull` controllano che il payload sia uno slot valido (o la risposta "hold piena"). Le funzioni `args` e `oneArg` (non riportate) estraggono dal payload `nome(a,b,…)` i singoli argomenti.
 
-### test01_holdCoordinate
+### test_holdCoordinate
 
 Chiede alla hold le coordinate di tutti i punti usati dal ciclo di carico e verifica che siano numeri finiti; verifica inoltre che un punto sconosciuto produca `point_not_found(0)`. Garantisce che il `cargoservice` possa sempre ottenere dalla hold le destinazioni da passare al robot.
 
 ```java
 @Test(timeout = 30000)
-public void test01_holdCoordinate() throws Exception {
+public void test_holdCoordinate() throws Exception {
     for (String point : Arrays.asList("ioport", "slot5", "home",
             "slot1", "slot2", "slot3", "slot4")) {
         IApplMessage reply = request("hold", "ask_for_point", "ask_for_point(" + point + ")");
@@ -295,57 +292,37 @@ public void test01_holdCoordinate() throws Exception {
 }
 ```
 
-### test02_holdRispostaValidaIndipendentementeDalloStato
+### test_holdRispostaValidaIndipendentementeDalloStato
 
 Chiede uno slot alla hold e verifica che la risposta sia **valida qualunque sia lo stato della hold**: `slot_assigned` con uno slot da `slot1` a `slot4`, oppure `hold_full(0)`. Il test non presuppone che la hold sia vuota, perché un altro test può averla riempita.
 
 ```java
 @Test(timeout = 20000)
-public void test02_holdRispostaValidaIndipendentementeDalloStato() throws Exception {
+public void test_holdRispostaValidaIndipendentementeDalloStato() throws Exception {
     validSlotOrFull(slot());
 }
 ```
 
-### test03_sonarMock
+### test_sonarMock
 
 Invia `detect_container(0)` al sonar mock e verifica la risposta `container_detected(0)`. Dimostra il contratto del sonar (richiesta di rilevazione e reply) che il sonar reale dello Sprint2 dovrà rispettare.
 
 ```java
 @Test(timeout = 20000)
-public void test03_sonarMock() throws Exception {
+public void test_sonarMock() throws Exception {
     IApplMessage reply = request("sonar_mock", "detect_container", "detect_container(0)");
     isReply(reply, "container_detected");
     assertEquals("0", oneArg(reply));
 }
 ```
 
-### test04_markerProgressivo
-
-Esegue due marcature consecutive e verifica che i codici abbiano forma `code<N>` e che il secondo numero sia maggiore del primo. Il progressivo è la proprietà che permette di distinguere i container marcati; la durata del test comprende i 2 s di marcatura simulata per ciascuna richiesta.
-
-```java
-@Test(timeout = 45000)
-public void test04_markerProgressivo() throws Exception {
-    IApplMessage first = request("marker", "start_marking", "start_marking(0)");
-    IApplMessage second = request("marker", "start_marking", "start_marking(0)");
-    isReply(first, "container_marked");
-    isReply(second, "container_marked");
-    String b1 = oneArg(first);
-    String b2 = oneArg(second);
-    assertTrue("Barcode errato: " + b1, b1.matches("code\\d+"));
-    assertTrue("Barcode errato: " + b2, b2.matches("code\\d+"));
-    assertTrue("Barcode non progressivi: " + b1 + ", " + b2,
-            Integer.parseInt(b2.substring(4)) > Integer.parseInt(b1.substring(4)));
-}
-```
-
-### test05_cargoserviceContratto
+### test_cargoserviceContratto
 
 Invia una `request_to_load(0)` al `cargoservice` e verifica che la reply sia **una di quelle previste dai requisiti**: `engaged` con uno slot valido, oppure `retrylater(0)` o `rejected(0)`. Verifica il contratto verso l'IOPort, non l'esito del carico. Se la richiesta è accettata avvia davvero il movimento del robot, per cui va eseguito su un sistema a riposo.
 
 ```java
 @Test(timeout = 30000)
-public void test05_cargoserviceContratto() throws Exception {
+public void test_cargoserviceContratto() throws Exception {
     IApplMessage reply = request("cargoservice", "request_to_load", "request_to_load(0)");
     String id = reply.msgId();
     assertTrue("Reply non prevista: " + reply,
@@ -355,13 +332,13 @@ public void test05_cargoserviceContratto() throws Exception {
 }
 ```
 
-### test06_holdDaVuotoAPieno
+### test_holdDaVuotoAPieno
 
 Riempie la hold dall'esterno: per quattro volte chiede uno slot, verifica che sia valido e **non già assegnato**, e comunica alla hold il deposito con `container_deployed`. Poiché il dispatch è asincrono, dopo ogni deposito attende (fino a 5 s) che la hold smetta di proporre lo stesso slot. Alla fine verifica che la richiesta successiva dia `hold_full(0)`. È un test **distruttivo**: va eseguito su un sistema appena avviato, con hold vuota.
 
 ```java
 @Test(timeout = 60000)
-public void test06_holdDaVuotoAPieno() throws Exception {
+public void test_holdDaVuotoAPieno() throws Exception {
     Set<String> used = new HashSet<>();
     IApplMessage initial = slot();
     isReply(initial, "slot_assigned");              // hold inizialmente vuota
@@ -396,13 +373,13 @@ public void test06_holdDaVuotoAPieno() throws Exception {
 }
 ```
 
-### test07_caricamentoIntegratoConRobot
+### test_caricamentoIntegratoConRobot
 
-Test **end-to-end** del ciclo di carico. Verifica che la hold abbia uno slot libero, simula la pressione del pulsante con `press_button(0)` a `io_port` e, ogni 2 s per un massimo di 120 s, richiede uno slot alla hold. Il carico è completato quando il primo slot libero **cambia** (il container è stato depositato e registrato) oppure la hold risulta piena. Coinvolge `io_port`, `cargoservice`, `hold`, `sonar_mock`, `marker`, `led_mock` e il robot virtuale.
+Test **end-to-end** del ciclo di carico. Verifica che la hold abbia uno slot libero, simula la pressione del pulsante con `press_button(0)` a `io_port` e, ogni 2 s per un massimo di 120 s, richiede uno slot alla hold. Il carico è completato quando il primo slot libero **cambia** (il container è stato depositato e registrato) oppure la hold risulta piena. Coinvolge `io_port`, `cargoservice`, `hold`, `sonar_mock`, `led_mock` e il robot virtuale.
 
 ```java
 @Test(timeout = 150000)
-public void test07_caricamentoIntegratoConRobot() throws Exception {
+public void test_caricamentoIntegratoConRobot() throws Exception {
     // 1. la hold ha uno slot libero
     IApplMessage before = slot();
     isReply(before, "slot_assigned");
@@ -429,13 +406,13 @@ public void test07_caricamentoIntegratoConRobot() throws Exception {
 }
 ```
 
-### test08_richiestaRifiutataConHoldPieno
+### test_richiestaRifiutataConHoldPieno
 
 Con la hold già piena (precondizione verificata dal test stesso) simula una nuova pressione del pulsante e dopo 2 s verifica che la hold sia ancora piena. La richiesta attraversa il vero `io_port`; l'arrivo di `rejected` all'IOPort è visibile nella console (`IOPORT_MOCK | Request rejected`).
 
 ```java
 @Test(timeout = 20000)
-public void test08_richiestaRifiutataConHoldPieno() throws Exception {
+public void test_richiestaRifiutataConHoldPieno() throws Exception {
     // precondizione: tutti e quattro gli slot sono occupati
     IApplMessage before = slot();
     isReply(before, "hold_full");
@@ -452,13 +429,13 @@ public void test08_richiestaRifiutataConHoldPieno() throws Exception {
 }
 ```
 
-### test09_richiestaDuranteCaricamento_RetryLater
+### test_richiestaDuranteCaricamento_RetryLater
 
 Verifica la gestione delle richieste concorrenti (Q1). La prima `request_to_load` deve ricevere `engaged` con lo **stesso slot** che la hold indicava come libero; dopo 2 s, mentre il carico è in corso, la seconda deve ricevere subito `retrylater(0)`, senza attendere la fine del carico. Richiede il robot virtuale.
 
 ```java
 @Test(timeout = 60000)
-public void test09_richiestaDuranteCaricamento_RetryLater() throws Exception {
+public void test_richiestaDuranteCaricamento_RetryLater() throws Exception {
     // 1. c'è almeno uno slot libero
     IApplMessage before = slot();
     isReply(before, "slot_assigned");
