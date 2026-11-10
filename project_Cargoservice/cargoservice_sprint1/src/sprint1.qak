@@ -10,7 +10,7 @@ Reply slot_assigned:slot_assigned(ID) for ask_for_slot
 Reply hold_full:hold_full(ARG) for ask_for_slot
 
 Request ask_for_point:ask_for_point(ID)
-Reply point_found:point_found(X,Y) for ask_for_point
+Reply point_found:point_found(X,Y,D) for ask_for_point
 Reply point_not_found:point_not_found(ARG) for ask_for_point
 Dispatch container_deployed:container_deployed(SlotId, Code)
 
@@ -25,6 +25,8 @@ Dispatch setrobotstate: setpos(X,Y,D)
 Request moverobot: moverobot(TARGETX, TARGETY,STEPTIME)
 Reply moverobotdone  :  moverobotdone(ARG) for moverobot
 Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
+Request setdirection:dir($Direction)
+Reply setdirectiondone : pos(PX,PY) for setdirection
 
 Event ioport_occupied:io_port_occupied(ARG)
 Dispatch press_button:press_button(ARG) //simulazione della pressione del pulsante IOPort
@@ -42,8 +44,9 @@ QActor cargoservice context ctx_cargoservice{
 		var Is_engaged = false
 		var FirstStart = true
 		var Slot_id: String = ""
-		var Robot_path = mutableListOf<String>()
+		val Robot_path = mutableListOf<String>()
 		var Target = ""
+		var Direction = ""
 		var Code: Int? = null
 		var CodeNumber = 1
 	#]
@@ -109,7 +112,7 @@ QActor cargoservice context ctx_cargoservice{
 				Slot_id = payloadArg(0)
 				Target = ""
 				Code = null
-				Robot_path = mutableListOf("ioport", "slot5", Slot_id, "home")
+				Robot_path.addAll(listOf("ioport", "slot5", Slot_id, "home"))
 			#]
 			replyTo request_to_load with engaged:engaged($Slot_id)
 			// Start blinking the led
@@ -131,7 +134,7 @@ QActor cargoservice context ctx_cargoservice{
     } Transition t2
         whenReply container_detected -> container_ready
         whenReply sonar_timeout -> sonar_timeout_state
-        whenRequest request_to_load -> retry_wait_sonar
+        whenRequest request_to_load -> retry_wait_sonar // Non mi torna questa cosa, non mi pare c'era scritto nei requisiti
 	
 	State retry_wait_sonar {
 		
@@ -191,11 +194,12 @@ QActor cargoservice context ctx_cargoservice{
     
     // movimento robot tramite RobotSmart26
 	State move_robot{
-		onMsg(point_found:point_found(X, Y)){
+		onMsg(point_found:point_found(X, Y, D)){
 			
 			[#
 				val X =	payloadArg(0)
 				val Y = payloadArg(1)
+				Direction = payloadArg(2)
 			#]
 			
 			request robotsmart -m moverobot:moverobot($X, $Y, 345)
@@ -206,18 +210,24 @@ QActor cargoservice context ctx_cargoservice{
 	State wait_robot {
 
     } Transition t4
-        whenReply moverobotdone -> moverobotdone
+        whenReply moverobotdone and [# Direction.isNotBlank() #] -> moverobotdone
+        whenReply moverobotdone and [# Direction.isBlank() #] -> setdirectiondone
         whenRequest request_to_load -> retry_wait_robot
         
     State retry_wait_robot {
 
 		println("CARGOSERVICE | Retry later: robot busy") color yellow
-        replyTo request_to_load with retrylater:retrylater(0)
+        replyTo request_to_load with retrylater:retrylater(0) // Anche questo non mi sembra fosse nei requisiti
         
     } Goto wait_robot
+    
+    State moverobotdone{
+    	request robotsmart -m setdirection:dir($Direction)
+    }Transition t10
+    	whenReply setdirectiondone -> setdirectiondone 
 		
 	// movimento completato
-	State moverobotdone{
+	State setdirectiondone{
 		if [# Target == "ioport" #]{
 			[# Io_port_occupied = false #]
 			emit ioport_occupied:ioport_occupied(false)
@@ -307,9 +317,10 @@ QActor hold context ctx_cargoservice{
 				[#
 					val X = point.x
 					val Y = point.y
+					val D = point.direction
 				#]
 				
-				replyTo ask_for_point with point_found:point_found($X, $Y)
+				replyTo ask_for_point with point_found:point_found($X, $Y, $D)
 			} else {
 				replyTo ask_for_point with point_not_found:point_not_found(0)
 			}

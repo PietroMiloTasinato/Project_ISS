@@ -8,19 +8,17 @@ import java.io.File
 
 class Hold(
     private val slotMap: Map<String, ISlot>,
-    override val ioPort: Pair<IPoint, IContainer?>,
-    override val slot5: Pair<IPoint, IContainer?>,
+    override val ioPort: ISlot,
+    override val slot5: ISlot,
     home: IPoint,
-): IHold{
-
-    override val slotNumber: Int = slotMap.size
+): IHold(){
 
     private val pointMap = slotMap.mapValues{ (key, value) ->
         value.point
     } + mapOf(
         "home" to home,
-        "slot5" to slot5.first,
-        "ioport" to ioPort.first
+        "slot5" to slot5.point,
+        "ioport" to ioPort.point
     )
 
     override fun getFreeSlot() = slotMap.values.firstOrNull { it.container == null }

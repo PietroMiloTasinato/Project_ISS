@@ -28,7 +28,7 @@ class Sonar_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		 
 				val Timeout = 30000L 
 				var success = true
@@ -41,7 +41,7 @@ class Sonar_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t017",targetState="measuring",cond=whenRequest("detect_container"))
+					 transition(edgeName="t019",targetState="measuring",cond=whenRequest("detect_container"))
 				}	 
 				state("measuring") { //this:State
 					action { //it:State
@@ -69,7 +69,7 @@ class Sonar_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=fals
 				 	 		stateTimer = TimerActor("timer_wait_timeout", 
 				 	 					  scope, context!!, "local_tout_"+name+"_wait_timeout", Timeout )  //OCT2023
 					}	 	 
-					 transition(edgeName="t118",targetState="handle_timeout",cond=whenTimeout("local_tout_"+name+"_wait_timeout"))   
+					 transition(edgeName="t120",targetState="handle_timeout",cond=whenTimeout("local_tout_"+name+"_wait_timeout"))   
 				}	 
 				state("handle_timeout") { //this:State
 					action { //it:State

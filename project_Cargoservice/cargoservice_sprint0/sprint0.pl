@@ -1,5 +1,5 @@
 %====================================================================================
-% sprint_0 description   
+% sprint0 description   
 %====================================================================================
 request( request_to_load, request_to_load(ARG) ).
 reply( retry_later, retry_later(ARG) ).  %%for request_to_load

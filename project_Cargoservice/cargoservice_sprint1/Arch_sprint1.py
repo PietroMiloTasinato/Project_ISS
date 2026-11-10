@@ -34,7 +34,7 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
      with Cluster('ctx_smartrobot', graph_attr=nodeattr):
           robotsmart=Custom('robotsmart(ext)','./qakicons/externalQActor.png')
      cargoservice >> Edge( label='ioport_occupied', **eventedgeattr, decorate='true', fontcolor='red') >> sys
-     cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> robotsmart
+     cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; setdirection<font color="darkgreen"> setdirectiondone</font> &nbsp; >',  fontcolor='magenta') >> robotsmart
      cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<detect_container<font color="darkgreen"> container_detected sonar_timeout</font> &nbsp; >',  fontcolor='magenta') >> sonar_mock
      io_port >> Edge(color='magenta', style='solid', decorate='true', label='<request_to_load<font color="darkgreen"> retrylater rejected engaged</font> &nbsp; >',  fontcolor='magenta') >> cargoservice
      cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_assigned hold_full</font> &nbsp; ask_for_point<font color="darkgreen"> point_found point_not_found</font> &nbsp; >',  fontcolor='magenta') >> hold

@@ -1,4 +1,4 @@
-System sprint_0
+System sprint0
 
 Request request_to_load: request_to_load(ARG)
 Reply retry_later: retry_later(ARG) for request_to_load

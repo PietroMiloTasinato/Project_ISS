@@ -13,7 +13,6 @@ abstract class HoldTestPlan {
 	IHold hold;
 
 	abstract IHold createHold();
-	abstract IContainer createContainer();
 
 	@Before
 	public void setUp() {

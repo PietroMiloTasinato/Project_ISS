@@ -102,7 +102,7 @@ dependencies {
 	implementation name: 'unibo.qakactor23-5.0'
     implementation name: 'unibo.basicomm23-1.0' 
 }
-	
+/*	//To reproduce gradle dir structure: no more
 sourceSets {
     main {
         java {
@@ -121,7 +121,7 @@ sourceSets {
         }
     }
  } 
-
+*/
 eclipse {
     classpath {
         sourceSets -= [sourceSets.main, sourceSets.test]	

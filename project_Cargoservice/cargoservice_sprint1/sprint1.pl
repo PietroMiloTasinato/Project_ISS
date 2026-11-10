@@ -9,7 +9,7 @@ request( ask_for_slot, ask_for_slot(ARG) ).
 reply( slot_assigned, slot_assigned(ID) ).  %%for ask_for_slot
 reply( hold_full, hold_full(ARG) ).  %%for ask_for_slot
 request( ask_for_point, ask_for_point(ID) ).
-reply( point_found, point_found(X,Y) ).  %%for ask_for_point
+reply( point_found, point_found(X,Y,D) ).  %%for ask_for_point
 reply( point_not_found, point_not_found(ARG) ).  %%for ask_for_point
 dispatch( container_deployed, container_deployed(SlotId,Code) ).
 dispatch( start_blinking, start_blinking(ARG) ).
@@ -21,6 +21,8 @@ dispatch( setrobotstate, setpos(X,Y,D) ).
 request( moverobot, moverobot(TARGETX,TARGETY,STEPTIME) ).
 reply( moverobotdone, moverobotdone(ARG) ).  %%for moverobot
 reply( moverobotfailed, moverobotfailed(PLANDONE,PLANTODO) ).  %%for moverobot
+request( setdirection, dir($Direction) ).
+reply( setdirectiondone, pos(PX,PY) ).  %%for setdirection
 event( ioport_occupied, io_port_occupied(ARG) ).
 dispatch( press_button, press_button(ARG) ).
 %====================================================================================

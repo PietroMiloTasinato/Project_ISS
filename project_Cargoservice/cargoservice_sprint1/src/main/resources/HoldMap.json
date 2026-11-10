@@ -1,30 +1,37 @@
 {
   "slot1": {
     "x": 1,
-    "y": 1
+    "y": 1,
+    "direction": "right"
   },
   "slot2": {
     "x": 3,
-    "y": 1
+    "y": 1,
+    "direction": "left"
   },
   "slot3": {
     "x": 1,
-    "y": 4
+    "y": 4,
+    "direction": "right"
   },
   "slot4": {
     "x": 3,
-    "y": 4
+    "y": 4,
+    "direction": "left"
   },
   "slot5": {
     "x": 2,
-    "y": 5
+    "y": 5,
+    "direction": "left"
   },
   "io_port": {
     "x": 4,
-    "y": 0
+    "y": 0,
+    "direction": "down"
   },
   "home": {
     "x" : 0,
-    "y": 0
+    "y": 0,
+    "direction": "down"
   }
 }

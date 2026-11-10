@@ -21,7 +21,7 @@ evattr = {
     'color': 'darkgreen',
     'style': 'dotted'
 }
-with Diagram('sprint_0Arch', show=False, outformat='png', graph_attr=graphattr) as diag:
+with Diagram('sprint0Arch', show=False, outformat='png', graph_attr=graphattr) as diag:
   with Cluster('env'):
      sys = Custom('','./qakicons/system.png')
 ### see https://renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index

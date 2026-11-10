@@ -28,15 +28,16 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		
 				var Io_port_occupied = false
 				var System_out_of_service = false
 				var Is_engaged = false
 				var FirstStart = true
 				var Slot_id: String = ""
-				var Robot_path = mutableListOf<String>()
+				val Robot_path = mutableListOf<String>()
 				var Target = ""
+				var Direction = ""
 				var Code: Int? = null
 				var CodeNumber = 1
 		return { //this:ActionBasciFsm
@@ -129,7 +130,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 												Slot_id = payloadArg(0)
 												Target = ""
 												Code = null
-												Robot_path = mutableListOf("ioport", "slot5", Slot_id, "home")
+												Robot_path.addAll(listOf("ioport", "slot5", Slot_id, "home"))
 								answer("request_to_load", "engaged", "engaged($Slot_id)"   )  
 								forward("start_blinking", "start_blinking(0)" ,"led_mock" ) 
 						}
@@ -247,11 +248,12 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("move_robot") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("point_found(X,Y)"), Term.createTerm("point_found(X,Y)"), 
+						if( checkMsgContent( Term.createTerm("point_found(X,Y,D)"), Term.createTerm("point_found(X,Y,D)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								
 												val X =	payloadArg(0)
 												val Y = payloadArg(1)
+												Direction = payloadArg(2)
 								request("moverobot", "moverobot($X,$Y,345)" ,"robotsmart" )  
 						}
 						//genTimer( actor, state )
@@ -268,8 +270,11 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t48",targetState="moverobotdone",cond=whenReply("moverobotdone"))
-					transition(edgeName="t49",targetState="retry_wait_robot",cond=whenRequest("request_to_load"))
+					 transition(edgeName="t48",targetState="moverobotdone",cond=whenReplyGuarded("moverobotdone",{ Direction.isNotBlank()  
+					}))
+					transition(edgeName="t49",targetState="setdirectiondone",cond=whenReplyGuarded("moverobotdone",{ Direction.isBlank()  
+					}))
+					transition(edgeName="t410",targetState="retry_wait_robot",cond=whenRequest("request_to_load"))
 				}	 
 				state("retry_wait_robot") { //this:State
 					action { //it:State
@@ -283,6 +288,16 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					 transition( edgeName="goto",targetState="wait_robot", cond=doswitch() )
 				}	 
 				state("moverobotdone") { //this:State
+					action { //it:State
+						request("setdirection", "dir($Direction)" ,"robotsmart" )  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t1011",targetState="setdirectiondone",cond=whenReply("setdirectiondone"))
+				}	 
+				state("setdirectiondone") { //this:State
 					action { //it:State
 						if(  Target == "ioport"  
 						 ){ Io_port_occupied = false  

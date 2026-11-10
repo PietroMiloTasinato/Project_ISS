@@ -1,11 +1,10 @@
 package main.kotlin
 
-interface IHold {
-
-    val ioPort: Pair<IPoint, IContainer?>
-    val slot5: Pair<IPoint, IContainer?>
-    val slotNumber: Int
-    fun getFreeSlot(): ISlot?
-    fun getPoint(id: String): IPoint?
-    fun codeAssigned(id: String, code: Int?)
+abstract class IHold {
+    val slotNumber: Int = 4
+    abstract val ioPort: ISlot
+    abstract val slot5: ISlot
+    abstract fun getFreeSlot(): ISlot?
+    abstract fun getPoint(id: String): IPoint?
+    abstract fun codeAssigned(id: String, code: Int?)
 }
