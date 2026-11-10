@@ -118,7 +118,7 @@ interface IContainer {
 }
 
 interface ISlot {
-    val id: String              // nome dello slot, ad esempio slot1 o slot4 
+    val id: String              // nome dello slot, ad esempio slot1 o slot4
     var container: IContainer?  // null se lo slot è libero
 }
 
@@ -146,7 +146,6 @@ Dopo che è stata rilevata la presenza del container, il **cargoservice** si avv
 ##### Slot1-slot4
 
 Al termine dell'operazione di marcatura, il `cargorobot` trasferisce il container nello slot precedentemente riservato.
-
 
 #### Cargorobot
 
@@ -236,30 +235,30 @@ In questa fase iniziale sono stati individuati i seguenti casi di test funzional
 | Servizio Out of service                             | `retrylater`        |
 | Hold piena, IOPort libera e servizio operativo      | Richiesta rifiutata |
 
-```
+```text
 QActor io_port_mock context ctx_cargoservice {
-	
-	[# var NumTest = 0 #]
-	
-	State start initial{
-		println("IO_PORT_MOCK | Testing cargoservice") color green
-	} Goto test
-	
-	State test {
-		request cargoservice -m request_to_load:request_to_load(0)
-	}Transition t0
-		whenReply engaged -> success
-		whenReply rejected -> finished
-		
-	State success{
-		onMsg(engaged:engaged(Slot)){
-			println("IO_PORT_MOCK | Request number ${NumTest++} successful with id: ${payloadArg(0)}") color green
-		}
-	} Goto test
-	
-	State finished{
-		println("IO_PORT_MOCK | Request rejected: Hold full after ${NumTest} successful") color green
-	}
+
+    [# var NumTest = 0 #]
+
+    State start initial{
+    println("IO_PORT_MOCK | Testing cargoservice") color green
+    } Goto test
+
+    State test {
+        request cargoservice -m request_to_load:request_to_load(0)
+    }Transition t0
+        whenReply engaged -> success
+        whenReply rejected -> finished
+
+    State success{
+        onMsg(engaged:engaged(Slot)){
+            println("IO_PORT_MOCK | Request number ${NumTest++} successful with id: ${payloadArg(0)}") color green
+        }
+    } Goto test
+
+    State finished{
+        println("IO_PORT_MOCK | Request rejected: Hold full after ${NumTest} successful") color green
+    }
 }
 ```
 
