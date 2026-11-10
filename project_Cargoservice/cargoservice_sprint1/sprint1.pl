@@ -21,7 +21,7 @@ dispatch( setrobotstate, setpos(X,Y,D) ).
 request( moverobot, moverobot(TARGETX,TARGETY,STEPTIME) ).
 reply( moverobotdone, moverobotdone(ARG) ).  %%for moverobot
 reply( moverobotfailed, moverobotfailed(PLANDONE,PLANTODO) ).  %%for moverobot
-request( setdirection, dir($Direction) ).
+request( setdirection, dir(D) ).
 reply( setdirectiondone, pos(PX,PY) ).  %%for setdirection
 event( ioport_occupied, io_port_occupied(ARG) ).
 dispatch( press_button, press_button(ARG) ).

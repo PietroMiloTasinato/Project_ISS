@@ -99,7 +99,7 @@ public class Sprint1Test {
             IApplMessage reply = request("hold", "ask_for_point", "ask_for_point(" + point + ")");
             isReply(reply, "point_found");
             String[] xy = args(reply);
-            assertEquals("Coordinate di " + point, 2, xy.length);
+            assertEquals("Coordinate di " + point, 3, xy.length);
             assertTrue("X non finita", Double.isFinite(Double.parseDouble(xy[0])));
             assertTrue("Y non finita", Double.isFinite(Double.parseDouble(xy[1])));
         }

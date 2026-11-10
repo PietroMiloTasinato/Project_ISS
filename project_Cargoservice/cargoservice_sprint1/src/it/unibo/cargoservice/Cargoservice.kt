@@ -54,7 +54,9 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("disengaged") { //this:State
 					action { //it:State
-						 Is_engaged = false  
+						 
+									Is_engaged = false
+									Direction = ""
 						if(  !FirstStart  
 						 ){forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
 						}

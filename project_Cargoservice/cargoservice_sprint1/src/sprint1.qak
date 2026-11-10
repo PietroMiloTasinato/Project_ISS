@@ -25,7 +25,7 @@ Dispatch setrobotstate: setpos(X,Y,D)
 Request moverobot: moverobot(TARGETX, TARGETY,STEPTIME)
 Reply moverobotdone  :  moverobotdone(ARG) for moverobot
 Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
-Request setdirection:dir($Direction)
+Request setdirection:dir(D)
 Reply setdirectiondone : pos(PX,PY) for setdirection
 
 Event ioport_occupied:io_port_occupied(ARG)
@@ -58,7 +58,10 @@ QActor cargoservice context ctx_cargoservice{
 	
 	//attesa di una nuova richiesta
 	State disengaged{
-		[# Is_engaged = false #]
+		[# 
+			Is_engaged = false
+			Direction = ""
+		#]
 		
 		// se non è il primo avvio posso inviare il messaggio al led
 		if [# !FirstStart #] {
@@ -300,7 +303,6 @@ QActor hold context ctx_cargoservice{
 	
 	State get_slot{
 		[# val SlotAssigned = Hold.getFreeSlot() #]
-		
 		if [# SlotAssigned != null #]{
 			[# val Id = SlotAssigned.id #]
 			replyTo ask_for_slot with slot_assigned:slot_assigned($Id)
