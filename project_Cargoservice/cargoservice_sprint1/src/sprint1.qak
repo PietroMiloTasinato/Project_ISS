@@ -35,6 +35,7 @@ Context ctx_cargoservice ip [host="localhost" port=8000]
 Context ctx_smartrobot ip [host="127.0.0.1" port=8020]
 
 ExternalQActor robotsmart context ctx_smartrobot
+ExternalQActor robotmnemo context ctx_smartrobot
 
 QActor cargoservice context ctx_cargoservice{
 	
@@ -42,7 +43,6 @@ QActor cargoservice context ctx_cargoservice{
 		var Io_port_occupied = false
 		var System_out_of_service = false
 		var Is_engaged = false
-		var FirstStart = true
 		var Slot_id: String = ""
 		val Robot_path = mutableListOf<String>()
 		var Target = ""
@@ -61,13 +61,14 @@ QActor cargoservice context ctx_cargoservice{
 		[# 
 			Is_engaged = false
 			Direction = ""
+            Io_port_occupied = false
+            Slot_id = ""
+            Target = ""
+            Code = null
+            Robot_path.clear()
 		#]
-		
-		// se non è il primo avvio posso inviare il messaggio al led
-		if [# !FirstStart #] {
-        	forward led_mock -m stop_blinking:stop_blinking(0)
-    	}
-	    [# FirstStart = false #]
+
+        forward led_mock -m stop_blinking:stop_blinking(0)
 	    
 		println("CARGOSERVICE | Ready") color green
 	} Transition t0
@@ -102,8 +103,6 @@ QActor cargoservice context ctx_cargoservice{
         
     State hold_full {
 
-        [# Is_engaged = false #]
-
         replyTo request_to_load with rejected:rejected(0)
 
     } Goto disengaged
@@ -113,10 +112,9 @@ QActor cargoservice context ctx_cargoservice{
 		onMsg(slot_assigned:slot_assigned(ID)){
 			[# 
 				Slot_id = payloadArg(0)
-				Target = ""
-				Code = null
 				Robot_path.addAll(listOf("ioport", "slot5", Slot_id, "home"))
 			#]
+			println("CARGOSERVICE | Slot assigned: $Slot_id") color yellow
 			replyTo request_to_load with engaged:engaged($Slot_id)
 			// Start blinking the led
 			forward led_mock -m start_blinking:start_blinking(0)
@@ -155,16 +153,6 @@ QActor cargoservice context ctx_cargoservice{
     } Goto check_target
     
     State sonar_timeout_state {
-
-        [#
-            Is_engaged = false
-            Slot_id = ""
-            Robot_path.clear()
-            Target = ""
-            Code = null
-        #]
-
-        forward led_mock -m stop_blinking:stop_blinking(0)
 
         println("CARGOSERVICE | Sonar timeout") color yellow
 
@@ -225,12 +213,14 @@ QActor cargoservice context ctx_cargoservice{
     } Goto wait_robot
     
     State moverobotdone{
-    	request robotsmart -m setdirection:dir($Direction)
+    	request robotmnemo -m setdirection : dir($Direction)
     }Transition t10
     	whenReply setdirectiondone -> setdirectiondone 
 		
 	// movimento completato
 	State setdirectiondone{
+		println("Direction set to $Direction") color green
+		delay 2000
 		if [# Target == "ioport" #]{
 			[# Io_port_occupied = false #]
 			emit ioport_occupied:ioport_occupied(false)
@@ -270,19 +260,6 @@ QActor cargoservice context ctx_cargoservice{
     
     // caricamento completato
     State loading_completed {
-
-        [#
-            Is_engaged = false
-            Io_port_occupied = false
-
-            Slot_id = ""
-            Target = ""
-            Code = null
-
-            Robot_path.clear()
-        #]
-
-        forward led_mock -m stop_blinking:stop_blinking(0)
 
         println("CARGOSERVICE | Loading completed") color green
 

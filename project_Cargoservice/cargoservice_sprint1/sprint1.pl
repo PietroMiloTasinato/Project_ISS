@@ -29,6 +29,7 @@ dispatch( press_button, press_button(ARG) ).
 context(ctx_cargoservice, "localhost",  "TCP", "8000").
 context(ctx_smartrobot, "127.0.0.1",  "TCP", "8020").
  qactor( robotsmart, ctx_smartrobot, "external").
+  qactor( robotmnemo, ctx_smartrobot, "external").
   qactor( cargoservice, ctx_cargoservice, "it.unibo.cargoservice.Cargoservice").
  static(cargoservice).
   qactor( hold, ctx_cargoservice, "it.unibo.hold.Hold").

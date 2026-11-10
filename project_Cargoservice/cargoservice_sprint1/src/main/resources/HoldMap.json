@@ -5,13 +5,13 @@
     "direction": "right"
   },
   "slot2": {
-    "x": 3,
-    "y": 1,
+	"x": 1,
+	"y": 4,
     "direction": "left"
   },
   "slot3": {
-    "x": 1,
-    "y": 4,
+	"x": 3,
+	"y": 1,
     "direction": "right"
   },
   "slot4": {

@@ -33,7 +33,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				var Io_port_occupied = false
 				var System_out_of_service = false
 				var Is_engaged = false
-				var FirstStart = true
 				var Slot_id: String = ""
 				val Robot_path = mutableListOf<String>()
 				var Target = ""
@@ -57,10 +56,12 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 						 
 									Is_engaged = false
 									Direction = ""
-						if(  !FirstStart  
-						 ){forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
-						}
-						 FirstStart = false  
+						            Io_port_occupied = false
+						            Slot_id = ""
+						            Target = ""
+						            Code = null
+						            Robot_path.clear()
+						forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
 						CommUtils.outgreen("CARGOSERVICE | Ready")
 						//genTimer( actor, state )
 					}
@@ -115,7 +116,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("hold_full") { //this:State
 					action { //it:State
-						 Is_engaged = false  
 						answer("request_to_load", "rejected", "rejected(0)"   )  
 						//genTimer( actor, state )
 					}
@@ -130,9 +130,8 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
 												Slot_id = payloadArg(0)
-												Target = ""
-												Code = null
 												Robot_path.addAll(listOf("ioport", "slot5", Slot_id, "home"))
+								CommUtils.outyellow("CARGOSERVICE | Slot assigned: $Slot_id")
 								answer("request_to_load", "engaged", "engaged($Slot_id)"   )  
 								forward("start_blinking", "start_blinking(0)" ,"led_mock" ) 
 						}
@@ -188,13 +187,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("sonar_timeout_state") { //this:State
 					action { //it:State
-						
-						            Is_engaged = false
-						            Slot_id = ""
-						            Robot_path.clear()
-						            Target = ""
-						            Code = null
-						forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
 						CommUtils.outyellow("CARGOSERVICE | Sonar timeout")
 						//genTimer( actor, state )
 					}
@@ -291,7 +283,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("moverobotdone") { //this:State
 					action { //it:State
-						request("setdirection", "dir($Direction)" ,"robotsmart" )  
+						request("setdirection", "dir($Direction)" ,"robotmnemo" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -301,6 +293,8 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("setdirectiondone") { //this:State
 					action { //it:State
+						CommUtils.outgreen("Direction set to $Direction")
+						delay(2000) 
 						if(  Target == "ioport"  
 						 ){ Io_port_occupied = false  
 						emit("ioport_occupied", "ioport_occupied(false)" ) 
@@ -355,16 +349,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("loading_completed") { //this:State
 					action { //it:State
-						
-						            Is_engaged = false
-						            Io_port_occupied = false
-						
-						            Slot_id = ""
-						            Target = ""
-						            Code = null
-						
-						            Robot_path.clear()
-						forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
 						CommUtils.outgreen("CARGOSERVICE | Loading completed")
 						//genTimer( actor, state )
 					}
