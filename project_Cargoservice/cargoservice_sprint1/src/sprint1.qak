@@ -306,7 +306,7 @@ QActor hold context ctx_cargoservice{
 	        if [# ReceivedStatus != null #] {
 	
 	            [#
-	                Hold.changeStatus(ReceivedSlot, ReceiveStatus)
+	                Hold.changeStatus(ReceivedSlot, ReceivedStatus)
 	            #]
 	
 	            println("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}")

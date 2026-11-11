@@ -95,7 +95,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 									            val ReceivedStatus = payloadArg(1)
 								if(  ReceivedStatus != null  
 								 ){
-									                Hold.changeStatus(ReceivedSlot, ReceiveStatus)
+									                Hold.changeStatus(ReceivedSlot, ReceivedStatus)
 								CommUtils.outgreen("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}")
 								}
 								else

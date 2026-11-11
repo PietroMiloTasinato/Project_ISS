@@ -30,7 +30,7 @@ abstract class HoldTestPlan {
 		for (int i = 0; i < hold.getSlotNumber(); i++) {
 			ISlot slot = hold.getFreeSlot();
 			Assert.assertNotNull(slot);
-			hold.codeAssigned(slot.getId(), i);
+			hold.changeStatus(slot.getId(), "OCCUPIED");
 		}
 
 		assertNull(hold.getFreeSlot());
