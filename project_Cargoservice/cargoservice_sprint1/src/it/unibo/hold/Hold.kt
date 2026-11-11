@@ -28,7 +28,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
 		 val Hold = main.kotlin.Hold.Companion.createHoldFromConfig()  
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
@@ -39,9 +39,9 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t012",targetState="get_slot",cond=whenRequest("ask_for_slot"))
-					transition(edgeName="t013",targetState="get_point",cond=whenRequest("ask_for_point"))
-					transition(edgeName="t014",targetState="update_map",cond=whenDispatch("container_deployed"))
+					 transition(edgeName="t011",targetState="get_slot",cond=whenRequest("ask_for_slot"))
+					transition(edgeName="t012",targetState="get_point",cond=whenRequest("ask_for_point"))
+					transition(edgeName="t013",targetState="update_map",cond=whenDispatch("container_deployed"))
 				}	 
 				state("get_slot") { //this:State
 					action { //it:State

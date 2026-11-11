@@ -73,11 +73,11 @@ QActor cargoservice context ctx_cargoservice{
 		println("CARGOSERVICE | Ready") color green
 	} Transition t0
 		whenRequest request_to_load -> start_engage
-		// whenMsg out_of_serive -> ...
+		// whenMsg out_of_service -> ...
 		
 	State start_engage{
 	} Goto retry_state
-		if [# Io_port_occupied || System_out_of_service || Is_engaged #]
+		if [# Io_port_occupied || System_out_of_service #]
 		else ask_slot
 		
 	State retry_state {
@@ -135,14 +135,7 @@ QActor cargoservice context ctx_cargoservice{
     } Transition t2
         whenReply container_detected -> container_ready
         whenReply sonar_timeout -> sonar_timeout_state
-        whenRequest request_to_load -> retry_wait_sonar // Non mi torna questa cosa, non mi pare c'era scritto nei requisiti
-	
-	State retry_wait_sonar {
-		
-		println("CARGOSERVICE | Retry later: waiting for sonar") color yellow
-        replyTo request_to_load with retrylater:retrylater(0)
-
-    } Goto wait_sonar
+  
     
     State container_ready {
 
@@ -174,11 +167,12 @@ QActor cargoservice context ctx_cargoservice{
 
     }Transition t3
 		whenReply point_found -> move_robot
-		whenRequest request_to_load -> retry_wait_point
+		whenRequest request_to_load and [# Io_port_occupied #] -> retry_wait_point
 	
+	// retrylater solo finchè il container è ancora nell'IOPort
 	State retry_wait_point {
 
-		println("CARGOSERVICE | Retry later: waiting for point") color yellow
+		println("CARGOSERVICE | Retry later: IOPort occupied") color yellow
         replyTo request_to_load with retrylater:retrylater(0)
 
     } Goto wait_point
@@ -203,13 +197,14 @@ QActor cargoservice context ctx_cargoservice{
     } Transition t4
         whenReply moverobotdone and [# Direction.isNotBlank() #] -> moverobotdone
         whenReply moverobotdone and [# Direction.isBlank() #] -> setdirectiondone
-        whenRequest request_to_load -> retry_wait_robot
+        whenRequest request_to_load and [# Io_port_occupied #] -> retry_wait_robot
         
+    // retrylater solo finchè il container è ancora nell'IOPort (il robot non l'ha ancora prelevato)
     State retry_wait_robot {
 
-		println("CARGOSERVICE | Retry later: robot busy") color yellow
-        replyTo request_to_load with retrylater:retrylater(0) // Anche questo non mi sembra fosse nei requisiti
-        
+		println("CARGOSERVICE | Retry later: IOPort occupied") color yellow
+        replyTo request_to_load with retrylater:retrylater(0)
+
     } Goto wait_robot
     
     State moverobotdone{
@@ -219,7 +214,7 @@ QActor cargoservice context ctx_cargoservice{
 		
 	// movimento completato
 	State setdirectiondone{
-		println("Direction set to $Direction") color green
+		println("CARGOSERVICE | DDR direction set to $Direction") color green
 		delay 2000
 		if [# Target == "ioport" #]{
 			[# Io_port_occupied = false #]
@@ -236,9 +231,9 @@ QActor cargoservice context ctx_cargoservice{
         if [# Target == Slot_id #]
         else check_target
 	
-	// marcatura nello slot5: dal punto di vista del sistema e' solo un'attesa del robot (ddr)
-	// Le request_to_load che arrivano durante l'attesa restano in coda e ricevono
-	// retrylater nel primo stato di attesa successivo (wait_point).
+	// marcatura nello slot5: dal punto di vista del sistema è solo un'attesa del robot (ddr)
+	// Le request_to_load che arrivano durante l'attesa (IOPort già libera) restano in coda
+	// e sono valutate al ritorno in disengaged.
 	State marking_container{
 		println("CARGOSERVICE | Marking container...") color magenta
 		delay 3000 //attesa di 3 sec

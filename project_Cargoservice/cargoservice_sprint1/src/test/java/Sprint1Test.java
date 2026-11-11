@@ -38,8 +38,12 @@ public class Sprint1Test {
     }
 
     private IApplMessage request(String actor, String id, String payload) throws Exception {
+        return request(actor, id, payload, REQUEST_TIMEOUT_MS);
+    }
+
+    private IApplMessage request(String actor, String id, String payload, int timeoutMs) throws Exception {
         IApplMessage req = CommUtils.buildRequest(SENDER, id, payload, actor);
-        IApplMessage reply = conn.request(req, REQUEST_TIMEOUT_MS);
+        IApplMessage reply = conn.request(req, timeoutMs);
         assertNotNull("Reply mancante: " + req, reply);
         System.out.println("[SPRINT1] " + actor + " -> " + reply);
         return reply;
@@ -323,13 +327,14 @@ public class Sprint1Test {
             "[SPRINT1 E2E] Prima richiesta accettata: " + assignedSlot
         );
 
-        // 3. Attende brevemente affinché il caricamento
-        //    entri nella fase di movimentazione.
-        TimeUnit.SECONDS.sleep(2);
+        // 3. Il sonar mock risponde subito: l'IOPort risulta occupata fino a
+        //    quando il robot non preleva il container. Attende solo il tempo
+        //    necessario perché il cargoservice sia in attesa del robot.
+        TimeUnit.MILLISECONDS.sleep(500);
 
-        // 4. Seconda richiesta mentre il primo caricamento è in corso
+        // 4. Seconda richiesta mentre l'IOPort è occupata
         System.out.println(
-            "[SPRINT1 E2E] Invio seconda richiesta durante il caricamento"
+            "[SPRINT1 E2E] Invio seconda richiesta con IOPort occupata"
         );
 
         IApplMessage secondReply = request(
@@ -357,5 +362,82 @@ public class Sprint1Test {
         System.out.println(
             "[SPRINT1 E2E] TEST SUPERATO!"
         );
+    }
+    
+    /**
+     * Ciclo completo: 5 pressioni del pulsante. Le prime 4 devono portare al deposito di un container ciascuna
+     * (uno per slot); la quinta trova la hold piena e viene rifiutata.
+     *
+     * press_button e' un dispatch: il test non riceve la reply, quindi verifica
+     * gli effetti sulla hold. Il rifiuto della quinta richiesta è visibile nella
+     * console QAK: "IOPORT_MOCK | Request rejected" / "IOPORT_MOCK | Hold is full".
+     *
+     * Test DESTRUTTIVO: richiede un sistema appena avviato (hold vuota).
+     */
+    @Test(timeout = 420000)
+    public void test_cicloCompleto_QuattroCarichiEQuintoRifiutato() throws Exception {
+        final int slotCount = 4;
+        final int cycleTimeoutMs = 120000;
+
+        System.out.println("[SPRINT1 E2E] Avvio ciclo completo: 4 carichi + 1 richiesta con hold piena");
+
+        Set<String> usedSlots = new HashSet<>();
+
+        for (int i = 1; i <= slotCount; i++) {
+            // Slot che la hold indica come libero: sara' quello riservato al carico.
+            IApplMessage before = slot();
+            isReply(before, "slot_assigned");
+            String expected = oneArg(before);
+            validSlot(expected);
+            assertTrue("Slot gia' usato: " + expected, usedSlots.add(expected));
+
+            System.out.println("[SPRINT1 E2E] Pressione " + i + " di " + slotCount
+                    + " (slot atteso: " + expected + ")");
+            // Se il ciclo precedente sta ancora riportando il robot a home,
+            // la richiesta resta in coda nel cargoservice (IOPort già libera).
+            dispatch("io_port", "press_button", "press_button(0)");
+
+            // Attende che il container sia depositato: la hold smette di proporre lo slot.
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(cycleTimeoutMs);
+            boolean deployed = false;
+            while (System.nanoTime() < deadline) {
+                TimeUnit.SECONDS.sleep(1);
+                IApplMessage next = slot();
+                validSlotOrFull(next);
+                if ("hold_full".equals(next.msgId()) || !expected.equals(oneArg(next))) {
+                    deployed = true;
+                    break;
+                }
+            }
+            assertTrue("Container non registrato nello slot " + expected
+                    + " entro " + cycleTimeoutMs / 1000 + " secondi", deployed);
+            System.out.println("[SPRINT1 E2E] Container " + i + " depositato in " + expected);
+        }
+
+        assertEquals("Ogni carico deve occupare uno slot diverso", slotCount, usedSlots.size());
+
+        // La hold e' piena.
+        IApplMessage full = slot();
+        isReply(full, "hold_full");
+        assertEquals("0", oneArg(full));
+        System.out.println("[SPRINT1 E2E] Hold piena dopo " + slotCount + " carichi");
+
+        // Quinta pressione: deve essere rifiutata.
+        System.out.println("[SPRINT1 E2E] Quinta pressione del pulsante");
+        dispatch("io_port", "press_button", "press_button(0)");
+
+        // Il robot sta ancora tornando a home: la richiesta viene valutata solo
+        // quando il cargoservice torna in disengaged.
+        TimeUnit.SECONDS.sleep(15);
+
+        // La richiesta rifiutata non modifica la hold.
+        IApplMessage after = slot();
+        isReply(after, "hold_full");
+        assertEquals("0", oneArg(after));
+
+        System.out.println("[SPRINT1 E2E] Hold ancora piena dopo la quinta richiesta");
+        System.out.println("[SPRINT1 E2E] Verificare nella console QAK: "
+                + "IOPORT_MOCK | Request rejected / Hold is full");
+        System.out.println("[SPRINT1 E2E] TEST SUPERATO: ciclo completo");
     }
 }

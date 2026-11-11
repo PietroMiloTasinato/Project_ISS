@@ -28,7 +28,7 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
 		
 		        var RequestsSent = 0
 		        var PendingRequests = 0
@@ -45,10 +45,10 @@ class Io_port ( name: String, scope: CoroutineScope, isconfined: Boolean=false, 
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t015",targetState="handle_press",cond=whenDispatch("press_button"))
-					transition(edgeName="t016",targetState="accepted",cond=whenReply("engaged"))
-					transition(edgeName="t017",targetState="rejected_state",cond=whenReply("rejected"))
-					transition(edgeName="t018",targetState="retry_state",cond=whenReply("retrylater"))
+					 transition(edgeName="t014",targetState="handle_press",cond=whenDispatch("press_button"))
+					transition(edgeName="t015",targetState="accepted",cond=whenReply("engaged"))
+					transition(edgeName="t016",targetState="rejected_state",cond=whenReply("rejected"))
+					transition(edgeName="t017",targetState="retry_state",cond=whenReply("retrylater"))
 				}	 
 				state("handle_press") { //this:State
 					action { //it:State

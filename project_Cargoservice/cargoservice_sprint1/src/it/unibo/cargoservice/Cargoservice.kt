@@ -28,7 +28,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
+		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
 		
 				var Io_port_occupied = false
 				var System_out_of_service = false
@@ -77,9 +77,9 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="retry_state", cond=doswitchGuarded({ Io_port_occupied || System_out_of_service || Is_engaged  
+					 transition( edgeName="goto",targetState="retry_state", cond=doswitchGuarded({ Io_port_occupied || System_out_of_service  
 					}) )
-					transition( edgeName="goto",targetState="ask_slot", cond=doswitchGuarded({! ( Io_port_occupied || System_out_of_service || Is_engaged  
+					transition( edgeName="goto",targetState="ask_slot", cond=doswitchGuarded({! ( Io_port_occupied || System_out_of_service  
 					) }) )
 				}	 
 				state("retry_state") { //this:State
@@ -161,18 +161,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					}	 	 
 					 transition(edgeName="t23",targetState="container_ready",cond=whenReply("container_detected"))
 					transition(edgeName="t24",targetState="sonar_timeout_state",cond=whenReply("sonar_timeout"))
-					transition(edgeName="t25",targetState="retry_wait_sonar",cond=whenRequest("request_to_load"))
-				}	 
-				state("retry_wait_sonar") { //this:State
-					action { //it:State
-						CommUtils.outyellow("CARGOSERVICE | Retry later: waiting for sonar")
-						answer("request_to_load", "retrylater", "retrylater(0)"   )  
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="wait_sonar", cond=doswitch() )
 				}	 
 				state("container_ready") { //this:State
 					action { //it:State
@@ -226,12 +214,13 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t36",targetState="move_robot",cond=whenReply("point_found"))
-					transition(edgeName="t37",targetState="retry_wait_point",cond=whenRequest("request_to_load"))
+					 transition(edgeName="t35",targetState="move_robot",cond=whenReply("point_found"))
+					transition(edgeName="t36",targetState="retry_wait_point",cond=whenRequestGuarded("request_to_load",{ Io_port_occupied  
+					}))
 				}	 
 				state("retry_wait_point") { //this:State
 					action { //it:State
-						CommUtils.outyellow("CARGOSERVICE | Retry later: waiting for point")
+						CommUtils.outyellow("CARGOSERVICE | Retry later: IOPort occupied")
 						answer("request_to_load", "retrylater", "retrylater(0)"   )  
 						//genTimer( actor, state )
 					}
@@ -264,15 +253,16 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t48",targetState="moverobotdone",cond=whenReplyGuarded("moverobotdone",{ Direction.isNotBlank()  
+					 transition(edgeName="t47",targetState="moverobotdone",cond=whenReplyGuarded("moverobotdone",{ Direction.isNotBlank()  
 					}))
-					transition(edgeName="t49",targetState="setdirectiondone",cond=whenReplyGuarded("moverobotdone",{ Direction.isBlank()  
+					transition(edgeName="t48",targetState="setdirectiondone",cond=whenReplyGuarded("moverobotdone",{ Direction.isBlank()  
 					}))
-					transition(edgeName="t410",targetState="retry_wait_robot",cond=whenRequest("request_to_load"))
+					transition(edgeName="t49",targetState="retry_wait_robot",cond=whenRequestGuarded("request_to_load",{ Io_port_occupied  
+					}))
 				}	 
 				state("retry_wait_robot") { //this:State
 					action { //it:State
-						CommUtils.outyellow("CARGOSERVICE | Retry later: robot busy")
+						CommUtils.outyellow("CARGOSERVICE | Retry later: IOPort occupied")
 						answer("request_to_load", "retrylater", "retrylater(0)"   )  
 						//genTimer( actor, state )
 					}
@@ -289,11 +279,11 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t1011",targetState="setdirectiondone",cond=whenReply("setdirectiondone"))
+					 transition(edgeName="t1010",targetState="setdirectiondone",cond=whenReply("setdirectiondone"))
 				}	 
 				state("setdirectiondone") { //this:State
 					action { //it:State
-						CommUtils.outgreen("Direction set to $Direction")
+						CommUtils.outgreen("CARGOSERVICE | DDR direction set to $Direction")
 						delay(2000) 
 						if(  Target == "ioport"  
 						 ){ Io_port_occupied = false  

@@ -45,7 +45,7 @@ interface IPoint {
 }
 ``` -->
 
-Il testo dei requisiti lascia alcuni punti non specificati. Per ciascuno è stata adottata un'**assunzione**, da confermare con il committente. Se arriva una nuova richiesta mentre il sistema è già _engaged_ (Q1) si risponde `retrylater`, perché c'è un solo robot e un solo IOPort e quindi non è possibile gestire due carichi concorrenti. Gli slot sono assegnati nell'ordine `slot1 … slot4`, scegliendo il primo libero (Q2). "Riservare" uno slot (Q3) è inteso come una riserva implicita, che non richiede alcun rilascio in caso di timeout. I 30 secondi di attesa del container (Q4) sono misurati, per ora, dal sonar mock, che risponde `sonar_timeout`. Se l'IOPort è occupata e la hold è piena contemporaneamente (Q5) prevale `retrylater`, perché le condizioni temporanee sono valutate per prime, nell'ordine in cui compaiono nel testo. Il comportamento da adottare quando il robot non riesce a completare un movimento (Q6) non è specificato dal committente e non è gestito nel prototipo. Infine, la marcatura nello `slot5` è modellata come attesa fissa del robot (nel prototipo 3 s), come indicato dal committente (si veda l'analisi dei requisiti); il codice a barre assegnato è un intero progressivo generato dal `cargoservice` (Q7).
+Il testo dei requisiti lascia alcuni punti non specificati. Per ciascuno è stata adottata un'**assunzione**, da confermare con il committente. Se arriva una nuova richiesta mentre il sistema è già _engaged_ (Q1) si risponde `retrylater` solo se l'IOPort è occupata da un container (o il sistema è _Out of service_), come nei requisiti; negli altri casi la richiesta resta in coda ed è valutata al ritorno in _disengaged_, perché c'è un solo robot e un solo IOPort e quindi non è possibile gestire due carichi concorrenti. Gli slot sono assegnati nell'ordine `slot1 … slot4`, scegliendo il primo libero (Q2). "Riservare" uno slot (Q3) è inteso come una riserva implicita, che non richiede alcun rilascio in caso di timeout. I 30 secondi di attesa del container (Q4) sono misurati, per ora, dal sonar mock, che risponde `sonar_timeout`. Se l'IOPort è occupata e la hold è piena contemporaneamente (Q5) prevale `retrylater`, perché le condizioni temporanee sono valutate per prime, nell'ordine in cui compaiono nel testo. Il comportamento da adottare quando il robot non riesce a completare un movimento (Q6) non è specificato dal committente e non è gestito nel prototipo. Infine, la marcatura nello `slot5` è modellata come attesa fissa del robot (nel prototipo 3 s), come indicato dal committente (si veda l'analisi dei requisiti); il codice a barre assegnato è un intero progressivo generato dal `cargoservice` (Q7).
 
 Il virtual environment non offre primitive di presa/rilascio: il "prelievo" e il "deposito" del container sono modellati come _arrivo del robot_ nel punto corrispondente, più l'aggiornamento logico della hold.
 
@@ -81,8 +81,8 @@ Nella griglia della figura la prima coordinata `X` indica la **riga** (da 0 a 4)
 | `home`   | `(0,0)` | angolo di partenza del robot                                      |
 | `ioport` | `(4,0)` | ultima riga, prima colonna                                        |
 | `slot1`  | `(1,1)` | a sinistra del blocco di ostacoli della riga 1 (colonne 2–3)      |
-| `slot3`  | `(1,4)` | a destra dello stesso blocco                                      |
-| `slot2`  | `(3,1)` | a sinistra del blocco di ostacoli della riga 3 (colonne 2–3)      |
+| `slot2`  | `(1,4)` | a destra dello stesso blocco                                      |
+| `slot3`  | `(3,1)` | a sinistra del blocco di ostacoli della riga 3 (colonne 2–3)      |
 | `slot4`  | `(3,4)` | a destra dello stesso blocco                                      |
 | `slot5`  | `(2,5)` | a destra dell'ostacolo della riga 2 (colonna 4), accanto al bordo |
 
@@ -118,11 +118,11 @@ Per lo stesso motivo visto sopra (un solo IOPort, un solo robot) la nostra anali
 
 Il pulsante può essere premuto in qualsiasi momento, anche durante un carico (Q1), e un ciclo di carico dura decine di secondi. L'analisi evidenzia tre aspetti:
 
-1. **Tempestività.** `retrylater` ha senso solo se arriva subito, perché dice al cliente di riprovare. Il `cargoservice` è un solo attore che elabora un messaggio alla volta: se la richiesta restasse in coda mentre il robot si muove, riceverebbe risposta solo al termine del carico in corso.
-2. **Unicità.** Due richieste non devono mai essere accettate insieme. Poiché un attore elabora un messaggio alla volta, la valutazione e l'impostazione di `Is_engaged` sono atomiche.
-3. **Copertura.** La risposta immediata deve essere possibile in ogni fase in cui l'attesa può durare (sonar, robot, marker), non solo in una.
+1. **Tempestività:** `retrylater` ha senso solo se arriva subito, perché dice al cliente di riprovare. Il `cargoservice` è un solo attore che elabora un messaggio alla volta: se la richiesta restasse in coda mentre il robot si muove, riceverebbe risposta solo al termine del carico in corso. Per i requisiti `retrylater` è però dovuto solo quando l'IOPort è occupata (o il sistema è _Out of service_): per questo la risposta immediata è necessaria solo nell'intervallo in cui il container è nell'IOPort, cioè dal rilevamento del sonar al prelievo da parte del robot. Fuori da tale intervallo i requisiti non prevedono `retrylater` e la richiesta resta in coda fino al ritorno in _disengaged_.
+2. **Unicità:** Due richieste non devono mai essere accettate insieme. Poiché un attore elabora un messaggio alla volta, la valutazione e l'impostazione di `Is_engaged` sono atomiche.
+3. **Copertura:** La risposta immediata deve essere possibile in ogni fase in cui l'IOPort può essere occupata e l'attesa può durare (attesa del punto e del robot fino al prelievo del container), non solo in una.
 
-Le soluzioni possibili sono due: (a) il `cargoservice` tratta `request_to_load` come messaggio da servire subito in ogni stato di attesa; (b) un attore separato riceve le richieste e risponde `retrylater`, delegando il carico a un altro attore. La nostra analisi rileva che (b) richiederebbe di duplicare `Is_engaged` fra due attori e di tenerli allineati con messaggi, con il rischio di risposte incoerenti; (a) mantiene lo stato in un solo attore, a costo di una gestione in più per ogni attesa. La scelta è (a); la sua realizzazione è descritta nel [Project](#project).
+Le soluzioni possibili sono due: (a) il `cargoservice` tratta `request_to_load` come messaggio da servire subito negli stati di attesa in cui l'IOPort è occupata; (b) un attore separato riceve le richieste e risponde `retrylater`, delegando il carico a un altro attore. La nostra analisi rileva che (b) richiederebbe di duplicare `Is_engaged` fra due attori e di tenerli allineati con messaggi, con il rischio di risposte incoerenti; (a) mantiene lo stato in un solo attore, a costo di una gestione in più per ogni attesa. La scelta è (a); la sua realizzazione è descritta nel [Project](#project).
 
 ### Tempo e mock
 
@@ -178,7 +178,7 @@ Context ctx_smartrobot   ip [host="127.0.0.1" port=8020]
 ExternalQActor robotsmart context ctx_smartrobot
 ```
 
-Per ciascun attore QAK si indicano natura, responsabilità e interfaccia di messaggi; il seguente scheletro Qak ne riporta stati e transizioni essenziali (il codice completo, con log e contatori, è in `sprint1.qak`).
+Per ciascun attore QAK si indicano natura, responsabilità e interfaccia di messaggi; il seguente scheletro Qak ne riporta stati e transizioni essenziali (il codice completo, con log e contatori, è in `sprint1.qak`). Lo scheletro è quello del modello dell'analisi: il Project lo raffina con l'orientamento del robot tramite `robotmnemo` e con la direzione `D` restituita dalla hold (si veda [L'orientamento del robot: robotmnemo](#lorientamento-del-robot-robotmnemo)).
 
 | QActor         | Natura                     | Responsabilità                                                                                                               | Riceve                                                                                                                       | Invia                                                                                                                                                                                                           |
 | -------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -191,9 +191,9 @@ Per ciascun attore QAK si indicano natura, responsabilità e interfaccia di mess
 ```text
 QActor cargoservice context ctx_cargoservice {
     State setup initial      { forward robotsmart -m setrobotstate : setpos(0,0,down) } Goto disengaged
-    State disengaged         { /* Is_engaged = false; stop_blinking dopo il primo avvio */ }
+    State disengaged         { /* azzera lo stato; stop_blinking */ }
                              Transition t0 whenRequest request_to_load -> start_engage
-    State start_engage       { } Goto retry_state if [# Io_port_occupied || System_out_of_service || Is_engaged #] else ask_slot
+    State start_engage       { } Goto retry_state if [# Io_port_occupied || System_out_of_service #] else ask_slot
     State retry_state        { replyTo request_to_load with retrylater } Goto disengaged
     State ask_slot           { /* Is_engaged = true */ request hold -m ask_for_slot } Goto wait_slot
     State wait_slot          { } Transition t1 whenReply slot_assigned -> engaged
@@ -204,23 +204,22 @@ QActor cargoservice context ctx_cargoservice {
     State request_sonar      { request sonar_mock -m detect_container } Goto wait_sonar
     State wait_sonar         { } Transition t2 whenReply container_detected -> container_ready
                                                whenReply sonar_timeout -> sonar_timeout_state
-                                               whenRequest request_to_load -> retry_wait_sonar
     State container_ready    { /* Io_port_occupied = true */ } Goto check_target
-    State sonar_timeout_state{ /* azzera il carico, stop_blinking */ } Goto disengaged
+    State sonar_timeout_state{ } Goto disengaged
     State check_target       { } Goto loading_completed if [# Robot_path.isEmpty() #] else get_point
     State get_point          { /* Target = Robot_path.removeAt(0) */ request hold -m ask_for_point(Target) } Goto wait_point
     State wait_point         { } Transition t3 whenReply point_found -> move_robot
-                                               whenRequest request_to_load -> retry_wait_point
+                                               whenRequest request_to_load and [# Io_port_occupied #] -> retry_wait_point
     State move_robot         { request robotsmart -m moverobot(X, Y, 345) } Goto wait_robot
     State wait_robot         { } Transition t4 whenReply moverobotdone -> moverobotdone
-                                               whenRequest request_to_load -> retry_wait_robot
+                                               whenRequest request_to_load and [# Io_port_occupied #] -> retry_wait_robot
     State moverobotdone      { /* Target == ioport: Io_port_occupied = false, emit ioport_occupied */ }
                              Goto marking_container if [# Target == "slot5" #] else check_reserved_slot
     State marking_container  { /* il robot attende in slot5 */ delay 3000; /* Code = progressivo */ } Goto check_target
     State check_reserved_slot{ } Goto notify_hold if [# Target == Slot_id #] else check_target
     State notify_hold        { forward hold -m container_deployed(Slot_id, Code) } Goto check_target
-    State loading_completed  { /* azzera lo stato, stop_blinking */ } Goto disengaged
-    /* retry_wait_sonar, retry_wait_point, retry_wait_robot: replyTo request_to_load with retrylater, poi ritorno all'attesa */
+    State loading_completed  { } Goto disengaged
+    /* retry_wait_point, retry_wait_robot: replyTo request_to_load with retrylater, poi ritorno all'attesa */
 }
 
 QActor hold context ctx_cargoservice {
@@ -275,17 +274,18 @@ Verifiche sul comportamento del `cargoservice` e della hold in uso reale:
 5. Partendo da una hold vuota, quattro registrazioni di container occupano quattro slot distinti, nessuno viene assegnato due volte e, a hold piena, la richiesta di slot dà "hold piena" (R3, R4).
 6. Il ciclo di carico completo, con il robot virtuale, si conclude con il container registrato nella hold: dopo la pressione del pulsante lo slot libero cambia (R1, R4, R7).
 7. Con la hold piena la richiesta di carico non modifica la hold e viene rifiutata (R3).
-8. Una nuova richiesta durante un carico riceve `retrylater`, mentre la prima è stata accettata con lo stesso slot che la hold indicava come libero (R2, Q1).
+8. Una nuova richiesta mentre l'IOPort è occupata dal container del carico in corso riceve `retrylater`, mentre la prima è stata accettata con lo stesso slot che la hold indicava come libero (R2, Q1).
+9. Ciclo completo con il vero `io_port`: quattro pressioni del pulsante portano al deposito di quattro container in quattro slot distinti; la quinta pressione trova la hold piena e viene rifiutata, senza modificare la hold (R1, R3, R4, R7).
 
 I test non coperti dal piano in questo sprint sono: il timeout dell'attesa del container (il sonar mock risponde sempre "container rilevato"), `retrylater` per _Out of service_ (stato non ancora raggiungibile, R9), il comportamento del led (osservabile solo in console), la marcatura (attesa fissa del robot nello `slot5`, osservabile in console e, indirettamente, dall'esito del ciclo completo) e il percorso del robot (osservabile nella GUI di RobotSmart26 e, indirettamente, dall'esito del ciclo completo).
 
 ## Project
 
-Il Project parte dal [modello dell'analisi](#il-modello-dellanalisi) e ne produce una specializzazione eseguibile: `sprint1.qak`. Il vocabolario dei messaggi è quello del modello dell'analisi quindi il Project non introduce nuovi messaggi.
+Il Project parte dal [modello dell'analisi](#il-modello-dellanalisi) e ne produce una specializzazione eseguibile: `sprint1.qak`. Il vocabolario dei messaggi è quello del modello dell'analisi, esteso nel Project con l'interazione con `robotmnemo` (`setdirection`, `setdirectiondone`) e con la direzione `D` in `point_found(X,Y,D)`, descritte nella sezione [L'orientamento del robot: robotmnemo](#lorientamento-del-robot-robotmnemo).
 
 ### Il cargoservice
 
-**Stato interno:** `Is_engaged` (richiesta accettata, carico non terminato), `Io_port_occupied` (container rilevato e non ancora prelevato), `System_out_of_service` (mai impostato in Sprint1), `FirstStart` (evita lo `stop_blinking` al primo avvio), `Slot_id`, `Robot_path` (punti da raggiungere: `ioport`, `slot5`, slot riservato, `home`), `Target`, `Code` (codice del container marcato) e `CodeNumber` (contatore progressivo da cui si ricavano i codici).
+**Stato interno:** `Is_engaged` (richiesta accettata, carico non terminato), `Io_port_occupied` (container rilevato e non ancora prelevato), `System_out_of_service` (mai impostato in Sprint1), `Slot_id`, `Robot_path` (punti da raggiungere: `ioport`, `slot5`, slot riservato, `home`), `Target` (punto in corso di raggiungimento), `Direction` (direzione che il robot deve assumere in `Target`, fornita dalla hold), `Code` (codice del container marcato) e `CodeNumber` (contatore progressivo da cui si ricavano i codici).
 
 ```mermaid
 sequenceDiagram
@@ -296,6 +296,7 @@ sequenceDiagram
     participant L as led_mock
     participant S as sonar_mock
     participant R as robotsmart
+    participant M as robotmnemo
 
     IO->>CS: request_to_load(0)
     CS->>H: ask_for_slot(0)
@@ -306,9 +307,12 @@ sequenceDiagram
     S-->>CS: container_detected(0)
     loop per ogni punto di Robot_path: ioport, slot5, slotN, home
         CS->>H: ask_for_point(T)
-        H-->>CS: point_found(X,Y)
+        H-->>CS: point_found(X,Y,D)
         CS->>R: moverobot(X,Y,345)
         R-->>CS: moverobotdone
+        CS->>M: setdirection(D)
+        M-->>CS: setdirectiondone(PX,PY)
+        Note over CS: pausa di 2 s
         opt T = ioport
             Note over CS: IOPort libera, emit ioport_occupied(false)
         end
@@ -322,34 +326,63 @@ sequenceDiagram
     CS-)L: stop_blinking(0)
 ```
 
-| Fase                 | Stati QAK                                                                              | Comportamento                                                                                                                                         |
-| -------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Avvio e riposo       | `setup`, `disengaged`                                                                  | `setup` allinea il robot (`setpos(0,0,down)`); `disengaged` azzera `Is_engaged`, spegne il led (dal secondo ciclo in poi), attende `request_to_load`. |
-| Valutazione          | `start_engage`, `retry_state`                                                          | Se `Io_port_occupied \|\| System_out_of_service \|\| Is_engaged` → `retrylater(0)`.                                                                   |
-| Prenotazione         | `ask_slot`, `wait_slot`, `hold_full`, `engaged`                                        | Pone `Is_engaged`, chiede lo slot; `hold_full` → `rejected(0)`; `slot_assigned` → costruisce `Robot_path`, `engaged(slot)`, avvia il led.             |
-| Attesa container     | `request_sonar`, `wait_sonar`, `container_ready`, `sonar_timeout_state`                | `sonar_timeout` → azzera il carico, spegne il led, torna a `disengaged`; `container_detected` → `Io_port_occupied = true`.                            |
-| Trasporto            | `check_target`, `get_point`, `wait_point`, `move_robot`, `wait_robot`, `moverobotdone` | Prossimo punto di `Robot_path` → coordinate dalla hold → `moverobot` → attesa reply. Raggiunto `ioport` libera l'IOPort ed emette l'evento.           |
-| Marcatura e deposito | `marking_container`, `check_reserved_slot`, `notify_hold`                              | A `slot5` il robot attende 3 s (`delay`) e viene assegnato il codice progressivo; allo slot riservato si invia `container_deployed`.                  |
-| Chiusura             | `loading_completed`                                                                    | `Robot_path` vuoto (robot in `home`): azzera lo stato, spegne il led, torna a `disengaged`.                                                           |
+| Fase                 | Stati QAK                                                                                                  | Comportamento                                                                                                                                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Avvio e riposo       | `setup`, `disengaged`                                                                                      | `setup` allinea il robot (`setpos(0,0,down)`); `disengaged` azzera `Is_engaged`, invia `stop_blinking` al led (al primo avvio il runtime segnala che il messaggio non è consegnabile, ma il led parte comunque spento), attende `request_to_load`. |
+| Valutazione          | `start_engage`, `retry_state`                                                                              | Se `Io_port_occupied \|\| System_out_of_service` → `retrylater(0)`.                                                                                                                                                                                |
+| Prenotazione         | `ask_slot`, `wait_slot`, `hold_full`, `engaged`                                                            | Pone `Is_engaged`, chiede lo slot; `hold_full` → `rejected(0)`; `slot_assigned` → costruisce `Robot_path`, `engaged(slot)`, avvia il led.                                                                                                          |
+| Attesa container     | `request_sonar`, `wait_sonar`, `container_ready`, `sonar_timeout_state`                                    | `sonar_timeout` → torna a `disengaged` (che azzera lo stato e spegne il led); `container_detected` → `Io_port_occupied = true`.                                                                                                                    |
+| Trasporto            | `check_target`, `get_point`, `wait_point`, `move_robot`, `wait_robot`, `moverobotdone`, `setdirectiondone` | Prossimo punto di `Robot_path` → coordinate e direzione dalla hold → `moverobot` → attesa reply → `setdirection` a `robotmnemo` → pausa di 2 s. Raggiunto `ioport`, al termine della pausa libera l'IOPort ed emette l'evento.                     |
+| Marcatura e deposito | `marking_container`, `check_reserved_slot`, `notify_hold`                                                  | A `slot5` il robot attende 3 s (`delay`) e viene assegnato il codice progressivo; allo slot riservato si invia `container_deployed`.                                                                                                               |
+| Chiusura             | `loading_completed`                                                                                        | `Robot_path` vuoto (robot in `home`): torna a `disengaged`, che azzera lo stato e spegne il led.                                                                                                                                                   |
 
-**Marcatura nello `slot5`.** Come concordato con il committente, la marcatura non è affidata a un attore dedicato: quando `moverobotdone` segnala l'arrivo del robot in `slot5`, il `cargoservice` entra in `marking_container`, dove con `delay 3000` lascia il DDR fermo in `slot5` per 3 s, assegna al container il codice `CodeNumber` e incrementa il contatore; poi riprende il percorso (`check_target`) verso lo slot riservato. Il codice è inviato alla hold con `container_deployed` solo al deposito. Poiché durante il `delay` il `cargoservice` non consuma messaggi, le `request_to_load` che arrivano in quei 3 s restano in coda e ricevono `retrylater(0)` nel primo stato di attesa successivo (`wait_point`), con un ritardo massimo di 3 s.
+**Marcatura nello `slot5`.** Come concordato con il committente, la marcatura non è affidata a un attore dedicato: quando il robot è arrivato in `slot5` (`moverobotdone`) e ha assunto la direzione richiesta (`setdirectiondone`), il `cargoservice` entra in `marking_container`, dove con `delay 3000` lascia il DDR fermo in `slot5` per 3 s, assegna al container il codice `CodeNumber` e incrementa il contatore; poi riprende il percorso (`check_target`) verso lo slot riservato. Il codice è inviato alla hold con `container_deployed` solo al deposito. Poiché durante il `delay` il `cargoservice` non consuma messaggi, le `request_to_load` che arrivano in quei 3 s restano in coda: l'IOPort è già libera, quindi non ricevono `retrylater` e sono valutate al ritorno in `disengaged`.
 
-**Realizzazione della risposta immediata.** Fra le soluzioni individuate nell'analisi, ogni stato in cui l'attesa può durare (`wait_sonar`, `wait_point`, `wait_robot`) ha, oltre alla transizione sulla reply attesa, la transizione `whenRequest request_to_load` verso uno stato `retry_wait_*` che risponde subito `retrylater(0)` e torna all'attesa. Non la ha `wait_slot`, dove la hold risponde subito: una richiesta arrivata in quel momento resta in coda e riceve `retrylater` appena il `cargoservice` entra in `wait_sonar`. Poiché un attore elabora un messaggio alla volta, controllo e impostazione di `Is_engaged` sono atomici: due richieste non possono essere accettate insieme.
+**Realizzazione della risposta immediata.** Fra le soluzioni individuate nell'analisi, gli stati di attesa in cui l'IOPort può essere occupata (`wait_point`, `wait_robot`) hanno, oltre alla transizione sulla reply attesa, la transizione `whenRequest request_to_load` con guardia `Io_port_occupied` verso uno stato `retry_wait_*` che risponde subito `retrylater(0)` e torna all'attesa. Se la guardia è falsa la richiesta non viene consumata: il runtime Qak la tiene nella coda dei messaggi non attesi e la valuta al ritorno in `disengaged`. Per questo `wait_sonar` (container non ancora rilevato, IOPort libera) e `wait_slot` non hanno transizioni sulla richiesta. Poiché un attore elabora un messaggio alla volta, controllo e impostazione di `Is_engaged` sono atomici: due richieste non possono essere accettate insieme.
 
-**Nota**: nello Sprint1 `Io_port_occupied` è sempre coperto da `Is_engaged` (il sonar è interrogato solo dopo l'accettazione); diventerà significativo con il sonar reale.
+**Nota**: nello Sprint1 `retrylater` è raggiungibile solo per `Io_port_occupied` (dal rilevamento del container al prelievo da parte del robot); il ramo `System_out_of_service` diventerà raggiungibile con il sonar reale. In `start_engage` non compare `Is_engaged`: lì il `cargoservice` è sempre in `disengaged`.
+
+### L'orientamento del robot: robotmnemo
+
+_//TODO: da riscrivere meglio il paragrafo e capire se va messo qui o nell'analisi_
+
+`moverobot(TARGETX, TARGETY, STEPTIME)` porta `robotsmart` in una cella ma non ha un parametro per la direzione con cui il robot vi arriva. La hold associa invece a ogni punto una direzione `D` (campo `direction` di `HoldMap.json`: ad esempio `down` per `ioport` e `home`, `right` o `left` per gli slot, a seconda del lato del blocco di ostacoli). Per fare assumere al DDR questa direzione il Project usa un secondo attore, `robotmnemo`, che gira nello stesso Context `ctx_smartrobot` (porta 8020) ed è dichiarato come `ExternalQActor`, come `robotsmart`:
+
+```text
+Context ctx_cargoservice ip [host="localhost" port=8000]
+Context ctx_smartrobot   ip [host="127.0.0.1" port=8020]
+
+ExternalQActor robotsmart context ctx_smartrobot
+ExternalQActor robotmnemo context ctx_smartrobot
+```
+
+Il contratto di interazione aggiunto al vocabolario dei messaggi è:
+
+```text
+Request setdirection     : dir(D)
+Reply   setdirectiondone : pos(PX,PY) for setdirection
+```
+
+Inoltre `point_found` trasporta anche la direzione, `point_found(X,Y,D)`, e il `cargoservice` la memorizza in `Direction` quando riceve le coordinate del punto (`move_robot`).
+
+**Flusso.** Dopo ogni `moverobotdone` il `cargoservice` entra in `moverobotdone`, dove invia `setdirection(Direction)` a `robotmnemo`, e attende `setdirectiondone` (transizione `t10`). Poi entra in `setdirectiondone`: stampa la direzione, attende 2 s e, se il punto è `ioport`, libera l'IOPort (`Io_port_occupied = false`) ed emette l'evento `ioport_occupied`; infine prosegue verso `marking_container` (punto `slot5`), `notify_hold` (slot riservato) o `check_target`. Se `Direction` è vuota, la richiesta a `robotmnemo` viene saltata e `wait_robot` passa direttamente a `setdirectiondone`.
+
+L'orientamento avviene a ogni tappa del percorso (`ioport`, `slot5`, slot riservato, `home`). In particolare, al ritorno in `home` il robot riprende la direzione `down` impostata all'avvio con `setpos(0,0,down)`, così il ciclo successivo parte dalle stesse condizioni iniziali.
+
+**Limite noto.** Negli stati `moverobotdone` (attesa di `setdirectiondone`) e `setdirectiondone` (pausa di 2 s) il `cargoservice` non ha transizioni sulla `request_to_load`. Se il punto è `ioport`, una richiesta che arriva in questo intervallo trova l'IOPort ancora occupata ma non riceve `retrylater` subito: resta in coda e, poiché l'IOPort viene liberata al termine della pausa, è valutata solo al ritorno in `disengaged`.
 
 ### Gli altri attori
 
 Le motivazioni della loro esistenza sono nell'analisi del problema; qui ne riportiamo il comportamento.
 
-- **`hold`**: incapsula l'oggetto `Hold` (caricato da `HoldMap.json`). `ask_for_slot` → primo slot libero o `hold_full`; `ask_for_point` → `point_found` o `point_not_found`; `container_deployed` → `Hold.codeAssigned` (se il codice non è un intero valido, errore in console e stato invariato).
+- **`hold`**: incapsula l'oggetto `Hold` (caricato da `HoldMap.json`). `ask_for_slot` → primo slot libero o `hold_full`; `ask_for_point` → `point_found(X,Y,D)` (coordinate e direzione del punto, da `HoldMap.json`) o `point_not_found`; `container_deployed` → `Hold.codeAssigned` (se il codice non è un intero valido, errore in console e stato invariato).
 - **`io_port`, `sonar_mock`, `led_mock`**: mock descritti nell'analisi; `io_port` trasforma `press_button` in `request_to_load` e conta gli esiti ricevuti.
 
 ## Testing
 
-Tutti i test sono nella classe [`Sprint1Test.java`](../project_Cargoservice/cargoservice_sprint1/src/test/java/Sprint1Test.java) (JUnit 4). Ogni test apre una connessione TCP verso `localhost:8000` (`@Before`), la chiude al termine (`@After`) e dialoga direttamente con gli attori del Context `ctx_cargoservice`. I test `test_holdCoordinate`, `test_holdRispostaValidaIndipendentementeDalloStato` e `test_sonarMock` verificano il contratto dei singoli attori (`hold`, `sonar_mock`); gli altri verificano il `cargoservice` con il sistema completo, e `test_caricamentoIntegratoConRobot` e `test_richiestaDuranteCaricamento_RetryLater` richiedono il robot virtuale. Nei frammenti che seguono sono omesse le istruzioni `System.out.println` di log.
+Tutti i test sono nella classe [`Sprint1Test.java`](../project_Cargoservice/cargoservice_sprint1/src/test/java/Sprint1Test.java) (JUnit 4). Ogni test apre una connessione TCP verso `localhost:8000` (`@Before`), la chiude al termine (`@After`) e dialoga direttamente con gli attori del Context `ctx_cargoservice`. I test `test_holdCoordinate`, `test_holdRispostaValidaIndipendentementeDalloStato` e `test_sonarMock` verificano il contratto dei singoli attori (`hold`, `sonar_mock`); gli altri verificano il `cargoservice` con il sistema completo, e `test_caricamentoIntegratoConRobot`, `test_richiestaDuranteCaricamento_RetryLater` e `test_cicloCompleto_QuattroCarichiEQuintoRifiutato` richiedono il robot virtuale.
 
-**Avvertenza:** alcuni test dipendono dallo stato condiviso della hold: `test_holdDaVuotoAPieno` la riempie, `test_richiestaRifiutataConHoldPieno` presuppone che sia piena, `test_cargoserviceContratto` avvia un vero carico se la richiesta è accettata. La classe non impone un ordine di esecuzione, quindi questi test vanno lanciati **singolarmente su un sistema riavviato**.
+**Avvertenza:** alcuni test dipendono dallo stato condiviso della hold: `test_holdDaVuotoAPieno` la riempie, `test_richiestaRifiutataConHoldPieno` presuppone che sia piena, `test_cargoserviceContratto` avvia un vero carico se la richiesta è accettata, `test_cicloCompleto_QuattroCarichiEQuintoRifiutato` parte da una hold vuota e la riempie. La classe non impone un ordine di esecuzione, quindi questi test vanno lanciati **singolarmente su un sistema riavviato**.
 
 ### Funzioni di supporto
 
@@ -357,8 +390,12 @@ I test usano alcune funzioni ausiliarie che nascondono il formato dei messaggi:
 
 ```java
 private IApplMessage request(String actor, String id, String payload) throws Exception {
+    return request(actor, id, payload, REQUEST_TIMEOUT_MS);   // 12 s
+}
+
+private IApplMessage request(String actor, String id, String payload, int timeoutMs) throws Exception {
     IApplMessage req = CommUtils.buildRequest(SENDER, id, payload, actor);
-    IApplMessage reply = conn.request(req, REQUEST_TIMEOUT_MS);   // 12 s
+    IApplMessage reply = conn.request(req, timeoutMs);
     assertNotNull("Reply mancante: " + req, reply);
     return reply;
 }
@@ -386,11 +423,11 @@ private static void validSlotOrFull(IApplMessage reply) {
 }
 ```
 
-`request` invia una Request e attende la Reply (fino a 12 s), `dispatch` invia un messaggio senza risposta, `slot()` chiede uno slot alla hold, `isReply` controlla l'identificatore della reply, `validSlot` e `validSlotOrFull` controllano che il payload sia uno slot valido (o la risposta "hold piena"). Le funzioni `args` e `oneArg` (non riportate) estraggono dal payload `nome(a,b,…)` i singoli argomenti.
+`request` invia una Request e attende la Reply (per default fino a 12 s; l'overload con `timeoutMs` consente attese più lunghe), `dispatch` invia un messaggio senza risposta, `slot()` chiede uno slot alla hold, `isReply` controlla l'identificatore della reply, `validSlot` e `validSlotOrFull` controllano che il payload sia uno slot valido (o la risposta "hold piena"). Le funzioni `args` e `oneArg` (non riportate) estraggono dal payload `nome(a,b,…)` i singoli argomenti.
 
 ### test_holdCoordinate
 
-Chiede alla hold le coordinate di tutti i punti usati dal ciclo di carico e verifica che siano numeri finiti; verifica inoltre che un punto sconosciuto produca `point_not_found(0)`. Garantisce che il `cargoservice` possa sempre ottenere dalla hold le destinazioni da passare al robot.
+Chiede alla hold i punti usati dal ciclo di carico e verifica che la reply `point_found(X,Y,D)` abbia tre argomenti e che le coordinate `X` e `Y` siano numeri finiti; verifica inoltre che un punto sconosciuto produca `point_not_found(0)`. Garantisce che il `cargoservice` possa sempre ottenere dalla hold le destinazioni da passare al robot.
 
 ```java
 @Test(timeout = 30000)
@@ -400,7 +437,7 @@ public void test_holdCoordinate() throws Exception {
         IApplMessage reply = request("hold", "ask_for_point", "ask_for_point(" + point + ")");
         isReply(reply, "point_found");
         String[] xy = args(reply);
-        assertEquals("Coordinate di " + point, 2, xy.length);
+        assertEquals("Coordinate e direzione di " + point, 3, xy.length);
         assertTrue("X non finita", Double.isFinite(Double.parseDouble(xy[0])));
         assertTrue("Y non finita", Double.isFinite(Double.parseDouble(xy[1])));
     }
@@ -412,7 +449,7 @@ public void test_holdCoordinate() throws Exception {
 
 ### test_holdRispostaValidaIndipendentementeDalloStato
 
-Chiede uno slot alla hold e verifica che la risposta sia **valida qualunque sia lo stato della hold**: `slot_assigned` con uno slot da `slot1` a `slot4`, oppure `hold_full(0)`. Il test non presuppone che la hold sia vuota, perché un altro test può averla riempita.
+Chiede uno slot alla hold e verifica che la risposta sia valida qualunque sia lo stato della hold: `slot_assigned` con uno slot da `slot1` a `slot4`, oppure `hold_full(0)`. Il test non presuppone che la hold sia vuota, perché un altro test può averla riempita.
 
 ```java
 @Test(timeout = 20000)
@@ -436,7 +473,7 @@ public void test_sonarMock() throws Exception {
 
 ### test_cargoserviceContratto
 
-Invia una `request_to_load(0)` al `cargoservice` e verifica che la reply sia **una di quelle previste dai requisiti**: `engaged` con uno slot valido, oppure `retrylater(0)` o `rejected(0)`. Verifica il contratto verso l'IOPort, non l'esito del carico. Se la richiesta è accettata avvia davvero il movimento del robot, per cui va eseguito su un sistema a riposo.
+Invia una `request_to_load(0)` al `cargoservice` e verifica che la reply sia una di quelle previste dai requisiti: `engaged` con uno slot valido, oppure `retrylater(0)` o `rejected(0)`. Verifica il contratto verso l'IOPort, non l'esito del carico. Se la richiesta è accettata avvia davvero il movimento del robot, per cui va eseguito su un sistema a riposo.
 
 ```java
 @Test(timeout = 30000)
@@ -452,7 +489,7 @@ public void test_cargoserviceContratto() throws Exception {
 
 ### test_holdDaVuotoAPieno
 
-Riempie la hold dall'esterno: per quattro volte chiede uno slot, verifica che sia valido e **non già assegnato**, e comunica alla hold il deposito con `container_deployed`. Poiché il dispatch è asincrono, dopo ogni deposito attende (fino a 5 s) che la hold smetta di proporre lo stesso slot. Alla fine verifica che la richiesta successiva dia `hold_full(0)`. È un test **distruttivo**: va eseguito su un sistema appena avviato, con hold vuota.
+Riempie la hold dall'esterno: per quattro volte chiede uno slot, verifica che sia valido e non già assegnato, e comunica alla hold il deposito con `container_deployed`. Poiché il dispatch è asincrono, dopo ogni deposito attende (fino a 5 s) che la hold smetta di proporre lo stesso slot. Alla fine verifica che la richiesta successiva dia `hold_full(0)`. È un test **distruttivo**: va eseguito su un sistema appena avviato, con hold vuota.
 
 ```java
 @Test(timeout = 60000)
@@ -493,7 +530,7 @@ public void test_holdDaVuotoAPieno() throws Exception {
 
 ### test_caricamentoIntegratoConRobot
 
-Test **end-to-end** del ciclo di carico. Verifica che la hold abbia uno slot libero, simula la pressione del pulsante con `press_button(0)` a `io_port` e, ogni 2 s per un massimo di 120 s, richiede uno slot alla hold. Il carico è completato quando il primo slot libero **cambia** (il container è stato depositato e registrato) oppure la hold risulta piena. Coinvolge `io_port`, `cargoservice`, `hold`, `sonar_mock`, `led_mock` e il robot virtuale.
+Test end-to-end del ciclo di carico. Verifica che la hold abbia uno slot libero, simula la pressione del pulsante con `press_button(0)` a `io_port` e, ogni 2 s per un massimo di 120 s, richiede uno slot alla hold. Il carico è completato quando il primo slot libero cambia (il container è stato depositato e registrato) oppure la hold risulta piena. Coinvolge `io_port`, `cargoservice`, `hold`, `sonar_mock`, `led_mock` e il robot virtuale.
 
 ```java
 @Test(timeout = 150000)
@@ -549,7 +586,7 @@ public void test_richiestaRifiutataConHoldPieno() throws Exception {
 
 ### test_richiestaDuranteCaricamento_RetryLater
 
-Verifica la gestione delle richieste concorrenti (Q1). La prima `request_to_load` deve ricevere `engaged` con lo **stesso slot** che la hold indicava come libero; dopo 2 s, mentre il carico è in corso, la seconda deve ricevere subito `retrylater(0)`, senza attendere la fine del carico. Richiede il robot virtuale.
+Verifica la gestione delle richieste concorrenti (Q1). La prima `request_to_load` deve ricevere `engaged` con lo stesso slot che la hold indicava come libero; dopo 0,5 s, mentre l'IOPort è ancora occupata dal container (il robot non l'ha ancora prelevato), la seconda deve ricevere subito `retrylater(0)`, senza attendere la fine del carico. Richiede il robot virtuale.
 
 ```java
 @Test(timeout = 60000)
@@ -568,33 +605,84 @@ public void test_richiestaDuranteCaricamento_RetryLater() throws Exception {
     assertEquals("Lo slot assegnato non corrisponde a quello disponibile",
             initialSlot, assignedSlot);
 
-    // 3. attende che il caricamento entri nella fase di movimentazione
-    TimeUnit.SECONDS.sleep(2);
+    // 3. l'IOPort resta occupata finché il robot non preleva il container
+    TimeUnit.MILLISECONDS.sleep(500);
 
-    // 4. seconda richiesta durante il caricamento: retrylater
+    // 4. seconda richiesta con l'IOPort occupata: retrylater
     IApplMessage secondReply = request("cargoservice", "request_to_load", "request_to_load(0)");
     isReply(secondReply, "retrylater");
     assertEquals("0", oneArg(secondReply));
 }
 ```
 
-### Esito
+### test_cicloCompleto_QuattroCarichiEQuintoRifiutato
 
-| Test                                                 | Requisiti  | Esito        |
-| ---------------------------------------------------- | ---------- | ------------ |
-| `test_holdCoordinate`                                | R7         | **Superato** |
-| `test_holdRispostaValidaIndipendentementeDalloStato` | R3, R4     | **Superato** |
-| `test_sonarMock`                                     | R6         | **Superato** |
-| `test_markerProgressivo`                             | R7         | **Superato** |
-| `test_cargoserviceContratto`                         | R1–R4      | **Superato** |
-| `test_holdDaVuotoAPieno`                             | R3, R4     | **Superato** |
-| `test_caricamentoIntegratoConRobot`                  | R1, R4, R7 | **Superato** |
-| `test_richiestaRifiutataConHoldPieno`                | R3         | **Superato** |
-| `test_richiestaDuranteCaricamento_RetryLater`        | R2         | **Superato** |
+Test end-to-end del funzionamento complessivo: cinque pressioni del pulsante (`press_button`) su una hold inizialmente vuota. Per ognuna delle prime quattro il test chiede alla hold lo slot libero (che deve essere diverso dai precedenti), preme il pulsante e attende, con polling ogni secondo (massimo 120 s), che la hold smetta di proporre quello slot, cioè che il container sia stato depositato e registrato. Se il ciclo precedente sta ancora riportando il robot a `home`, la richiesta resta in coda nel `cargoservice` (l'IOPort è già libera, quindi niente `retrylater`) ed è servita al ritorno in `disengaged`. Dopo il quarto carico verifica che la hold sia piena, preme il pulsante una quinta volta, attende 15 s (il tempo che il robot torni a `home` e la richiesta sia valutata) e verifica che la hold sia ancora piena.
+
+`press_button` è un dispatch, quindi il test non riceve la reply: gli effetti sono verificati sulla hold, mentre il rifiuto della quinta richiesta è visibile nella console QAK (`IOPORT_MOCK | Request rejected`, `IOPORT_MOCK | Hold is full`). Richiede il robot virtuale ed è **distruttivo**: va eseguito su un sistema appena avviato.
+
+```java
+@Test(timeout = 420000)
+public void test_cicloCompleto_QuattroCarichiEQuintoRifiutato() throws Exception {
+    Set<String> usedSlots = new HashSet<>();
+
+    for (int i = 1; i <= 4; i++) {
+        // slot che la hold indica come libero: sarà quello riservato al carico
+        IApplMessage before = slot();
+        isReply(before, "slot_assigned");
+        String expected = oneArg(before);
+        validSlot(expected);
+        assertTrue("Slot già usato: " + expected, usedSlots.add(expected));
+
+        dispatch("io_port", "press_button", "press_button(0)");
+
+        // attende che la hold smetta di proporre lo slot (container depositato)
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(120);
+        boolean deployed = false;
+        while (System.nanoTime() < deadline) {
+            TimeUnit.SECONDS.sleep(1);
+            IApplMessage next = slot();
+            validSlotOrFull(next);
+            if ("hold_full".equals(next.msgId()) || !expected.equals(oneArg(next))) {
+                deployed = true;
+                break;
+            }
+        }
+        assertTrue("Container non registrato nello slot " + expected, deployed);
+    }
+    assertEquals(4, usedSlots.size());
+
+    // la hold è piena
+    IApplMessage full = slot();
+    isReply(full, "hold_full");
+    assertEquals("0", oneArg(full));
+
+    // quinta pressione: rifiutata, la hold non cambia
+    dispatch("io_port", "press_button", "press_button(0)");
+    TimeUnit.SECONDS.sleep(15);
+    IApplMessage after = slot();
+    isReply(after, "hold_full");
+    assertEquals("0", oneArg(after));
+}
+```
+
+### Esiti dei test
+
+| Test                                                 | Requisiti      | Esito        |
+| ---------------------------------------------------- | -------------- | ------------ |
+| `test_holdCoordinate`                                | R7             | **Superato** |
+| `test_holdRispostaValidaIndipendentementeDalloStato` | R3, R4         | **Superato** |
+| `test_sonarMock`                                     | R6             | **Superato** |
+| `test_cargoserviceContratto`                         | R1–R4          | **Superato** |
+| `test_holdDaVuotoAPieno`                             | R3, R4         | **Superato** |
+| `test_caricamentoIntegratoConRobot`                  | R1, R4, R7     | **Superato** |
+| `test_richiestaRifiutataConHoldPieno`                | R3             | **Superato** |
+| `test_richiestaDuranteCaricamento_RetryLater`        | R2             | **Superato** |
+| `test_cicloCompleto_QuattroCarichiEQuintoRifiutato`  | R1, R3, R4, R7 | **Superato** |
 
 ## Deployment
 
-1. **Ambiente del robot** (fornito dal committente): `robotsmart26.yaml` (Docker) avvia broker MQTT, `wenv` (8090), GUI con mappa di contesto `robotoutgui25` (8085) e `robotsmart26` (8020). Serve per `test_caricamentoIntegratoConRobot` e `test_richiestaDuranteCaricamento_RetryLater`, e per avviare il Context `ctx_cargoservice`.
+1. **Ambiente del robot** (fornito dal committente): `robotsmart26.yaml` (Docker) avvia broker MQTT, `wenv` (8090), GUI con mappa di contesto `robotoutgui25` (8085) e `robotsmart26` (8020, Context `ctx_smartrobot`, a cui appartengono `robotsmart` e `robotmnemo`). Serve per i test che utilizzano il DDR e per avviare il Context `ctx_cargoservice`.
 2. **`cargoservice`**: Context `ctx_cargoservice` sulla porta 8000.
 
 Dalla cartella `project_Cargoservice/cargoservice_sprint1`:
@@ -602,7 +690,7 @@ Dalla cartella `project_Cargoservice/cargoservice_sprint1`:
 ```bash
 docker compose -f robotsmart26.yaml up      # ambiente del robot
 ./gradlew run                              # Context cargoservice (Windows: gradlew.bat run)
-./gradlew test --tests "test.java.Sprint1Test.test_richiestaDuranteCaricamento_RetryLater"
+./gradlew test --tests "test.java.Sprint1Test.test_cicloCompleto_QuattroCarichiEQuintoRifiutato"
 ```
 
 Il codice in `src/it/unibo` è generato dalla software factory QAK da `sprint1.qak`.
