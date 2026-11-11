@@ -175,6 +175,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("sonar_timeout_state") { //this:State
 					action { //it:State
+						forward("change_slot_status", "change_slot_status($Slot_id,FREE)" ,"hold" ) 
 						CommUtils.outyellow("CARGOSERVICE | Sonar timeout")
 						//genTimer( actor, state )
 					}
@@ -339,6 +340,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("loading_completed") { //this:State
 					action { //it:State
+						forward("change_slot_status", "change_slot_status($Slot_id,OCCUPIED)" ,"hold" ) 
 						CommUtils.outgreen("CARGOSERVICE | Loading completed")
 						//genTimer( actor, state )
 					}

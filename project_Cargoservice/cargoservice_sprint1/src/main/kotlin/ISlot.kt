@@ -5,7 +5,7 @@ interface ISlot {
     var status: Status
     val point: IPoint
 
-    enum class Status{
+    enum class Status {
         FREE, BOOKED, OCCUPIED
     }
 }
