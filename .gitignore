@@ -1,7 +1,7 @@
 # Compiled class file
 *.class
-*.gradle
 *.settings
+.claude
 
 # Log file
 *.log
@@ -33,4 +33,3 @@ project_Cargoservice/cargoservice_sprint1/logs
 project_Cargoservice/cargoservice_sprint1/src-gen
 project_Cargoservice/cargoservice_sprint1/.gradle
 project_Cargoservice/bin
-*.gradle
