@@ -329,7 +329,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("notify_hold") { //this:State
 					action { //it:State
-						forward("change_slot_status", "change_slot_status($Slot_id,$Code)" ,"hold" ) 
+						forward("change_slot_status", "change_slot_status($Slot_id,OCCUPIED)" ,"hold" ) 
 						CommUtils.outgreen("CARGOSERVICE | Container deployed")
 						//genTimer( actor, state )
 					}
@@ -340,7 +340,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("loading_completed") { //this:State
 					action { //it:State
-						forward("change_slot_status", "change_slot_status($Slot_id,OCCUPIED)" ,"hold" ) 
 						CommUtils.outgreen("CARGOSERVICE | Loading completed")
 						//genTimer( actor, state )
 					}

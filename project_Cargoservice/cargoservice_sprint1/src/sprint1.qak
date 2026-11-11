@@ -247,15 +247,13 @@ QActor cargoservice context ctx_cargoservice{
 	// aggiornamento stiva
 	State notify_hold {
 
-        forward hold -m change_slot_status:change_slot_status($Slot_id, $Code)
-
+        forward hold -m change_slot_status:change_slot_status($Slot_id, OCCUPIED)
         println("CARGOSERVICE | Container deployed") color green
 
     } Goto check_target
     
     // caricamento completato
     State loading_completed {
-    	forward hold -m change_slot_status:change_slot_status($Slot_id, OCCUPIED)
         println("CARGOSERVICE | Loading completed") color green
 
     } Goto disengaged
