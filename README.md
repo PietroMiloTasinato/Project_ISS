@@ -18,7 +18,7 @@ Il sistema è modellato con il metamodello **Qak** (Quasi Actor Kotlin) e svilup
 | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | [Requisiti del committente](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1) | Testo originale dei requisiti                                                                                  |
 | [Sprint0](UserDocs/sprint0.md)                                                                            | Requisiti formalizzati, macrocomponenti, core business, architettura di riferimento, piano di test e di lavoro |
-| [Sprint1](UserDocs/sprint1.md)                                                                            | Core business: ciclo di carico (cargoservice, cargorobot, marker), analisi del problema, test                  |
+| [Sprint1](UserDocs/sprint1.md)                                                                            | Core business: ciclo di carico (cargoservice, cargorobot e hold), analisi del problema, test                  |
 
 ## Mappa della repository
 
