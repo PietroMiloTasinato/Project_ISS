@@ -309,8 +309,7 @@ QActor hold context ctx_cargoservice{
 	                Hold.changeStatus(ReceivedSlot, ReceivedStatus)
 	            #]
 	
-	            println("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}")
-	                color green
+	            println("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}") color green
 	
 	        } else {
 	
