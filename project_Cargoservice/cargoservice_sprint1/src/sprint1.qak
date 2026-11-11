@@ -12,7 +12,7 @@ Reply hold_full:hold_full(ARG) for ask_for_slot
 Request ask_for_point:ask_for_point(ID)
 Reply point_found:point_found(X,Y,D) for ask_for_point
 Reply point_not_found:point_not_found(ARG) for ask_for_point
-Dispatch container_deployed:container_deployed(SlotId, Code)
+Dispatch change_slot_status:change_slot_status(SlotId, Status)
 
 Dispatch start_blinking:start_blinking(ARG)
 Dispatch stop_blinking:stop_blinking(ARG)
@@ -247,7 +247,7 @@ QActor cargoservice context ctx_cargoservice{
 	// aggiornamento stiva
 	State notify_hold {
 
-        forward hold -m container_deployed:container_deployed($Slot_id, $Code)
+        forward hold -m change_slot_status:change_slot_status($Slot_id, $Code)
 
         println("CARGOSERVICE | Container deployed") color green
 
@@ -271,12 +271,15 @@ QActor hold context ctx_cargoservice{
 	}Transition t0
 		whenRequest ask_for_slot -> get_slot
 		whenRequest ask_for_point -> get_point
-		whenMsg container_deployed -> update_map
+		whenMsg change_slot_status -> update_map
 	
 	State get_slot{
 		[# val SlotAssigned = Hold.getFreeSlot() #]
 		if [# SlotAssigned != null #]{
-			[# val Id = SlotAssigned.id #]
+			[# 
+				val Id = SlotAssigned.id 
+				Hold.changeStatus(Id, "BOOKED")
+			#]
 			replyTo ask_for_slot with slot_assigned:slot_assigned($Id)
 		} else {
 			replyTo ask_for_slot with hold_full:hold_full(0)
@@ -302,16 +305,16 @@ QActor hold context ctx_cargoservice{
 	} Goto idle
 	
 	State update_map{
-		onMsg(container_deployed:container_deployed(SlotId, Code)){
+		onMsg(change_slot_status:change_slot_status(SlotId, Status)){
 			[#
 	            val ReceivedSlot = payloadArg(0)
-	            val ReceivedCode = payloadArg(1).toIntOrNull()
+	            val ReceivedStatus = payloadArg(1)
         	#]
 
-	        if [# ReceivedCode != null #] {
+	        if [# ReceivedStatus != null #] {
 	
 	            [#
-	                Hold.codeAssigned(ReceivedSlot, ReceivedCode)
+	                Hold.changeStatus(ReceivedSlot, ReceiveStatus)
 	            #]
 	
 	            println("HOLD | Container registration requested")

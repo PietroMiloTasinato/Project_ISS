@@ -37,11 +37,11 @@ class HoldDeserializer : JsonDeserializer<IHold> {
                 pointJson.get("direction").asString
             )
             when (set.key) {
-                "slot5" -> slot5 = Slot(set.key, null, point)
-                "io_port" -> ioPort = Slot(set.key, null, point)
+                "slot5" -> slot5 = Slot(set.key, ISlot.Status.FREE, point)
+                "io_port" -> ioPort = Slot(set.key, ISlot.Status.FREE, point)
                 "home" -> home = point
                 else -> {
-                    val slot = Slot(set.key, null, point)
+                    val slot = Slot(set.key, ISlot.Status.FREE, point)
                     map[slot.id] = slot
                 }
             }

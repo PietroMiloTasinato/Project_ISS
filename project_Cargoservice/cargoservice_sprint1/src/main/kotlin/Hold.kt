@@ -21,10 +21,12 @@ class Hold(
         "ioport" to ioPort.point
     )
 
-    override fun getFreeSlot() = slotMap.values.firstOrNull { it.container == null }
+    override fun getFreeSlot() = slotMap.values.firstOrNull { it.status == ISlot.Status.FREE }
     override fun getPoint(id: String) = pointMap[id]
-    override fun codeAssigned(id: String, code: Int?){
-        slotMap[id]?.container = Container(code)
+    override fun changeStatus(id: String, status: String){
+        runCatching{ ISlot.Status.valueOf(status) }.getOrNull()?.let{
+            slotMap[id]?.status = it
+        }
     }
 
     companion object{

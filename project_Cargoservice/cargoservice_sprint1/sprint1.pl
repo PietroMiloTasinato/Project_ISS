@@ -11,7 +11,7 @@ reply( hold_full, hold_full(ARG) ).  %%for ask_for_slot
 request( ask_for_point, ask_for_point(ID) ).
 reply( point_found, point_found(X,Y,D) ).  %%for ask_for_point
 reply( point_not_found, point_not_found(ARG) ).  %%for ask_for_point
-dispatch( container_deployed, container_deployed(SlotId,Code) ).
+dispatch( change_slot_status, change_slot_status(SlotId,Status) ).
 dispatch( start_blinking, start_blinking(ARG) ).
 dispatch( stop_blinking, stop_blinking(ARG) ).
 request( detect_container, detect_container(ARG) ).

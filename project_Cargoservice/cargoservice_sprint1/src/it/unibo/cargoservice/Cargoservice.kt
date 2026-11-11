@@ -28,7 +28,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		
 				var Io_port_occupied = false
 				var System_out_of_service = false
@@ -328,7 +328,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				}	 
 				state("notify_hold") { //this:State
 					action { //it:State
-						forward("container_deployed", "container_deployed($Slot_id,$Code)" ,"hold" ) 
+						forward("change_slot_status", "change_slot_status($Slot_id,$Code)" ,"hold" ) 
 						CommUtils.outgreen("CARGOSERVICE | Container deployed")
 						//genTimer( actor, state )
 					}

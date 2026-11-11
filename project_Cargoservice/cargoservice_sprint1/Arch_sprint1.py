@@ -42,5 +42,5 @@ with Diagram('sprint1Arch', show=False, outformat='png', graph_attr=graphattr) a
      cargoservice >> Edge(color='magenta', style='solid', decorate='true', label='<ask_for_slot<font color="darkgreen"> slot_assigned hold_full</font> &nbsp; ask_for_point<font color="darkgreen"> point_found point_not_found</font> &nbsp; >',  fontcolor='magenta') >> hold
      cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<setrobotstate &nbsp; >',  fontcolor='blue') >> robotsmart
      cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<stop_blinking &nbsp; start_blinking &nbsp; >',  fontcolor='blue') >> led_mock
-     cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<container_deployed &nbsp; >',  fontcolor='blue') >> hold
+     cargoservice >> Edge(color='blue', style='solid',  decorate='true', label='<change_slot_status &nbsp; >',  fontcolor='blue') >> hold
 diag
