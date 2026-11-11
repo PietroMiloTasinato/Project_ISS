@@ -37,8 +37,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 				val Robot_path = mutableListOf<String>()
 				var Target = ""
 				var Direction = ""
-				var Code: Int? = null
-				var CodeNumber = 1
 		return { //this:ActionBasciFsm
 				state("setup") { //this:State
 					action { //it:State
@@ -59,7 +57,6 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 						            Io_port_occupied = false
 						            Slot_id = ""
 						            Target = ""
-						            Code = null
 						            Robot_path.clear()
 						forward("stop_blinking", "stop_blinking(0)" ,"led_mock" ) 
 						CommUtils.outgreen("CARGOSERVICE | Ready")
@@ -316,10 +313,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 					action { //it:State
 						CommUtils.outmagenta("CARGOSERVICE | Marking container...")
 						delay(3000) 
-						
-									Code = CodeNumber
-									CodeNumber = CodeNumber + 1
-						CommUtils.outmagenta("CARGOSERVICE | Container marked with code $Code")
+						CommUtils.outmagenta("CARGOSERVICE | Done")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

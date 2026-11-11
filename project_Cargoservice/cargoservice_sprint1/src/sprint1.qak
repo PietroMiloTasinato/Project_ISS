@@ -47,8 +47,6 @@ QActor cargoservice context ctx_cargoservice{
 		val Robot_path = mutableListOf<String>()
 		var Target = ""
 		var Direction = ""
-		var Code: Int? = null
-		var CodeNumber = 1
 	#]
 	
 	State setup initial{
@@ -64,7 +62,6 @@ QActor cargoservice context ctx_cargoservice{
             Io_port_occupied = false
             Slot_id = ""
             Target = ""
-            Code = null
             Robot_path.clear()
 		#]
 
@@ -237,11 +234,7 @@ QActor cargoservice context ctx_cargoservice{
 	State marking_container{
 		println("CARGOSERVICE | Marking container...") color magenta
 		delay 3000 //attesa di 3 sec
-		[#
-			Code = CodeNumber
-			CodeNumber = CodeNumber + 1
-		#]
-		println("CARGOSERVICE | Container marked with code $Code") color magenta
+		println("CARGOSERVICE | Done") color magenta
 	} Goto check_target
 	
 	// aggiornamento stiva
