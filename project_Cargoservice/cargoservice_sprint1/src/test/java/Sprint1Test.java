@@ -150,8 +150,8 @@ public class Sprint1Test {
             String assigned = oneArg(free);
             validSlot(assigned);
             assertTrue("Slot assegnato due volte: " + assigned, used.add(assigned));
-            dispatch("hold", "container_deployed",
-                    "container_deployed(" + assigned + "," + (1000 + i) + ")");
+            dispatch("hold", "change_slot_status",
+                    "change_slot_status(OCCUPIED)");
 
             // Il dispatch e' asincrono: attendere una risposta diversa dal vecchio slot.
             long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);

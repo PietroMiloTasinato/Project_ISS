@@ -28,7 +28,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		//IF actor.withobj !== null val actor.withobj.name» = actor.withobj.method»ENDIF
+		//IF actor.withobj !== null val actor.withobj.name� = actor.withobj.method�ENDIF
 		 val Hold = main.kotlin.Hold.Companion.createHoldFromConfig()  
 		return { //this:ActionBasciFsm
 				state("idle") { //this:State
@@ -41,13 +41,15 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					}	 	 
 					 transition(edgeName="t011",targetState="get_slot",cond=whenRequest("ask_for_slot"))
 					transition(edgeName="t012",targetState="get_point",cond=whenRequest("ask_for_point"))
-					transition(edgeName="t013",targetState="update_map",cond=whenDispatch("container_deployed"))
+					transition(edgeName="t013",targetState="update_map",cond=whenDispatch("change_slot_status"))
 				}	 
 				state("get_slot") { //this:State
 					action { //it:State
 						 val SlotAssigned = Hold.getFreeSlot()  
 						if(  SlotAssigned != null  
-						 ){ val Id = SlotAssigned.id  
+						 ){ 
+										val Id = SlotAssigned.id 
+										Hold.changeStatus(Id, "BOOKED")
 						answer("ask_for_slot", "slot_assigned", "slot_assigned($Id)"   )  
 						}
 						else
@@ -85,14 +87,14 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 				}	 
 				state("update_map") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("container_deployed(SlotId,Code)"), Term.createTerm("container_deployed(SlotId,Code)"), 
+						if( checkMsgContent( Term.createTerm("change_slot_status(SlotId,Status)"), Term.createTerm("change_slot_status(SlotId,Status)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								
 									            val ReceivedSlot = payloadArg(0)
-									            val ReceivedCode = payloadArg(1).toIntOrNull()
-								if(  ReceivedCode != null  
+									            val ReceivedStatus = payloadArg(1)
+								if(  ReceivedStatus != null  
 								 ){
-									                Hold.codeAssigned(ReceivedSlot, ReceivedCode)
+									                Hold.changeStatus(ReceivedSlot, ReceiveStatus)
 								CommUtils.outgreen("HOLD | Container registration requested")
 								}
 								else

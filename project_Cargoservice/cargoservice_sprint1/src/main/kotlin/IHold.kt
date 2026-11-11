@@ -6,5 +6,5 @@ abstract class IHold {
     abstract val slot5: ISlot
     abstract fun getFreeSlot(): ISlot?
     abstract fun getPoint(id: String): IPoint?
-    abstract fun codeAssigned(id: String, code: Int?)
+    abstract fun changeStatus(id: String, status: String)
 }
