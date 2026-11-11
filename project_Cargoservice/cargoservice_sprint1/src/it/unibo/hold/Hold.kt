@@ -50,6 +50,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 						 ){ 
 										val Id = SlotAssigned.id 
 										Hold.changeStatus(Id, "BOOKED")
+						CommUtils.outblack("HOLD | ${Id} changed status to BOOKED")
 						answer("ask_for_slot", "slot_assigned", "slot_assigned($Id)"   )  
 						}
 						else
@@ -95,7 +96,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 								if(  ReceivedStatus != null  
 								 ){
 									                Hold.changeStatus(ReceivedSlot, ReceiveStatus)
-								CommUtils.outgreen("HOLD | Container registration requested")
+								CommUtils.outgreen("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}")
 								}
 								else
 								 {CommUtils.outred("HOLD | Invalid container code")

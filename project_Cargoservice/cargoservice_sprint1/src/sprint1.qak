@@ -271,6 +271,7 @@ QActor hold context ctx_cargoservice{
 				val Id = SlotAssigned.id 
 				Hold.changeStatus(Id, "BOOKED")
 			#]
+			println("HOLD | ${Id} changed status to BOOKED")
 			replyTo ask_for_slot with slot_assigned:slot_assigned($Id)
 		} else {
 			replyTo ask_for_slot with hold_full:hold_full(0)
@@ -308,7 +309,7 @@ QActor hold context ctx_cargoservice{
 	                Hold.changeStatus(ReceivedSlot, ReceiveStatus)
 	            #]
 	
-	            println("HOLD | Container registration requested")
+	            println("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}")
 	                color green
 	
 	        } else {
