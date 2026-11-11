@@ -110,21 +110,23 @@ Se il container non viene collocato nell'area del `sonar` entro il tempo prefiss
 
 ##### Modello del dominio: hold, slot e container
 
-L'**hold** (stiva) costituisce l’ambiente fisico operativo in cui opera il DDR ed è organizzata in quattro aree di deposito permanente, denominate **slot1–slot4**, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, **slot5**, dedicata alle operazioni di marcatura. Il `cargoservice` ne gestisce una rappresentazione interna. Poiché si tratta di entità del dominio interne al servizio (e non di servizi), le formalizziamo con interfacce Kotlin, limitandoci agli elementi che emergono dai requisiti.
+L'**hold** (stiva) costituisce l’ambiente fisico operativo in cui opera il DDR ed è organizzata in quattro aree di deposito permanente, denominate **slot1–slot4**, ciascuna destinata a ospitare un solo container, e in un’area di deposito temporaneo, **slot5**, dedicata alle operazioni di marcatura. Il `cargoservice` ne gestisce una rappresentazione interna. Poiché si tratta di entità del dominio interne al servizio (e non di servizi), le formalizziamo con interfacce Kotlin, limitandoci agli elementi che emergono dai requisiti. Dopo un confronto con il committente, è stato concordato che il sistema di marcatura non è di nostra competenza in quanto il nostro obiettivo è quello di automatizzare le operazioni di carico dei container nella stiva. Quindi non è necessario definire il container, ma basta utilizzare una semplice flag per ogni **slot**.
 
 ```kotlin
-interface IContainer {
-    val code: Int?              // codice a barre assegnato dal marker; null finché il container non è marcato
-}
-
 interface ISlot {
-    val id: String              // nome dello slot, ad esempio slot1 o slot4
-    var container: IContainer?  // null se lo slot è libero
+    val id: String               // valore identificativo del container     
+    var status: Status           // stato dello slot (libero, prenotato, occupato)
+    val point: IPoint            // la posizione dello slot
+
+    enum class Status{
+        FREE, BOOKED, OCCUPIED
+    }
 }
 
 interface IPoint {
     val x: Int
     val y: Int
+    val direction: String?   // la direzione in cui il robot deve guardare una volta raggiunto il punto, null se non ci interessa la direzione del robot in quel punto
 }
 
 abstract class IHold {
@@ -141,7 +143,7 @@ La rappresentazione delle posizioni come coordinate su un piano emerge dall'imma
 
 ##### Slot 5
 
-Dopo che è stata rilevata la presenza del container, il **cargoservice** si avvale del **cargorobot** per trasferirlo dall'`IOPort` allo **slot5**, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura.
+Dopo che è stata rilevata la presenza del container, il **cargoservice** si avvale del **cargorobot** per trasferirlo dall'`IOPort` allo **slot5**, dove il dispositivo `marker` applica un codice a barre identificativo e segnala il completamento dell’operazione di marcatura. Dopo un confronto con il committente, è stato stabilito che l'implementazione del dispositivo `marker` non è di nostra competenza, e che possiamo considerare l'operazione di marcatura come un'attesa di circa 3 secondi dall'arrivo del **cargorobot** allo **slot5**, entro i quali si completa l'operazione di marcatura.
 
 ##### Slot1-slot4
 
@@ -167,14 +169,14 @@ Il **sonar** è il sensore associato all'`IOPort`. Misura la distanza D da un os
 
 #### IOPort e display
 
-L'`IOPort` è il dispositivo con cui il cliente interagisce. Su indicazione del committente deve essere una **web-gui**, quindi un'interfaccia web lato cliente dotata di:
+L'**IOPort** è il dispositivo con cui il cliente interagisce. Su indicazione del committente deve essere una **web-gui**, quindi un'interfaccia web lato cliente dotata di:
 
 - un pulsante (`pushbutton`) per inoltrare le richieste di carico;
 - un `display` per visualizzare la risposta alla richiesta, lo stato corrente della hold e lo stato del servizio.
 
-Sul `display` il `cargoservice` deve mostrare inoltre il messaggio _Service working_ quando tutto procede correttamente, oppure _Out of service_ quando il `sonar` misura per almeno 3 secondi una distanza superiore a `DFREE`.
+Sul `display` il **cargoservice** deve mostrare inoltre il messaggio _Service working_ quando tutto procede correttamente, oppure _Out of service_ quando il `sonar` misura per almeno 3 secondi una distanza superiore a _DFREE_. Siccome il termine "IOPort" è condiviso con la zona dell'**hold** dove il **cargorobot** ritira il container, per evitare ambiguità, ci riferiremo al componente che abbiamo appena descritto con il nome di **web-gui**.
 
-Si riporta di seguito una bozza iniziale dell'`IOPort`:
+Si riporta di seguito una bozza iniziale della **web-gui**:
 
 ```html
 <!DOCTYPE html>
@@ -193,9 +195,9 @@ Si riporta di seguito una bozza iniziale dell'`IOPort`:
 
 Il `led` è il dispositivo che deve lampeggiare mentre il `cargoservice` è nello stato _engaged_. Su indicazione del committente deve essere il LED del PicoW.
 
-### Interazione IOPort–cargoservice: vocabolario dei messaggi
+### Interazione web-gui–cargoservice: vocabolario dei messaggi
 
-L'interazione principale è una richiesta dalla `IOPort` al `cargoservice`, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente (`retrylater` è invece il nome indicato nei requisiti), è:
+L'interazione principale è una richiesta dalla **web-gui** al `cargoservice`, seguita da una risposta. Un primo vocabolario Qak, con nomi proposti dagli analisti per gli esiti non nominati dal committente (`retrylater` è invece il nome indicato nei requisiti), è:
 
 ```text
 Request load_container : load_container(ARG)
@@ -204,14 +206,14 @@ Reply load_refused : load_refused(CAUSE) for load_container
 Reply retrylater : retrylater(CAUSE) for load_container
 ```
 
-Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/`WebGUI` per la richiesta, **cargoservice**/**cargorobot** per muovere il DDR, **sonar** per rilevamento, `display` per la visualizzazione e **led** per il lampeggio.
+Il frammento descrive solo i messaggi: non è un modello Qak completo già validato o eseguibile. Inoltre, le interazioni rimanenti tramite messaggi verranno discusse e modellate durante le fasi di analisi nei successivi sprint ma possiamo già esplicitarne di altre come Cliente/**web-gui** per la richiesta, **cargoservice**/**cargorobot** per muovere il DDR, **sonar** per rilevamento, `display` per la visualizzazione e **led** per il lampeggio.
 
 Dall’analisi dei requisiti emerge un sistema caratterizzato dalla cooperazione di diverse entità software e dispositivi fisici. Il numero di nodi computazionali ricavato dai requisiti è almeno 5:
 
 - un dispositivo per il sonar
 - un dispositivo dotato di un LED
-- un computer per eseguire `cargoservice`
-- un dispositivo per interagire con l'`IOPort`
+- un computer per eseguire **cargoservice**
+- un dispositivo per interagire con la **web-gui**
 - un Differential Drive Robot
 
 In caso durante la fase di progettazione dovesse sorgere la necessità di usare altri nodi, essi dovranno essere definiti nelle successive fasi di analisi e progettazione. Possiamo dedurre che il **cargoservice** è un servizio, mentre le altre entità includono dispositivi fisici, un'interfaccia web e un sottosistema robotico.
@@ -222,11 +224,11 @@ Il seguente diagramma rappresenta l'architettura logica iniziale di riferimento 
 
 ![diagram0](../img/sprint_0_requirements_architecture.png)
 
-**Goal dello Sprint1**: realizzare un primo prototipo dell'interazione **IOPort**–**cargoservice** che gestisca _accettazione_, _rifiuto_ e _retrylater_, utilizzando mock se necessari. Il trasporto effettivo e l'integrazione dei dispositivi sono rinviati ai successivi incrementi.
+**Goal dello Sprint1**: realizzare un primo prototipo dell'interazione **web-gui**–**cargoservice** che gestisca _accettazione_, _rifiuto_ e _retrylater_, utilizzando mock se necessari. Il trasporto effettivo e l'integrazione dei dispositivi sono rinviati ai successivi incrementi.
 
 ## Piano di Test
 
-In questa fase iniziale sono stati individuati i seguenti casi di test funzionali, derivati direttamente dai requisiti del committente, con l'obiettivo di verificare il comportamento del sistema in risposta a una richiesta di caricamento, a partire dall'interazione `IOPort`–`cargoservice`.
+In questa fase iniziale sono stati individuati i seguenti casi di test funzionali, derivati direttamente dai requisiti del committente, con l'obiettivo di verificare il comportamento del sistema in risposta a una richiesta di caricamento, a partire dall'interazione **web-gui**–**cargoservice**.
 
 | Condizione iniziale e richiesta                     | Risultato atteso    |
 | --------------------------------------------------- | ------------------- |
@@ -262,7 +264,7 @@ QActor io_port_mock context ctx_cargoservice {
 }
 ```
 
-Segue il test plan dell'Hold, per verificare il corretto funzionamento dell'interfacce finora implementate
+Segue il test plan dell'Hold, per verificare il corretto funzionamento delle interfacce finora implementate
 
 ```java
 abstract class HoldTestPlan {
