@@ -1,7 +1,7 @@
 # Compiled class file
 *.class
-*/.gradle
-*/.settings
+*.gradle
+*.settings
 
 # Log file
 *.log
