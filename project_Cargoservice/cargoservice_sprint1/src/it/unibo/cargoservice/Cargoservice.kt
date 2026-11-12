@@ -129,6 +129,7 @@ class Cargoservice ( name: String, scope: CoroutineScope, isconfined: Boolean=fa
 												Slot_id = payloadArg(0)
 												Robot_path.addAll(listOf("ioport", "slot5", Slot_id, "home"))
 								CommUtils.outyellow("CARGOSERVICE | Slot assigned: $Slot_id")
+								forward("change_slot_status", "change_slot_status($Slot_id,BOOKED)" ,"hold" )
 								answer("request_to_load", "engaged", "engaged($Slot_id)"   )  
 								forward("start_blinking", "start_blinking(0)" ,"led_mock" ) 
 						}

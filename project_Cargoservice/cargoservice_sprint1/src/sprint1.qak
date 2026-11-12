@@ -112,6 +112,8 @@ QActor cargoservice context ctx_cargoservice{
 				Robot_path.addAll(listOf("ioport", "slot5", Slot_id, "home"))
 			#]
 			println("CARGOSERVICE | Slot assigned: $Slot_id") color yellow
+			// prenotazione dello slot: FREE -> BOOKED (ask_for_slot e' in sola lettura)
+			forward hold -m change_slot_status:change_slot_status($Slot_id, BOOKED)
 			replyTo request_to_load with engaged:engaged($Slot_id)
 			// Start blinking the led
 			forward led_mock -m start_blinking:start_blinking(0)
@@ -266,12 +268,9 @@ QActor hold context ctx_cargoservice{
 	
 	State get_slot{
 		[# val SlotAssigned = Hold.getFreeSlot() #]
+		// sola lettura: la prenotazione (BOOKED) e' richiesta dal cargoservice con change_slot_status
 		if [# SlotAssigned != null #]{
-			[# 
-				val Id = SlotAssigned.id 
-				Hold.changeStatus(Id, "BOOKED")
-			#]
-			println("HOLD | ${Id} changed status to BOOKED")
+			[# val Id = SlotAssigned.id #]
 			replyTo ask_for_slot with slot_assigned:slot_assigned($Id)
 		} else {
 			replyTo ask_for_slot with hold_full:hold_full(0)

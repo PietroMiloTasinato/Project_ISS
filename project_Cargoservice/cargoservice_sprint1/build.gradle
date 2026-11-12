@@ -184,7 +184,7 @@ task dovesiamo {
 
 distributions {
     main {
-        distributionBaseName = 'cargoservice_sprint0'
+        distributionBaseName = 'cargoservice_sprint1'
         /*contents { 
              from './cargoservice_sprint0.pl'
              from './sysRules.pl'

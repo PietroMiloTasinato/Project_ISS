@@ -48,9 +48,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 						 val SlotAssigned = Hold.getFreeSlot()  
 						if(  SlotAssigned != null  
 						 ){ 
-										val Id = SlotAssigned.id 
-										Hold.changeStatus(Id, "BOOKED")
-						CommUtils.outblack("HOLD | ${Id} changed status to BOOKED")
+										val Id = SlotAssigned.id
 						answer("ask_for_slot", "slot_assigned", "slot_assigned($Id)"   )  
 						}
 						else
