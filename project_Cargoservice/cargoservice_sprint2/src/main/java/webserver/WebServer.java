@@ -1,10 +1,12 @@
 package webserver;
 
 import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
 import unibo.basicomm23.utils.CommUtils;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 public class WebServer {
 
@@ -12,10 +14,17 @@ public class WebServer {
 	
 	public static void setUpWebServer() {
 		if (webServer == null) {
-			webServer = Javalin.create().start(8010);
+			webServer = Javalin.create(javalinConfig -> {
+				javalinConfig.jetty.modifyWebSocketServletFactory(factory ->
+						factory.setIdleTimeout(Duration.ZERO));
+				javalinConfig.staticFiles.add(staticFileConfig -> {
+					staticFileConfig.directory = "/webgui";
+					staticFileConfig.location = Location.CLASSPATH;
+				});
+			}).start(8010);
 		}
 		webServer.get("/", ctx -> {
-			try(InputStream inputStream = WebServer.class.getResourceAsStream("webgui.html")) {
+			try(InputStream inputStream = WebServer.class.getResourceAsStream("/webgui/webgui.html")) {
 				if (inputStream != null) {
 					String content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 					ctx.html(content);
@@ -35,6 +44,7 @@ public class WebServer {
 				});
 				ws.onMessage(ctx -> {
 					String message = ctx.message();
+
 				 	CommUtils.outcyan("Message from webgui: " + message);
 				});
 				ws.onClose(ctx -> {
