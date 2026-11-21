@@ -1,0 +1,478 @@
+System sprint2
+
+Request request_to_load: request_to_load(ARG)
+Reply retrylater: retrylater(ARG) for request_to_load
+Reply rejected: rejected(ARG) for request_to_load
+Reply engaged: engaged(SLOT) for request_to_load
+
+Request ask_for_slot:ask_for_slot(ARG)
+Reply slot_assigned:slot_assigned(ID) for ask_for_slot
+Reply hold_full:hold_full(ARG) for ask_for_slot
+
+Request ask_for_point:ask_for_point(ID)
+Reply point_found:point_found(X,Y,D) for ask_for_point
+Reply point_not_found:point_not_found(ARG) for ask_for_point
+Dispatch change_slot_status:change_slot_status(SlotId, Status)
+
+Dispatch start_blinking:start_blinking(ARG)
+Dispatch stop_blinking:stop_blinking(ARG)
+
+Request detect_container:detect_container(ARG)
+Reply container_detected:container_detected(ARG) for detect_container
+Reply sonar_timeout:sonar_timeout(ARG) for detect_container
+
+Dispatch setrobotstate: setpos(X,Y,D)
+Request moverobot: moverobot(TARGETX, TARGETY,STEPTIME)
+Reply moverobotdone  :  moverobotdone(ARG) for moverobot
+Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
+Request setdirection:dir(D)
+Reply setdirectiondone : pos(PX,PY) for setdirection
+
+Event ioport_occupied:io_port_occupied(ARG)
+Dispatch press_button:press_button(ARG) //simulazione della pressione del pulsante IOPort
+
+Context ctx_cargoservice ip [host="localhost" port=8000]
+Context ctx_smartrobot ip [host="127.0.0.1" port=8020]
+
+ExternalQActor robotsmart context ctx_smartrobot
+ExternalQActor robotmnemo context ctx_smartrobot
+
+QActor cargoservice context ctx_cargoservice{
+	
+	[#
+		var Io_port_occupied = false
+		var System_out_of_service = false
+		var Is_engaged = false
+		var Slot_id: String = ""
+		val Robot_path = mutableListOf<String>()
+		var Target = ""
+		var Direction = ""
+	#]
+	
+	State setup initial{
+		println("CARGOSERVICE | Starting") color green
+		forward robotsmart -m setrobotstate : setpos(0,0,down)
+	} Goto disengaged
+	
+	//attesa di una nuova richiesta
+	State disengaged{
+		[# 
+			Is_engaged = false
+			Direction = ""
+            Io_port_occupied = false
+            Slot_id = ""
+            Target = ""
+            Robot_path.clear()
+		#]
+
+        forward led_mock -m stop_blinking:stop_blinking(0)
+	    
+		println("CARGOSERVICE | Ready") color green
+	} Transition t0
+		whenRequest request_to_load -> start_engage
+		// whenMsg out_of_service -> ...
+		
+	State start_engage{
+	} Goto retry_state
+		if [# Io_port_occupied || System_out_of_service #]
+		else ask_slot
+		
+	State retry_state {
+		
+		println("CARGOSERVICE | Retry later: service unavailable") color yellow
+		replyTo request_to_load with retrylater:retrylater(0)
+
+    } Goto disengaged
+    
+    State ask_slot {
+
+        [# Is_engaged = true #]
+
+        request hold -m ask_for_slot:ask_for_slot(0)
+
+    } Goto wait_slot
+		
+	State wait_slot {
+
+    } Transition t1
+        whenReply slot_assigned -> engaged
+        whenReply hold_full -> hold_full
+        
+    State hold_full {
+
+        replyTo request_to_load with rejected:rejected(0)
+
+    } Goto disengaged
+		
+	// accettazione del caricamento
+	State engaged{
+		onMsg(slot_assigned:slot_assigned(ID)){
+			[# 
+				Slot_id = payloadArg(0)
+				Robot_path.addAll(listOf("ioport", "slot5", Slot_id, "home"))
+			#]
+			println("CARGOSERVICE | Slot assigned: $Slot_id") color yellow
+			// prenotazione dello slot: FREE -> BOOKED (ask_for_slot e' in sola lettura)
+			forward hold -m change_slot_status:change_slot_status($Slot_id, BOOKED)
+			replyTo request_to_load with engaged:engaged($Slot_id)
+			// Start blinking the led
+			forward led_mock -m start_blinking:start_blinking(0)
+			
+		}
+	} Goto request_sonar
+		
+	// rilevamento container
+	State request_sonar {
+
+        request sonar_mock -m detect_container:detect_container(0)
+
+    } Goto wait_sonar
+
+
+    State wait_sonar {
+
+    } Transition t2
+        whenReply container_detected -> container_ready
+        whenReply sonar_timeout -> sonar_timeout_state
+  
+    
+    State container_ready {
+
+        [# Io_port_occupied = true #]
+
+        println("CARGOSERVICE | Container detected") color green
+
+    } Goto check_target
+    
+    State sonar_timeout_state {
+    	forward hold -m change_slot_status:change_slot_status($Slot_id, FREE)
+        println("CARGOSERVICE | Sonar timeout") color yellow
+
+    } Goto disengaged
+	
+	// gestione del percorso robot	
+	State check_target{} Goto loading_completed if [# Robot_path.isEmpty() #] else get_point
+	
+	State get_point{
+		[#
+			Target = Robot_path.removeAt(0)
+		#]
+		
+		request hold -m ask_for_point:ask_for_point($Target)
+	} Goto wait_point 
+	
+	
+	State wait_point {
+
+    }Transition t3
+		whenReply point_found -> move_robot
+		whenRequest request_to_load and [# Io_port_occupied #] -> retry_wait_point
+	
+	// retrylater solo finchè il container è ancora nell'IOPort
+	State retry_wait_point {
+
+		println("CARGOSERVICE | Retry later: IOPort occupied") color yellow
+        replyTo request_to_load with retrylater:retrylater(0)
+
+    } Goto wait_point
+    
+    // movimento robot tramite RobotSmart26
+	State move_robot{
+		onMsg(point_found:point_found(X, Y, D)){
+			
+			[#
+				val X =	payloadArg(0)
+				val Y = payloadArg(1)
+				Direction = payloadArg(2)
+			#]
+			
+			request robotsmart -m moverobot:moverobot($X, $Y, 345)
+		}
+	} Goto wait_robot
+	
+	
+	State wait_robot {
+
+    } Transition t4
+        whenReply moverobotdone and [# Direction.isNotBlank() #] -> moverobotdone
+        whenReply moverobotdone and [# Direction.isBlank() #] -> setdirectiondone
+        whenRequest request_to_load and [# Io_port_occupied #] -> retry_wait_robot
+        
+    // retrylater solo finchè il container è ancora nell'IOPort (il robot non l'ha ancora prelevato)
+    State retry_wait_robot {
+
+		println("CARGOSERVICE | Retry later: IOPort occupied") color yellow
+        replyTo request_to_load with retrylater:retrylater(0)
+
+    } Goto wait_robot
+    
+    State moverobotdone{
+    	request robotmnemo -m setdirection : dir($Direction)
+    }Transition t10
+    	whenReply setdirectiondone -> setdirectiondone 
+		
+	// movimento completato
+	State setdirectiondone{
+		println("CARGOSERVICE | DDR direction set to $Direction") color green
+		delay 2000
+		if [# Target == "ioport" #]{
+			[# Io_port_occupied = false #]
+			emit ioport_occupied:ioport_occupied(false)
+		}
+	} Goto marking_container
+        if [# Target == "slot5" #]
+        else check_reserved_slot
+
+
+    State check_reserved_slot {
+
+    } Goto notify_hold
+        if [# Target == Slot_id #]
+        else check_target
+	
+	// marcatura nello slot5: dal punto di vista del sistema è solo un'attesa del robot (ddr)
+	// Le request_to_load che arrivano durante l'attesa (IOPort già libera) restano in coda
+	// e sono valutate al ritorno in disengaged.
+	State marking_container{
+		println("CARGOSERVICE | Marking container...") color magenta
+		delay 3000 //attesa di 3 sec
+		println("CARGOSERVICE | Done") color magenta
+	} Goto check_target
+	
+	// aggiornamento stiva
+	State notify_hold {
+
+        forward hold -m change_slot_status:change_slot_status($Slot_id, OCCUPIED)
+        println("CARGOSERVICE | Container deployed") color green
+
+    } Goto check_target
+    
+    // caricamento completato
+    State loading_completed {
+        println("CARGOSERVICE | Loading completed") color green
+
+    } Goto disengaged
+	
+}
+
+QActor hold context ctx_cargoservice{
+	
+	[# val Hold = main.kotlin.Hold.Companion.createHoldFromConfig() #]
+	
+	State idle initial{
+		println("HOLD | Ready") color green
+	}Transition t0
+		whenRequest ask_for_slot -> get_slot
+		whenRequest ask_for_point -> get_point
+		whenMsg change_slot_status -> update_map
+	
+	State get_slot{
+		[# val SlotAssigned = Hold.getFreeSlot() #]
+		// sola lettura: la prenotazione (BOOKED) e' richiesta dal cargoservice con change_slot_status
+		if [# SlotAssigned != null #]{
+			[# val Id = SlotAssigned.id #]
+			replyTo ask_for_slot with slot_assigned:slot_assigned($Id)
+		} else {
+			replyTo ask_for_slot with hold_full:hold_full(0)
+		}
+	} Goto idle
+	
+	
+	State get_point{
+		onMsg(ask_for_point:ask_for_point(ID)){
+			[# val point = Hold.getPoint(payloadArg(0)) #]
+			if [# point != null #]{
+				[#
+					val X = point.x
+					val Y = point.y
+					val D = point.direction
+				#]
+				
+				replyTo ask_for_point with point_found:point_found($X, $Y, $D)
+			} else {
+				replyTo ask_for_point with point_not_found:point_not_found(0)
+			}
+		}
+	} Goto idle
+	
+	State update_map{
+		onMsg(change_slot_status:change_slot_status(SlotId, Status)){
+			[#
+	            val ReceivedSlot = payloadArg(0)
+	            val ReceivedStatus = payloadArg(1)
+        	#]
+
+	        if [# ReceivedStatus != null #] {
+	
+	            [#
+	                Hold.changeStatus(ReceivedSlot, ReceivedStatus)
+	            #]
+	
+	            println("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}") color green
+	
+	        } else {
+	
+	            println("HOLD | Invalid container code")
+	                color red
+	        }
+		}
+	} Goto idle
+	 
+}
+
+
+QActor io_port context ctx_cargoservice {
+	
+	[#
+        var RequestsSent = 0
+        var PendingRequests = 0
+
+        var AcceptedRequests = 0
+        var RejectedRequests = 0
+        var RetryRequests = 0
+    #]
+	
+	State idle initial {
+		
+		println("IOPORT_MOCK | Ready") color green
+		
+	} Transition t0
+		whenMsg press_button -> handle_press
+        whenReply engaged -> accepted
+        whenReply rejected -> rejected_state
+        whenReply retrylater -> retry_state
+    
+    // simulazione pressione pulsante
+    State handle_press {
+
+        onMsg(press_button:press_button(ARG)) {
+
+            [#
+                RequestsSent++
+                PendingRequests++
+            #]
+
+            println("IOPORT_MOCK | Button pressed") color yellow
+
+            println("IOPORT_MOCK | Sending load request") color yellow
+        }
+
+        request cargoservice -m request_to_load:request_to_load(0)
+
+    } Goto idle
+    
+    // richiesta accettata  
+    State accepted {
+
+        onMsg(engaged:engaged(SLOT)) {
+
+            [#
+                val AssignedSlot = payloadArg(0)
+                AcceptedRequests++
+                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+            #]
+
+            println("IOPORT_MOCK | Request accepted") color green
+
+            println("IOPORT_MOCK | Assigned slot: $AssignedSlot") color green
+        }
+
+    } Goto idle
+    
+    // richiesta rifiutata
+    State rejected_state {
+    	
+    	onMsg(rejected:rejected(ARG)) {
+
+            [#
+                RejectedRequests++
+                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+            #]
+
+            println("IOPORT_MOCK | Request rejected") color red
+            println("IOPORT_MOCK | Hold is full") color red
+        }
+
+    } Goto idle
+    
+    // riprovare piu tardi
+    State retry_state {
+    	
+    	onMsg(retrylater:retrylater(ARG)) {
+
+            [#
+                RetryRequests++
+                PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+            #]
+
+            println("IOPORT_MOCK | Retry later")color yellow
+        }
+
+    } Goto idle
+}
+
+QActor sonar_mock context ctx_cargoservice{
+	
+	[# 
+		val Timeout = 30000L 
+		var success = true
+	#]
+	
+	State idle initial{
+		println("SONAR_MOCK | Ready") color green
+	} Transition t0
+		whenRequest detect_container -> measuring
+	
+	State measuring{
+		
+		if[# success #]{
+			println("SONAR_MOCK | Container detected") color green
+			replyTo detect_container with container_detected:container_detected(0)
+		}
+		
+	} Goto idle
+        if [# success #]
+        else wait_timeout
+        
+    State wait_timeout {
+
+        println("SONAR_MOCK | Waiting for container")
+            color yellow
+
+    } Transition t1
+        whenTimeVar Timeout -> handle_timeout
+    
+	
+	State handle_timeout{
+		
+		println("SONAR_MOCK | Detection timeout") color red
+		replyTo detect_container with sonar_timeout:sonar_timeout(0)
+		
+	} Goto idle
+	
+	
+} 
+
+QActor led_mock context ctx_cargoservice {
+	
+	State off initial {
+		
+		println("LED_MOCK | Off") color red
+		
+	} Transition t0
+		whenMsg start_blinking -> on
+		whenMsg stop_blinking -> off
+		
+	State on {
+		
+		println("LED_MOCK | Blinking") color green
+		
+	} Transition t1 
+		whenMsg stop_blinking -> off
+        whenMsg start_blinking -> on
+	
+}
+
+
+
+

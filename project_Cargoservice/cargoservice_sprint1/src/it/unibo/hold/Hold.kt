@@ -47,8 +47,7 @@ class Hold ( name: String, scope: CoroutineScope, isconfined: Boolean=false, isd
 					action { //it:State
 						 val SlotAssigned = Hold.getFreeSlot()  
 						if(  SlotAssigned != null  
-						 ){ 
-										val Id = SlotAssigned.id
+						 ){ val Id = SlotAssigned.id  
 						answer("ask_for_slot", "slot_assigned", "slot_assigned($Id)"   )  
 						}
 						else
