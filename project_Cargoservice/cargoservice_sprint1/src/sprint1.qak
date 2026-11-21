@@ -472,7 +472,3 @@ QActor led_mock context ctx_cargoservice {
         whenMsg start_blinking -> on
 	
 }
-
-
-
-

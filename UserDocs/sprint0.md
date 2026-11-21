@@ -135,11 +135,11 @@ abstract class IHold {
     abstract val slot5: ISlot                         // rappresenta lo slot 5
     abstract fun getFreeSlot(): ISlot?                // getter per ottenere uno slot libero, null se non ci sono slot liberi
     abstract fun getPoint(id: String): IPoint?        // getter per ottenere la posizione di un dato il suo id, ritorna null se l'id non è valido
-    abstract fun codeAssigned(id: String, code: Int?) // funzione per assegnare un codice ad un container, se il codice fornito è null, il codice del container diventa null
+    abstract fun changeStatus(id: String, status: String) // funzione per modificare lo stato di uno slot
 }
 ```
 
-La rappresentazione delle posizioni come coordinate su un piano emerge dall'immagine all'interno del documento di requisiti. In essa il committente evidenzia il fatto che ogni **slot** si trova in una posizione diversa, da qui la necessità di introdurre l'interfaccia `IPoint`.
+La rappresentazione delle posizioni come coordinate su un piano emerge dall'immagine all'interno del documento di requisiti. In essa il committente evidenzia il fatto che ogni **slot** si trova in una posizione diversa, da qui la necessità di introdurre l'interfaccia `IPoint`. Dopo un confronto con il committente, è emersa la necessità di introdurre un ulteriore stato (_BOOKED_) per ogni **slot** oltre ai due espressi nei requisiti (_FREE_ e _OCCUPIED_), per rappresentare uno **slot** assegnato ma ancora non occupato.In caso il **sonar** non rilevi il container entro 30 secondi dalla richiesta, lo slot deve ritornare nello stato _FREE_. 
 
 ##### Slot 5
 
@@ -290,7 +290,7 @@ abstract class HoldTestPlan {
         for (int i = 0; i < hold.getSlotNumber(); i++) {
             ISlot slot = hold.getFreeSlot();
             Assert.assertNotNull(slot);
-            hold.codeAssigned(slot.getId(), i);
+            hold.changeStatus(slot.getId(), "FREE");
         }
 
         assertNull(hold.getFreeSlot());
