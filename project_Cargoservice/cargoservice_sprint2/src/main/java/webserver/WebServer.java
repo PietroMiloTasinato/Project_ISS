@@ -30,18 +30,6 @@ public class WebServer {
 	private static final String requestToLoad = "request_to_load";
 	private static final Map<Session, WsConnectContext> webGuiCtxMap = new HashMap<>();
 	private static volatile Interaction tcpIoPortConn = null;
-	private static final Thread ioPortScanning = new Thread(() -> {
-		try {
-			while (tcpIoPortConn == null) {
-				tcpIoPortConn = ConnectionFactory.createClientSupport23(ProtocolType.tcp, "localhost", "8000");
-				Thread.sleep(2000);
-			}
-			IApplMessage dispatch = CommUtils.buildDispatch("webgui", "link_webgui", "link_webgui(0)", "io_port");
-			tcpIoPortConn.forward(dispatch);
-		} catch (Exception e) {
-			CommUtils.outyellow("Io port scanning thread crashed: " + e);
-		}
-    });
 
 	public static void setUpWebServer() throws Exception {
 		if (webServer == null) {
@@ -103,10 +91,25 @@ public class WebServer {
 			ws.onClose(ctx -> {
 				CommUtils.outcyan("Io port connection closed.");
 				tcpIoPortConn = null;
-				ioPortScanning.start();
+				startPollingIoPort();
 			});
 		});
-		ioPortScanning.start();
+		startPollingIoPort();
+	}
+
+	private static void startPollingIoPort(){
+		new Thread(() -> {
+			try {
+				while (tcpIoPortConn == null) {
+					tcpIoPortConn = ConnectionFactory.createClientSupport23(ProtocolType.tcp, "localhost", "8000");
+					Thread.sleep(2000);
+				}
+				IApplMessage dispatch = CommUtils.buildDispatch("webgui", "link_webgui", "link_webgui(0)", "io_port");
+				tcpIoPortConn.forward(dispatch);
+			} catch (Exception e) {
+				CommUtils.outyellow("Io port scanning thread crashed: " + e);
+			}
+		}).start();
 	}
 
 	private static String handleIoPortMessage(IApplMessage message) throws IllegalArgumentException{
