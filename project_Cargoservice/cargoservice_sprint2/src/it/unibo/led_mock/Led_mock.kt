@@ -38,8 +38,8 @@ class Led_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=false,
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t020",targetState="on",cond=whenDispatch("start_blinking"))
-					transition(edgeName="t021",targetState="off",cond=whenDispatch("stop_blinking"))
+					 transition(edgeName="t021",targetState="on",cond=whenDispatch("start_blinking"))
+					transition(edgeName="t022",targetState="off",cond=whenDispatch("stop_blinking"))
 				}	 
 				state("on") { //this:State
 					action { //it:State
@@ -49,8 +49,8 @@ class Led_mock ( name: String, scope: CoroutineScope, isconfined: Boolean=false,
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t122",targetState="off",cond=whenDispatch("stop_blinking"))
-					transition(edgeName="t123",targetState="on",cond=whenDispatch("start_blinking"))
+					 transition(edgeName="t123",targetState="off",cond=whenDispatch("stop_blinking"))
+					transition(edgeName="t124",targetState="on",cond=whenDispatch("start_blinking"))
 				}	 
 			}
 		}

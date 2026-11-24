@@ -30,8 +30,12 @@ Reply setdirectiondone : pos(PX,PY) for setdirection
 
 Event ioport_occupied:io_port_occupied(ARG)
 Dispatch press_button:press_button(ARG) //simulazione della pressione del pulsante IOPort
+Dispatch link_webgui:link_webgui(ARG)
 
 Context ctx_cargoservice ip [host="localhost" port=8000]
+//Context ctx_hold ip [host="127.0.0.1" port=8001]
+//Context ctx_led ip [host="172.28.0.4" port=8002]
+//Context ctx_sonar ip [host="172.28.0.5" port=8003]
 Context ctx_smartrobot ip [host="127.0.0.1" port=8020]
 
 ExternalQActor robotsmart context ctx_smartrobot
@@ -64,7 +68,8 @@ QActor cargoservice context ctx_cargoservice{
             Target = ""
             Robot_path.clear()
 		#]
-
+		
+		
         forward led_mock -m stop_blinking:stop_blinking(0)
 	    
 		println("CARGOSERVICE | Ready") color green
@@ -307,7 +312,8 @@ QActor hold context ctx_cargoservice{
 	            [#
 	                Hold.changeStatus(ReceivedSlot, ReceivedStatus)
 	            #]
-	
+
+				
 	            println("HOLD | ${ReceivedSlot} changed status to ${ReceivedStatus}") color green
 	
 	        } else {
@@ -326,7 +332,7 @@ QActor io_port context ctx_cargoservice {
 	[#
         var RequestsSent = 0
         var PendingRequests = 0
-
+        var Conn: unibo.basicomm23.interfaces.Interaction? = null
         var AcceptedRequests = 0
         var RejectedRequests = 0
         var RetryRequests = 0
@@ -335,12 +341,16 @@ QActor io_port context ctx_cargoservice {
 	State idle initial {
 		
 		println("IOPORT_MOCK | Ready") color green
-		
+
 	} Transition t0
 		whenMsg press_button -> handle_press
-        whenReply engaged -> accepted
-        whenReply rejected -> rejected_state
-        whenReply retrylater -> retry_state
+		whenMsg link_webgui -> link_webgui
+    
+    
+    State link_webgui{
+    	[# Conn = unibo.basicomm23.utils.ConnectionFactory.createClientSupport23(unibo.basicomm23.msg.ProtocolType.ws, "localhost:8010", "ioport") #]
+    	println("IOPORT_MOCK | Connection: $Conn") color yellow 
+    }Goto idle
     
     // simulazione pressione pulsante
     State handle_press {
@@ -359,7 +369,10 @@ QActor io_port context ctx_cargoservice {
 
         request cargoservice -m request_to_load:request_to_load(0)
 
-    } Goto idle
+    } Transition t1
+    	whenReply engaged -> accepted
+        whenReply rejected -> rejected_state
+        whenReply retrylater -> retry_state
     
     // richiesta accettata  
     State accepted {
@@ -370,6 +383,8 @@ QActor io_port context ctx_cargoservice {
                 val AssignedSlot = payloadArg(0)
                 AcceptedRequests++
                 PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+                val msg = unibo.basicomm23.utils.CommUtils.buildDispatch("io_port", "accepted", "$AssignedSlot", "webgui")
+                Conn?.forward(msg)
             #]
 
             println("IOPORT_MOCK | Request accepted") color green
@@ -387,6 +402,8 @@ QActor io_port context ctx_cargoservice {
             [#
                 RejectedRequests++
                 PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+                val msg = unibo.basicomm23.utils.CommUtils.buildDispatch("io_port", "rejected", "rejected", "webgui")
+                Conn?.forward(msg)
             #]
 
             println("IOPORT_MOCK | Request rejected") color red
@@ -403,6 +420,8 @@ QActor io_port context ctx_cargoservice {
             [#
                 RetryRequests++
                 PendingRequests = (PendingRequests - 1).coerceAtLeast(0)
+                val msg = unibo.basicomm23.utils.CommUtils.buildDispatch("io_port", "retrylater", "retrylater", "webgui")
+                Conn?.forward(msg)
             #]
 
             println("IOPORT_MOCK | Retry later")color yellow

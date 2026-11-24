@@ -8,6 +8,7 @@ import unibo.basicomm23.interfaces.IApplMessage;
 import unibo.basicomm23.interfaces.Interaction;
 import unibo.basicomm23.msg.ProtocolType;
 import unibo.basicomm23.utils.CommUtils;
+import unibo.basicomm23.utils.Connection;
 import unibo.basicomm23.utils.ConnectionFactory;
 
 import java.util.Arrays;

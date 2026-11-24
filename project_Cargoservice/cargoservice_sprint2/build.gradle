@@ -202,6 +202,20 @@ task run0(type: JavaExec) {
     main = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
 }
 
+task cargoservice(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'it.unibo.ctx_cargoservice.MainCtx_cargoserviceKt'
+}
+
+task hold(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'it.unibo.ctx_hold.MainCtx_holdKt'
+}
+
 /*
 //TODO
 tasks.register('copyReport', Copy) {

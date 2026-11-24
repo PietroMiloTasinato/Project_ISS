@@ -25,6 +25,7 @@ request( setdirection, dir(D) ).
 reply( setdirectiondone, pos(PX,PY) ).  %%for setdirection
 event( ioport_occupied, io_port_occupied(ARG) ).
 dispatch( press_button, press_button(ARG) ).
+dispatch( link_webgui, link_webgui(ARG) ).
 %====================================================================================
 context(ctx_cargoservice, "localhost",  "TCP", "8000").
 context(ctx_smartrobot, "127.0.0.1",  "TCP", "8020").
