@@ -18,7 +18,8 @@ Il sistema è modellato con il metamodello **Qak** (Quasi Actor Kotlin) e svilup
 | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | [Requisiti del committente](https://anatali.github.io/issLab2026/_static/docs/Protobook.pdf#section.31.1) | Testo originale dei requisiti                                                                                  |
 | [Sprint0](UserDocs/sprint0.md)                                                                            | Requisiti formalizzati, macrocomponenti, core business, architettura di riferimento, piano di test e di lavoro |
-| [Sprint1](UserDocs/sprint1.md)                                                                            | Core business: ciclo di carico (cargoservice, cargorobot e hold), analisi del problema, test                  |
+| [Sprint1](UserDocs/sprint1.md)                                                                            | Core business: ciclo di carico (cargoservice, cargorobot e hold), analisi del problema, test                   |
+| [Sprint2](UserDocs/sprint2.md)                                                                            | Implementazione del sonar e led sul Raspberry Pi Pico W + realizzazione della web-gui (pushbutton + display)   |
 
 ## Mappa della repository
 
@@ -27,10 +28,12 @@ Project_ISS/
 ├── README.md                 questo file
 ├── LICENSE
 ├── UserDocs/
-│   └── sprint0.md            documentazione Sprint0 in formato markdown
-│   └── sprint0.pdf           documentazione Sprint0 in formato pdf
-│   └── sprint1.md            documentazione Sprint1 in formato markdown
-│   └── sprint1.pdf           documentazione Sprint1 in formato pdf
+│   ├── sprint0.md            documentazione Sprint0 in formato markdown
+│   ├── sprint0.pdf           documentazione Sprint0 in formato pdf
+│   ├── sprint1.md            documentazione Sprint1 in formato markdown
+│   ├── sprint1.pdf           documentazione Sprint1 in formato pdf
+│   ├── sprint2.md            documentazione Sprint2 in formato markdown
+│   └── sprint2.pdf           documentazione Sprint2 in formato pdf 
 ├── img/                      immagini e diagrammi usati nella documentazione
 └── project_Cargoservice/
     ├── cargoservice_sprint0/ progetto Gradle Sprint0
@@ -41,8 +44,13 @@ Project_ISS/
     ├── cargoservice_sprint1/ progetto Gradle Sprint1
     │   ├── src/sprint1.qak   modello Qak
     │   ├── src/it/unibo/     codice Kotlin generato
-    │   ├── src/test/java/    CargoServiceTest, CargoServiceWorkerTest, HoldTest
+    │   ├── src/test/java/    test
     │   └── Arch_sprint1.py   diagramma dell'architettura
+    ├── cargoservice_sprint2/ progetto Gradle Sprint2
+    │   ├── src/sprint2.qak   modello Qak
+    │   ├── src/it/unibo/     codice Kotlin generato
+    │   ├── src/test/java/    test
+    │   └── Arch_sprint2.py   diagramma dell'architettura
     └── unibolibs/            librerie Unibo (qakactor, basicomm, 2p, interfacce)
 ```
 
